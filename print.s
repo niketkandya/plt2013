@@ -21,7 +21,5 @@ bx lr
 
 
 addr_of_for: .word format
-
-
 format: .asciz "%d\n"
 

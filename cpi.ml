@@ -29,8 +29,12 @@ let rec code_expr = function
       | Sub -> print_endline "sub r0, r1, r0"
       | Mult -> print_endline "mul r2, r1, r0";
                 print_endline "mov r0, r2"
-      | Div -> print_endline "sdiv r2, r1, r0";
-               print_endline "mov r0, r2"
+      | Div -> print_endline "str r1, [sp,#-4]!";
+               print_endline "mov r1, r0";
+               print_endline "ldr r0, [sp], #4";
+               print_endline "push {ip,lr}";
+               print_endline "bl __aeabi_idiv";
+               print_endline "pop {ip,pc}"
 
 let rec code_stmt = function
   Block(stmts) -> print_endline "";
