@@ -1,8 +1,24 @@
 open Ast
 
+let end_string = []
+
 let rec code_expr = function
   Literal(x) -> print_endline ("mov r0, #" ^ (string_of_int x))
-  | Call(f, var) -> print_endline ("Function called " ^ f)
+  | Call(f, var) ->
+      if f = "printf" then
+         ( print_endline "push {ip,lr}";
+          print_endline "ldr addr_of_format";
+          print_endline "bl printf";
+          print_endline "pop {ip,pc}";
+          (*print_endline ("var = " ^ String.concat "," (List.map string_of_expr
+          var));*)
+          (end_string @ ["addr_of_format: .word format"; ""; ("format .asciz " ^
+          String.concat "," (List.map string_of_expr var))]); print_endline ""
+          (*print_endline
+          ;
+          print_endline "var" ^ var *) )
+      else print_endline ("Function called " ^ f ^ " with var: " ^
+      String.concat "," (List.map string_of_expr var))
   | Binop(e1, op, e2) ->
       code_expr e1;
       print_endline "str r0, [sp,#-4]!";
@@ -31,4 +47,5 @@ let _ =
   let program = Parser.program Scanner.token lexbuf in
     (print_endline ".global main\n.func main\nmain:";
      code_program program;
-     print_endline "bx lr")
+     print_endline "bx lr";
+     List.map print_endline end_string)
