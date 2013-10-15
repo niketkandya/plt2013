@@ -5,7 +5,7 @@ let rec code_expr = function
   | Call(f, var) ->
       (* "Args: " ^ String.concat "" (List.map (fun x -> string_of_int x) var) ^
        * *)
-      "Push args here" ^ "\n" ^
+      "/* Push args here if necessary */" ^ "\n" ^
       "push {ip, lr}" ^ "\n" ^
       "bl " ^ f ^ "\n" ^
       "pop {ip, pc}" ^ "\n"
@@ -34,11 +34,14 @@ let code_function fdecl =
   "\n" ^ ".global " ^ fdecl.fname ^ "\n" ^
   ".func " ^ fdecl.fname ^ "\n" ^
   fdecl.fname ^ ":" ^ "\n" ^
-  "Save LR" ^ "\n" ^
-  "Pop args here" ^ "\n" ^
+  "/* Save LR */" ^ "\n" ^
+  "str lr, [sp,#-4]!" ^ "\n" ^
+  "/* Pop args here if necessary */" ^ "\n" ^
   String.concat "" (List.map code_stmt fdecl.body) ^
-  "Restore LR" ^ "\n" ^
-  "bx lr" ^ "\n"
+  "/* Restore LR */" ^ "\n" ^
+  "ldr lr, [sp], #+4" ^ "\n" ^
+  "bx lr" ^ "\n" ^
+  ".endfunc" ^ "\n"
 
 let code_program (globals,functions) =
   let funcs = List.rev functions in

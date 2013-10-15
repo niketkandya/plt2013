@@ -1,9 +1,8 @@
-divide() {
-  return 4 / 5;
+fun(){
+  return 5 + 9 * 2 + 10;
 }
 
 main() {
-  1 + 2;
-  divide();
-  return 3;
+  5 + 4;
+  return(fun());
 }
