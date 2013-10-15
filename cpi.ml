@@ -2,6 +2,7 @@ open Ast
 
 let rec code_expr = function
   Literal(x) -> print_endline ("mov r0, #" ^ (string_of_int x))
+  | Call(f, var) -> print_endline ("Function called " ^ f)
   | Binop(e1, op, e2) ->
       code_expr e1;
       print_endline "str r0, [sp,#-4]!";
@@ -16,7 +17,8 @@ let rec code_expr = function
                print_endline "mov r0, r2"
 
 let rec code_stmt = function
-  Expr(expr) -> code_expr expr
+  Block(stmts) -> print_endline "";
+  | Expr(expr) | Return(expr) -> code_expr expr
 
 let code_function fdecl =
   List.map code_stmt fdecl.body
