@@ -37,16 +37,42 @@ let translate (globals, functions) =
     (* Bookkeeping: FP offsets for locals and arguments *)
     let num_formals = List.length fdecl.formals
     and num_locals = List.length fdecl.locals
+    and num_temp = 0
     and local_offsets = enum 1 1 fdecl.locals
     and formal_offsets = enum (-1) (-2) fdecl.formals in
     let env = { env with local_index = string_map_pairs
 		  StringMap.empty (local_offsets @ formal_offsets) } in
-    let function_start = fdecl.fname ^ ":\n" ^
+    let load_code var reg = (* TODO Generates the code to load the value of a variable
+    to the specified register*)
+"Dummy: Load"
+        in
+        let store_code reg var = (*TODO Stores the content of reg to a variable
+        *)
+        "Dummy: Store"
+                in
+                let add_temp = (*TODO Generate a temporary variable and update
+                in locals_offsets *)
+                "Temp variable added to local_offsets"
+                        in
+    let function_start = 
+            let size_stmfd = 4 
+            and align_size = 4 
+            and var_size = 4 (* right now doing only for integers *)
+            in fdecl.fname ^ ":\n" ^
                     "\t stmfd sp!, {fp, lr}\n" ^
-                    "\t add fp, sp,#4\n" ^
+                    "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^ (*number of registers pushed using
+                    stmfd - 1 * 4 *)
                     "\t sub sp, sp,#" ^ string_of_int (( num_formals +
-                    num_locals) * 4) ^
-                    (* now store the formals into the stack*)
+                    num_locals) * align_size) ^
+                    let rec formals_push_code i = if i < 0 then "" else 
+                            "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
+                            string_of_int (((num_locals + i) * align_size) +
+                            var_size) ^ "]\n" ^ (formals_push_code (i-1))
+                    in formals_push_code (num_formals -1)
+                     ^
+                    (* TODO : if the variable size is 1 byte, strb should be
+                     * used instead and the var_size should be updated
+                     * accordingly *)
                     (* need a protocol to get the offset of locals given that
                      * formals are present first *)
 "\n"
@@ -96,4 +122,3 @@ let translate (globals, functions) =
   with Not_found -> raise (Failure ("no \"main\" function"))
   in (* Compile the functions *)
    entry_function :: List.map (translate env) functions
-
