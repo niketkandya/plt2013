@@ -51,7 +51,12 @@ let translate (globals, functions) =
                 let load_code var reg = (* load variable var to register reg *)
                 "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
                 string_of_int 
-                ((((StringMap.find var env.local_index)-1) * align_size ) + (size_stmfd) + (var_size)) 
+                (try 
+                        ((((StringMap.find var env.local_index)-1) * align_size
+                        ) + (size_stmfd) + (var_size))
+                with Not_found -> raise (Failure ("Cannot find in load_code" ^
+                var))  )
+
                 ^ "]\n"
         and 
         store_code reg var = (*TODO Stores the content of reg to a variable*)
@@ -76,20 +81,19 @@ let translate (globals, functions) =
                             string_of_int (((num_locals + i) * align_size) +
                             var_size) ^ "]\n"
                     in formals_push_code (num_formals -1)
-                     ^
                     (* TODO : if the variable size is 1 byte, strb should be
                      * used instead and the var_size should be updated
                      * accordingly *)
                     (* need a protocol to get the offset of locals given that
                      * formals are present first *)
-                "\n" ^ 
-                (StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^ string_of_int va) env.local_index "" )
+                (*StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^
+                 * string_of_int va) env.local_index "" *)
     in
     
     let function_exit = "\t sub sp, fp, #4\n" ^
                         "\t ldmfd sp!, {fp, pc}\n" in
     let rec expr = function
-            Literal i -> "#" ^ string_of_int i
+            Literal i -> string_of_int i
       | Id s ->
                       (try (StringMap.find s env.local_index);s
           with Not_found -> try (StringMap.find s
@@ -105,7 +109,7 @@ let translate (globals, functions) =
                       []-> ""
                 |hd::tl -> ( load_code hd ("r" ^ string_of_int i) ) ^ (fcall (i+1) tl)
                in fcall 0 (List.map expr (List.rev actuals)) ^ ("\n\t bl  "^
-               fname)
+               fname ^ "\n" )
                (* ((StringMap.find fname env.function_index))
         with Not_found -> raise (Failure ("undefined function " ^ fname))) *)
       | Noexpr -> ""
