@@ -31,9 +31,9 @@ Cπ will contain the following keywords
 ###Primitive Data Types
     int:		32 bit integers
     char:		8 bit character
-    int\*:		32 bit pointer to an integer value
-    char\*:	32 bit pointer to a character value
-    void\*:	32 bit pointer to a castable value
+    int*:		32 bit pointer to an integer value
+    char*:	32 bit pointer to a character value
+    void*:	32 bit pointer to a castable value
 
 ###Aggregate Data Types
 
