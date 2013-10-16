@@ -28,30 +28,30 @@ let rec code_stmt = function
   | Expr(expr) | Return(expr) -> code_expr expr
 
 let code_function fdecl =
-  "\n" ^ (if fdecl.fname = "main" 
+  let func_str = ( "\n" ^ (if fdecl.fname = "main" 
           then ".global " ^ fdecl.fname ^ "\n"
           else "" ) ^
-  ".func " ^ fdecl.fname ^ "\n" ^
-  fdecl.fname ^ ":" ^ "\n" ^
-  "/* Save LR */" ^ "\n" ^
-  "push {fp, lr}" ^ "\n" ^
-  "/* Pop args here if necessary */" ^ "\n" ^
-  String.concat "" (List.map code_stmt fdecl.body) ^
-  "/* Restore LR */" ^ "\n" ^
-  "pop {fp, pc}" ^ "\n" ^
-  "bx lr" ^ "\n" ^
-  ".endfunc" ^ "\n"
+            ".func " ^ fdecl.fname ^ "\n" ^
+            fdecl.fname ^ ":" ^ "\n" ^
+            "/* Save LR */" ^ "\n" ^
+            "push {fp, lr}" ^ "\n" ^
+            "/* Pop args here if necessary */" ^ "\n" ^
+            String.concat "" (List.map code_stmt fdecl.body) ^
+            "/* Restore LR */" ^ "\n" ^
+            "pop {fp, pc}" ^ "\n" ^
+            "bx lr" ^ "\n" ^
+            ".endfunc" ^ "\n" ) in
+    let oc = open_out (fdecl.fname ^ ".s") in
+      fprintf oc "%s\n" func_str;
+      close_out oc; func_str
 
 let code_program (globals,functions) =
   let funcs = List.rev functions in
     String.concat "" (List.map code_function funcs)
 
-let file = "main.s"
 
 let _ =
   let lexbuf = Lexing.from_channel stdin in
     let program = Parser.program Scanner.token lexbuf in
       let listing = code_program program in
-        let oc = open_out file in
-        fprintf oc "%s\n" listing;
-        close_out oc;
+        print_string listing
