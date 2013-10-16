@@ -9,11 +9,12 @@ I'm just going to document what I'm doing. Feel free to add whatever you want.
 
 If you run qemu with the flag "-redir tcp:5022::22", then you can ssh into qemu
 with
+
     ssh pi@locahost -p 5022
 
-You should also
 
 On your local machine, add to ~/.ssh/config
+
     Host pi
     Hostname localhost
     Port 5022
@@ -28,6 +29,7 @@ qemu vm
 ####Automatic testing
 Assuming you have the configurations above and you are in the directory where
 the assembly files are, run:
+
     rsync -avz -e ssh . pi:tmp/ # Does all work in a ~/tmp directory
     ssh pi "cd tmp; make run"   # Assuming you have a "run" task for Makefile
                                 # that compiles and runs the assembly
