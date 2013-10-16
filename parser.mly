@@ -6,6 +6,7 @@
 %token RETURN IF ELSE FOR WHILE INT
 %token <int> LITERAL
 %token <string> LITSTRING
+%token <string> PRINTF
 %token <string> ID
 %token EOF
 
@@ -82,6 +83,7 @@ expr:
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | ID ASSIGN expr   { Assign($1, $3) }
+  | PRINTF LPAREN actuals_opt RPAREN { Printf($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
 

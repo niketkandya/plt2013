@@ -26,6 +26,7 @@ rule token = parse
 | "while"  { WHILE }
 | "return" { RETURN }
 | "int"    { INT }
+| "printf" as lxm { PRINTF(lxm) }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | '"' [^'"']* '"'  as lxm { LITSTRING(lxm) }
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }

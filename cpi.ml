@@ -1,11 +1,31 @@
 open Ast
 open Printf
 
+let rec string_of_printf_args k = function
+      | [] -> ""
+      | h :: t -> "mov r" ^ (string_of_int k) ^ " #" ^ (string_of_expr h) ^ "\n" ^
+      string_of_printf_args (k+1) t
+
 let rec code_expr = function
   Literal(x) -> "mov r0, #" ^ (string_of_int x) ^ "\n"
+  | Printf(f, var) ->
+          let print_func = (".data \n" ^
+            "msg: .asciz " ^ ((fun x -> string_of_expr
+            x) (List.hd var)) ^ "\n\n" ^
+            ".text\n\n" ^
+            ".globl " ^ "print\n" ^
+            "print: \n" ^ "push {ip, lr} \n" ^
+            "ldr r0, addr_of_msg\n" ^ 
+            (string_of_printf_args 1 (List.tl var)) ^
+            "bl printf\n" ^ "pop {ip, lr}\n" ^
+            "bx lr  \n\n" ^ "addr_of_msg: .word msg \n") in
+              let oc = open_out "print.s" in
+                fprintf oc "%s\n" print_func;
+                close_out oc;
+                "bl print \n"
   | Call(f, var) ->
-       "Args: " ^ String.concat " " (List.map (fun x -> string_of_expr x) var) ^
-       "\n" ^
+       "/*Args: " ^ String.concat " " (List.map (fun x -> string_of_expr x) var) ^
+       "*/\n" ^
       "/* Push args here if necessary */" ^ "\n" ^
       "bl " ^ f ^ "\n"
   | Binop(e1, op, e2) ->
@@ -26,6 +46,7 @@ let rec code_expr = function
 let rec code_stmt = function
   Block(stmts) -> String.concat "" (List.map code_stmt stmts)
   | Expr(expr) | Return(expr) -> code_expr expr
+
 
 let code_function fdecl =
   let func_str = ( "\n" ^ (if fdecl.fname = "main" 
