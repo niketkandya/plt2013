@@ -49,4 +49,6 @@ let _ =
   let lexbuf = Lexing.from_channel stdin in
     let program = Parser.program Scanner.token lexbuf in
       let listing = code_program program in
-        print_endline listing
+        let oc = open_out file in
+        fprintf oc "%s\n" listing;
+        close_out oc;
