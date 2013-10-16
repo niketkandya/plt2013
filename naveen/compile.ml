@@ -38,33 +38,37 @@ let translate (globals, functions) =
     let num_formals = List.length fdecl.formals
     and num_locals = List.length fdecl.locals
     and num_temp = 0
-    and local_offsets = enum 1 1 fdecl.locals
-    and formal_offsets = enum (-1) (-2) fdecl.formals in
+    and local_offsets = enum 1 1 fdecl.locals in
+    let formal_offsets = enum 1 (num_locals+1) fdecl.formals in
     let env = { env with local_index = string_map_pairs
 		  StringMap.empty (local_offsets @ formal_offsets) } in
-    let load_code var reg = (* TODO Generates the code to load the value of a variable
-    to the specified register*)
-"Dummy: Load"
-        in
-        let store_code reg var = (*TODO Stores the content of reg to a variable
-        *)
-        "Dummy: Store"
-                in
-                let add_temp = (*TODO Generate a temporary variable and update
-                in locals_index *)
-                "Temp variable added to local_index"
-                        in
     let function_start = 
             let size_stmfd = 4 
-            and align_size = 4 
-            and var_size = 4 (* right now doing only for integers *)
-            in fdecl.fname ^ ":\n" ^
+                and align_size = 4 
+                and var_size = 4 (* right now doing only for integers *)
+                in
+            let load_code var reg = (* load variable var to register reg *)
+                "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
+                string_of_int 
+                ((((StringMap.find var env.local_index)-1) * align_size ) + (size_stmfd) + (var_size)) 
+                ^ "]\n" in
+            let store_code reg var = (*TODO Stores the content of reg to a variable*)
+                "Dummy: Store"
+                in
+            let add_temp = (*Generate a temporary variable and updates in locals_index *)
+                let num_temp = num_temp + 1 in
+                env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
+                (num_formals + num_locals + num_temp) env.local_index;
+                "__tmp" ^ string_of_int num_temp
+                in
+            (* Code generation for function *)
+            fdecl.fname ^ ":\n" ^
                     "\t stmfd sp!, {fp, lr}\n" ^
                     "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^ (*number of registers pushed using
                     stmfd - 1 * 4 *)
                     "\t sub sp, sp,#" ^ string_of_int (( num_formals +
                     num_locals) * align_size) ^ "\n" ^
-                    let rec formals_push_code i = if i < 0 then "" else 
+            let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
                             string_of_int (((num_locals + i) * align_size) +
                             var_size) ^ "]\n"
@@ -75,7 +79,8 @@ let translate (globals, functions) =
                      * accordingly *)
                     (* need a protocol to get the offset of locals given that
                      * formals are present first *)
-"\n"
+        "\n" ^ (StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^ string_of_int va)
+env.local_index "" )
     
     in
     let function_exit = "\t sub sp, fp, #4\n" ^

@@ -1,4 +1,6 @@
 fun( a, b) {
+	int c;
+	int d;
 }
 
 main()
