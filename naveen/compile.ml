@@ -51,8 +51,8 @@ let translate (globals, functions) =
         "Dummy: Store"
                 in
                 let add_temp = (*TODO Generate a temporary variable and update
-                in locals_offsets *)
-                "Temp variable added to local_offsets"
+                in locals_index *)
+                "Temp variable added to local_index"
                         in
     let function_start = 
             let size_stmfd = 4 
@@ -63,11 +63,11 @@ let translate (globals, functions) =
                     "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^ (*number of registers pushed using
                     stmfd - 1 * 4 *)
                     "\t sub sp, sp,#" ^ string_of_int (( num_formals +
-                    num_locals) * align_size) ^
+                    num_locals) * align_size) ^ "\n" ^
                     let rec formals_push_code i = if i < 0 then "" else 
-                            "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
+                            (formals_push_code (i-1)) ^ "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
                             string_of_int (((num_locals + i) * align_size) +
-                            var_size) ^ "]\n" ^ (formals_push_code (i-1))
+                            var_size) ^ "]\n"
                     in formals_push_code (num_formals -1)
                      ^
                     (* TODO : if the variable size is 1 byte, strb should be
