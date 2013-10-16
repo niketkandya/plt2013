@@ -3,7 +3,7 @@ open Printf
 
 let rec string_of_printf_args k = function
       | [] -> ""
-      | h :: t -> "mov r" ^ (string_of_int k) ^ " #" ^ (string_of_expr h) ^ "\n" ^
+      | h :: t -> "mov r" ^ (string_of_int k) ^ ", #" ^ (string_of_expr h) ^ "\n" ^
       string_of_printf_args (k+1) t
 
 let rec code_expr = function

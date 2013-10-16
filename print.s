@@ -1,5 +1,5 @@
 .data 
-msg: .asciz "Hello World"
+msg: .asciz "Hello World %d"
 
 .text
 
@@ -7,6 +7,7 @@ msg: .asciz "Hello World"
 print: 
 push {ip, lr} 
 ldr r0, addr_of_msg
+mov r1, #5
 bl printf
 pop {ip, lr}
 bx lr  
