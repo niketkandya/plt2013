@@ -26,6 +26,7 @@ let translate (globals, functions) =
 
   (* Allocate "addresses" for each global variable *)
   let global_indexes = string_map_pairs StringMap.empty (enum 1 0 globals) in
+  (* TODO Code generation for globals *)
 
   (* Assign indexes to function names; built-in "print" is special *)
   let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
@@ -42,33 +43,39 @@ let translate (globals, functions) =
     let formal_offsets = enum 1 (num_locals+1) fdecl.formals in
     let env = { env with local_index = string_map_pairs
 		  StringMap.empty (local_offsets @ formal_offsets) } in
+
     let function_start = 
-            let size_stmfd = 4 
-                and align_size = 4 
+
+            let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
+                and align_size = 4 (*Alignment of the stack *)
                 and var_size = 4 (* right now doing only for integers *)
                 in
-            let load_code var reg = (* load variable var to register reg *)
+
+        let load_code var reg = (* load variable var to register reg *)
                 "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
                 string_of_int 
                 ((((StringMap.find var env.local_index)-1) * align_size ) + (size_stmfd) + (var_size)) 
                 ^ "]\n" in
-            let store_code reg var = (*TODO Stores the content of reg to a variable*)
+
+        let store_code reg var = (*TODO Stores the content of reg to a variable*)
                 "Dummy: Store"
                 in
-            let add_temp = (*Generate a temporary variable and updates in locals_index *)
+
+        let add_temp = (*Generate a temporary variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
                 env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
                 (num_formals + num_locals + num_temp) env.local_index;
                 "__tmp" ^ string_of_int num_temp
                 in
+
             (* Code generation for function *)
             fdecl.fname ^ ":\n" ^
                     "\t stmfd sp!, {fp, lr}\n" ^
-                    "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^ (*number of registers pushed using
-                    stmfd - 1 * 4 *)
-                    "\t sub sp, sp,#" ^ string_of_int (( num_formals +
-                    num_locals) * align_size) ^ "\n" ^
-            let rec formals_push_code i = if i < 0 then "" else 
+                    "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^
+                    "\t sub sp, sp,#" ^ string_of_int (( num_formals + num_locals) * align_size) ^ 
+                    "\n" ^
+
+                        let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
                             string_of_int (((num_locals + i) * align_size) +
                             var_size) ^ "]\n"
@@ -79,14 +86,15 @@ let translate (globals, functions) =
                      * accordingly *)
                     (* need a protocol to get the offset of locals given that
                      * formals are present first *)
-        "\n" ^ (StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^ string_of_int va)
-env.local_index "" )
-    
+                "\n" ^ 
+                (StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^ string_of_int va) env.local_index "" )
     in
+    
     let function_exit = "\t sub sp, fp, #4\n" ^
-                        "\t ldmfd sp!, {fp, pc}\n"in
+                        "\t ldmfd sp!, {fp, pc}\n" in
+
     let rec expr = function
-            Literal i -> [string_of_int i]
+        Literal i -> [string_of_int i]
       | Id s ->
                       (try [string_of_int (StringMap.find s env.local_index)]
           with Not_found -> try [string_of_int (StringMap.find s
@@ -121,7 +129,7 @@ env.local_index "" )
 		 global_index = global_indexes;
 		 local_index = StringMap.empty } in
 
-  (* Code executed to start the program: Jsr main; halt *)
+  (* Code executed to start the program *)
   let entry_function = try
     string_of_int (StringMap.find "main" function_indexes)
   with Not_found -> raise (Failure ("no \"main\" function"))
