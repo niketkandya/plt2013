@@ -3,8 +3,8 @@ open Ast
 let rec code_expr = function
   Literal(x) -> "mov r0, #" ^ (string_of_int x) ^ "\n"
   | Call(f, var) ->
-      (* "Args: " ^ String.concat "" (List.map (fun x -> string_of_int x) var) ^
-       * *)
+       "Args: " ^ String.concat " " (List.map (fun x -> string_of_expr x) var) ^
+       "\n" ^
       "/* Push args here if necessary */" ^ "\n" ^
       "bl " ^ f ^ "\n"
   | Binop(e1, op, e2) ->
@@ -36,6 +36,7 @@ let code_function fdecl =
   "push {fp, lr}" ^ "\n" ^
   "/* Pop args here if necessary */" ^ "\n" ^
   String.concat "" (List.map code_stmt fdecl.body) ^
+  (*String.concat " " fdecl.formals ^*)
   "/* Restore LR */" ^ "\n" ^
   "pop {fp, pc}" ^ "\n" ^
   "bx lr" ^ "\n" ^
