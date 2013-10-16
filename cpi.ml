@@ -1,4 +1,5 @@
 open Ast
+open Printf
 
 let rec code_expr = function
   Literal(x) -> "mov r0, #" ^ (string_of_int x) ^ "\n"
@@ -44,6 +45,8 @@ let code_function fdecl =
 let code_program (globals,functions) =
   let funcs = List.rev functions in
     String.concat "" (List.map code_function funcs)
+
+let file = "main.s"
 
 let _ =
   let lexbuf = Lexing.from_channel stdin in
