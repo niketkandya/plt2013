@@ -1,5 +1,5 @@
 fun(){
-  return 5 + 9 * 2 + 10;
+  return 9 / 2 + 10 * 4;
 }
 
 main() {

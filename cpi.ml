@@ -6,9 +6,7 @@ let rec code_expr = function
       (* "Args: " ^ String.concat "" (List.map (fun x -> string_of_int x) var) ^
        * *)
       "/* Push args here if necessary */" ^ "\n" ^
-      "push {ip, lr}" ^ "\n" ^
-      "bl " ^ f ^ "\n" ^
-      "pop {ip, pc}" ^ "\n"
+      "bl " ^ f ^ "\n"
   | Binop(e1, op, e2) ->
       (code_expr e1) ^
       "str r0, [sp,#-4]!" ^ "\n" ^
@@ -22,24 +20,24 @@ let rec code_expr = function
       | Div -> "str r1, [sp,#-4]!" ^ "\n" ^
                "mov r1, r0" ^ "\n" ^
                "ldr r0, [sp], #4" ^ "\n" ^
-               "push {ip,lr}" ^ "\n" ^
-               "bl __aeabi_idiv" ^ "\n" ^
-               "pop {ip,pc}" ^ "\n" )
+               "bl __aeabi_idiv" ^ "\n")
 
 let rec code_stmt = function
   Block(stmts) -> String.concat "" (List.map code_stmt stmts)
   | Expr(expr) | Return(expr) -> code_expr expr
 
 let code_function fdecl =
-  "\n" ^ ".global " ^ fdecl.fname ^ "\n" ^
+  "\n" ^ (if fdecl.fname = "main" 
+          then ".global " ^ fdecl.fname ^ "\n"
+          else "" ) ^
   ".func " ^ fdecl.fname ^ "\n" ^
   fdecl.fname ^ ":" ^ "\n" ^
   "/* Save LR */" ^ "\n" ^
-  "str lr, [sp,#-4]!" ^ "\n" ^
+  "push {fp, lr}" ^ "\n" ^
   "/* Pop args here if necessary */" ^ "\n" ^
   String.concat "" (List.map code_stmt fdecl.body) ^
   "/* Restore LR */" ^ "\n" ^
-  "ldr lr, [sp], #+4" ^ "\n" ^
+  "pop {fp, pc}" ^ "\n" ^
   "bx lr" ^ "\n" ^
   ".endfunc" ^ "\n"
 
