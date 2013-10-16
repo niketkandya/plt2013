@@ -6,9 +6,7 @@ let rec code_expr = function
       (* "Args: " ^ String.concat "" (List.map (fun x -> string_of_int x) var) ^
        * *)
       "/* Push args here if necessary */" ^ "\n" ^
-      "push {ip, lr}" ^ "\n" ^
-      "bl " ^ f ^ "\n" ^
-      "pop {ip, pc}" ^ "\n"
+      "bl " ^ f ^ "\n"
   | Binop(e1, op, e2) ->
       (code_expr e1) ^
       "str r0, [sp,#-4]!" ^ "\n" ^
@@ -35,11 +33,11 @@ let code_function fdecl =
   ".func " ^ fdecl.fname ^ "\n" ^
   fdecl.fname ^ ":" ^ "\n" ^
   "/* Save LR */" ^ "\n" ^
-  "str lr, [sp,#-4]!" ^ "\n" ^
+  "push {fp, lr}" ^ "\n" ^
   "/* Pop args here if necessary */" ^ "\n" ^
   String.concat "" (List.map code_stmt fdecl.body) ^
   "/* Restore LR */" ^ "\n" ^
-  "ldr lr, [sp], #+4" ^ "\n" ^
+  "pop {fp, pc}" ^ "\n" ^
   "bx lr" ^ "\n" ^
   ".endfunc" ^ "\n"
 
