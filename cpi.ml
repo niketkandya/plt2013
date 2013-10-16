@@ -29,7 +29,9 @@ let rec code_stmt = function
   | Expr(expr) | Return(expr) -> code_expr expr
 
 let code_function fdecl =
-  "\n" ^ ".global " ^ fdecl.fname ^ "\n" ^
+  "\n" ^ (if fdecl.fname = "main" 
+          then ".global " ^ fdecl.fname ^ "\n"
+          else "" ) ^
   ".func " ^ fdecl.fname ^ "\n" ^
   fdecl.fname ^ ":" ^ "\n" ^
   "/* Save LR */" ^ "\n" ^
