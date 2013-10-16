@@ -36,7 +36,6 @@ let code_function fdecl =
   "push {fp, lr}" ^ "\n" ^
   "/* Pop args here if necessary */" ^ "\n" ^
   String.concat "" (List.map code_stmt fdecl.body) ^
-  (*String.concat " " fdecl.formals ^*)
   "/* Restore LR */" ^ "\n" ^
   "pop {fp, pc}" ^ "\n" ^
   "bx lr" ^ "\n" ^
