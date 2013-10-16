@@ -20,9 +20,7 @@ let rec code_expr = function
       | Div -> "str r1, [sp,#-4]!" ^ "\n" ^
                "mov r1, r0" ^ "\n" ^
                "ldr r0, [sp], #4" ^ "\n" ^
-               "push {ip,lr}" ^ "\n" ^
-               "bl __aeabi_idiv" ^ "\n" ^
-               "pop {ip,pc}" ^ "\n" )
+               "bl __aeabi_idiv" ^ "\n")
 
 let rec code_stmt = function
   Block(stmts) -> String.concat "" (List.map code_stmt stmts)
