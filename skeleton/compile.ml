@@ -48,19 +48,23 @@ let translate (globals, functions) =
                 and align_size = 4 (*Alignment of the stack *)
                 and var_size = 4 (* right now doing only for integers *)
                 in
-                let load_code var reg = (* load variable var to register reg *)
-                "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
-                string_of_int 
+        let get_fp_offset var = 
                 (try 
                         ((((StringMap.find var env.local_index)-1) * align_size
                         ) + (size_stmfd) + (var_size))
-                with Not_found -> raise (Failure ("Cannot find in load_code" ^
+                with Not_found -> raise (Failure ("Cannot find in load_code " ^
                 var))  )
-
+                in
+        let load_code reg var= (* load variable var to register reg *)
+                if 
+                "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
+                string_of_int (get_fp_offset var)
                 ^ "]\n"
         and 
         store_code reg var = (*TODO Stores the content of reg to a variable*)
-                "Dummy: Store"
+                "\t str  " ^ reg ^ ", [fp, #-" ^ 
+                string_of_int (get_fp_offset var)
+                ^ "]\n"
         and
         add_temp = (*Generate a temporary variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
@@ -89,25 +93,24 @@ let translate (globals, functions) =
                 (*StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^
                  * string_of_int va) env.local_index "" *)
     in
-    
     let function_exit = "\t sub sp, fp, #4\n" ^
                         "\t ldmfd sp!, {fp, pc}\n" in
     let rec expr = function
-            Literal i -> string_of_int i
+            Literal i -> "#" ^ string_of_int i
       | Id s ->
                       (try (StringMap.find s env.local_index);s
           with Not_found -> try (StringMap.find s
           env.global_index);s
           with Not_found -> raise (Failure ("undeclared variable " ^ s)))
       | Binop (e1, op, e2) -> (expr e1) ^ (expr e2)
-      | Assign (s, e) -> "Assignment" ^ (expr e)
+      | Assign (s, e) -> let v1 = (expr e) in (load_code "r0" v1);(store_code "r0" s); v1
 (*	  (try (StringMap.find s env.local_index)
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)
       | Call (fname, actuals) -> (* (try *)
               let rec fcall i = function
                       []-> ""
-                |hd::tl -> ( load_code hd ("r" ^ string_of_int i) ) ^ (fcall (i+1) tl)
+                |hd::tl -> ( load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
                in fcall 0 (List.map expr (List.rev actuals)) ^ ("\n\t bl  "^
                fname ^ "\n" )
                (* ((StringMap.find fname env.function_index))

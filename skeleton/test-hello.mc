@@ -7,5 +7,6 @@ main()
 {
 	int a;
 	int b;
+	a = b;
 	fun(a, b);
 }
