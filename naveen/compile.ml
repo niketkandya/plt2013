@@ -44,30 +44,26 @@ let translate (globals, functions) =
     let env = { env with local_index = string_map_pairs
 		  StringMap.empty (local_offsets @ formal_offsets) } in
 
-    let function_start = 
-
             let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
                 and align_size = 4 (*Alignment of the stack *)
                 and var_size = 4 (* right now doing only for integers *)
                 in
-
-        let load_code var reg = (* load variable var to register reg *)
+                let load_code var reg = (* load variable var to register reg *)
                 "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
                 string_of_int 
                 ((((StringMap.find var env.local_index)-1) * align_size ) + (size_stmfd) + (var_size)) 
-                ^ "]\n" in
-
-        let store_code reg var = (*TODO Stores the content of reg to a variable*)
+                ^ "]\n"
+        and 
+        store_code reg var = (*TODO Stores the content of reg to a variable*)
                 "Dummy: Store"
-                in
-
-        let add_temp = (*Generate a temporary variable and updates in locals_index *)
+        and
+        add_temp = (*Generate a temporary variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
                 env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
                 (num_formals + num_locals + num_temp) env.local_index;
                 "__tmp" ^ string_of_int num_temp
                 in
-
+    let function_start = 
             (* Code generation for function *)
             fdecl.fname ^ ":\n" ^
                     "\t stmfd sp!, {fp, lr}\n" ^
@@ -92,37 +88,44 @@ let translate (globals, functions) =
     
     let function_exit = "\t sub sp, fp, #4\n" ^
                         "\t ldmfd sp!, {fp, pc}\n" in
-
     let rec expr = function
-        Literal i -> [string_of_int i]
+            Literal i -> "#" ^ string_of_int i
       | Id s ->
-                      (try [string_of_int (StringMap.find s env.local_index)]
-          with Not_found -> try [string_of_int (StringMap.find s
-          env.global_index)]
+                      (try (StringMap.find s env.local_index);s
+          with Not_found -> try (StringMap.find s
+          env.global_index);s
           with Not_found -> raise (Failure ("undeclared variable " ^ s)))
-      | Binop (e1, op, e2) -> (expr e1) @ (expr e2)
-      | Assign (s, e) -> ["Assignment"] @ (expr e)
+      | Binop (e1, op, e2) -> (expr e1) ^ (expr e2)
+      | Assign (s, e) -> "Assignment" ^ (expr e)
 (*	  (try (StringMap.find s env.local_index)
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)
-      | Call (fname, actuals) -> ["Function called"] (*try
-	  (List.concat (List.map expr (List.rev actuals))) @
-	  (StringMap.find fname env.function_index)
-        with Not_found -> raise (Failure ("undefined function " ^ fname))*)
-      | Noexpr -> []
+      | Call (fname, actuals) -> (* (try *)
+              let rec fcall i = function
+                      []-> ""
+                |hd::tl -> ( load_code hd ("r" ^ string_of_int i) ) ^ (fcall (i+1) tl)
+               in fcall 0 (List.map expr (List.rev actuals)) ^ ("\n\t bl  "^
+               fname)
+               (* ((StringMap.find fname env.function_index))
+        with Not_found -> raise (Failure ("undefined function " ^ fname))) *)
+      | Noexpr -> ""
 
     in let rec stmt = function
-	Block sl     ->  List.concat (List.map stmt sl)
+	Block sl     -> (*List.map stmt sl*)
+                        (List.fold_left (fun str lst -> str ^ "\n" ^ lst) ""
+                        (List.map stmt sl) )
+                        (*stmt sl*)
       | Expr e       -> expr e
       | Return e     -> expr e
-      | If (p, t, f) -> ["let t' = stmt t and f' = stmt f in"]
+      | If (p, t, f) -> "let t' = stmt t and f' = stmt f in"
         (*"true =" ^ t ^ " false" ^ f'*)
       | While (e, b) ->
-                      ["let b' = stmt b and e' = expr e in"]
-      | _ -> ["Check something went wron with this expression"]
+                      "let b' = stmt b and e' = expr e in"
+      | _ -> "Check something went wron with this expression"
 
     in  function_start ^     (* Entry: allocate space for locals *)
-    List.fold_left (fun str lst -> str ^ "\n" ^ lst) "" (stmt (Block fdecl.body)) (* Body *)
+    (stmt (Block fdecl.body)) (* Body *)
+    (* List.fold_left (fun str lst -> str ^ "\n" ^ lst) "" (stmt (Block fdecl.body)) *)
      ^ function_exit  (* Default = return 0 *)
 
   in let env = { function_index = function_indexes;
