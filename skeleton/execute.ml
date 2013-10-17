@@ -13,17 +13,17 @@ open Bytecode
    ...
    Arg n *)
 
-let execute_prog prog = function
-   Atom (atm) -> print_endline "Atom"
-  |Fstart (num_local, num_formal) -> print_endline "Fstart" (*start of a function*)
-  | Fexit  -> print_endline "Fexit"             (*Restore registers values at exit*)
-  | BinEval  (dst, var1, op, var2) -> print_endline "BinEval"(*Binary evaluation *)
-  | Str (reg , atm ) -> print_endline "Store"
-  | Ldr (reg ,atm ) -> print_endline "Load"
-  | Mov (dst, src) -> print_endline "Move"
-  | Fcall (fname, args ) -> print_endline "fcall" 
-  | Uncond_br label -> print_endline "Unconditional branch"
-  | Cond_br label -> print_endline "Conditional branch"
+let execute_prog = function
+   Atom (atm) ->  "Atom"
+  |Fstart (num_local, num_formal) ->  "Fstart" (*start of a function*)
+  | Fexit  ->  "Fexit"             (*Restore registers values at exit*)
+  | BinEval  (dst, var1, op, var2) ->  "BinEval"(*Binary evaluation *)
+  | Str (reg , atm ) ->  "Store"
+  | Ldr (reg ,atm ) ->  "Load"
+  | Mov (dst, src) ->  "Move"
+  | Fcall (fname, args ) ->  "fcall" 
+  | Uncond_br label ->  "Unconditional branch"
+  | Cond_br label ->  "Conditional branch"
 
 
 (* let execute_prog prog =
