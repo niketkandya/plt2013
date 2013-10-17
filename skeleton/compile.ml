@@ -48,43 +48,39 @@ let translate (globals, functions) =
                 and align_size = 4 (*Alignment of the stack *)
                 and var_size = 4 (* right now doing only for integers *)
                 in
-        let get_fp_offset var = 
+        let get_atom var = 
                 (try 
-                        ((((StringMap.find var env.local_index)-1) * align_size
-                        ) + (size_stmfd) + (var_size))
-                with Not_found -> raise (Failure ("Cannot find in load_code " ^
-                var))  )
+                [Atom (Lvar ( (StringMap.find var env.local_index), var_size))]
+                with Not_found -> try (StringMap.find var env.global_index);
+                      [Atom (Gvar(var,var_size))] 
+                with Not_found -> raise (Failure ("undeclared variable " ^ var)))
                 in
-                let add_temp = (*Generate a temporary variable and updates in locals_index *)
+        let add_temp = (*Generate a temporary variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
                 env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
                 (num_formals + num_locals + num_temp) env.local_index;
                 (num_formals + num_locals + num_temp)
                 in
-                let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
-                and function_exit = [Fexit]
+        let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
+        and function_exit = [Fexit]
                         in
+        let atom_of_bstmt stmt = match stmt with
+        Atom a -> a
+        | _ -> raise (Failure ("Wrong conversion ")) 
+        in
     let rec expr = function
         Literal i -> [Atom (Lit i)]
-      | Id s ->
-                      (try [Atom (Var (StringMap.find s env.local_index))]
-          with Not_found -> try [Atom (Var (StringMap.find s
-          env.global_index))]
-          with Not_found -> raise (Failure ("undeclared variable " ^ s)))
-      | Binop (e1, op, e2) -> [BinEval (Var(2), Var(2), Add, Var(2))]
-      | Assign (s, e) -> [Ldr ("asdfa", Var(3))] 
+      | Id s -> (get_atom s)
+      | Binop (e1, op, e2) -> [BinEval (Lvar(2,3), Lvar(2,4), Add, Lvar(3,2))]
+      | Assign (s, e) -> [Ldr ("asdfa", Lvar(3,3))] 
 (*	  (try (StringMap.find s env.local_index)
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)
-      | Call (fname, actuals) -> (* (try *)
-                      [Fcall (fname, [])]
-              (* let rec fcall i = function
-                      []-> ""
-                |hd::tl -> ( load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
-               in fcall 0 (List.map expr (List.rev actuals)) ^ ("\n\t bl  "^
-               fname ^ "\n" ) *)
-               (* ((StringMap.find fname env.function_index))
-        with Not_found -> raise (Failure ("undefined function " ^ fname))) *)
+      | Call (fname, actuals) ->  (try 
+               (StringMap.find fname env.function_index)
+      with Not_found -> raise (Failure ("undefined function " ^ fname)));
+                      [Fcall (fname,List.rev (List.map atom_of_bstmt (List.concat
+                      (List.map expr (List.rev actuals)))))]
         | Noexpr ->[] 
 
     in let rec stmt = function

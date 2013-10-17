@@ -1,8 +1,9 @@
 open Ast
 
 type atom =
-    Lit of int    (* Push a literal *)
-  | Var of int           (* Discard a value *)
+    Lit of int    (*  literal *)
+  | Lvar of int * int (* Local Var(variable_index, variable_size) *)
+  | Gvar of string * int (* Globacl var (name,size) *)
 
 type bstmt =
    Atom of atom
