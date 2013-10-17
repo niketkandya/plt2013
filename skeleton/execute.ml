@@ -13,8 +13,21 @@ open Bytecode
    ...
    Arg n *)
 
-let execute_prog prog =
-  let stack = Array.make 1024 0
+let execute_prog prog = function
+   Atom (atm) -> print_endline "Atom"
+  |Fstart (num_local, num_formal) -> print_endline "Fstart" (*start of a function*)
+  | Fexit  -> print_endline "Fexit"             (*Restore registers values at exit*)
+  | BinEval  (dst, var1, op, var2) -> print_endline "BinEval"(*Binary evaluation *)
+  | Str (reg , atm ) -> print_endline "Store"
+  | Ldr (reg ,atm ) -> print_endline "Load"
+  | Mov (dst, src) -> print_endline "Move"
+  | Fcall (fname, args ) -> print_endline "fcall" 
+  | Uncond_br label -> print_endline "Unconditional branch"
+  | Cond_br label -> print_endline "Conditional branch"
+
+
+(* let execute_prog prog =
+   let stack = Array.make 1024 0
   and globals = Array.make prog.num_globals 0 in
 
   let rec exec fp sp pc = match prog.text.(pc) with
@@ -48,4 +61,4 @@ let execute_prog prog =
   | Bra i   -> exec fp sp (pc+i)
   | Hlt     -> ()
 
-  in exec 0 0 0
+  in exec 0 0 0 *)

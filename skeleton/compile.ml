@@ -55,85 +55,57 @@ let translate (globals, functions) =
                 with Not_found -> raise (Failure ("Cannot find in load_code " ^
                 var))  )
                 in
-        let load_code reg var= (* load variable var to register reg *)
-                if 
-                "\t ldr  " ^ reg ^ ", [fp, #-" ^ 
-                string_of_int (get_fp_offset var)
-                ^ "]\n"
-        and 
-        store_code reg var = (*TODO Stores the content of reg to a variable*)
-                "\t str  " ^ reg ^ ", [fp, #-" ^ 
-                string_of_int (get_fp_offset var)
-                ^ "]\n"
-        and
-        add_temp = (*Generate a temporary variable and updates in locals_index *)
+                let add_temp = (*Generate a temporary variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
                 env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
                 (num_formals + num_locals + num_temp) env.local_index;
-                "__tmp" ^ string_of_int num_temp
+                (num_formals + num_locals + num_temp)
                 in
-    let function_start = 
-            (* Code generation for function *)
-            fdecl.fname ^ ":\n" ^
-                    "\t stmfd sp!, {fp, lr}\n" ^
-                    "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^
-                    "\t sub sp, sp,#" ^ string_of_int (( num_formals + num_locals) * align_size) ^ 
-                    "\n" ^
-
-                        let rec formals_push_code i = if i < 0 then "" else 
-                            (formals_push_code (i-1)) ^ "\t str  r" ^ string_of_int i ^ ", [fp, #-" ^
-                            string_of_int (((num_locals + i) * align_size) +
-                            var_size) ^ "]\n"
-                    in formals_push_code (num_formals -1)
-                    (* TODO : if the variable size is 1 byte, strb should be
-                     * used instead and the var_size should be updated
-                     * accordingly *)
-                    (* need a protocol to get the offset of locals given that
-                     * formals are present first *)
-                (*StringMap.fold (fun key va pre -> pre ^ "\n" ^key ^ ":" ^
-                 * string_of_int va) env.local_index "" *)
-    in
-    let function_exit = "\t sub sp, fp, #4\n" ^
-                        "\t ldmfd sp!, {fp, pc}\n" in
+                
+                let function_start = [Fstart (num_locals, num_formals)]
+                and function_exit = [Fexit]
+                        in
     let rec expr = function
-            Literal i -> "#" ^ string_of_int i
+        Literal i -> [Atom (Lit i)]
       | Id s ->
-                      (try (StringMap.find s env.local_index);s
-          with Not_found -> try (StringMap.find s
-          env.global_index);s
+                      (try [Atom (Var (StringMap.find s env.local_index))]
+          with Not_found -> try [Atom (Var (StringMap.find s
+          env.global_index))]
           with Not_found -> raise (Failure ("undeclared variable " ^ s)))
-      | Binop (e1, op, e2) -> (expr e1) ^ (expr e2)
-      | Assign (s, e) -> let v1 = (expr e) in (load_code "r0" v1);(store_code "r0" s); v1
+      | Binop (e1, op, e2) -> [BinEval (Var(2), Var(2), Add, Var(2))]
+      | Assign (s, e) -> [Ldr ("asdfa", Var(3))] 
 (*	  (try (StringMap.find s env.local_index)
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)
       | Call (fname, actuals) -> (* (try *)
-              let rec fcall i = function
+                      [Fcall (Var(3), [])]
+              (* let rec fcall i = function
                       []-> ""
                 |hd::tl -> ( load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
                in fcall 0 (List.map expr (List.rev actuals)) ^ ("\n\t bl  "^
-               fname ^ "\n" )
+               fname ^ "\n" ) *)
                (* ((StringMap.find fname env.function_index))
         with Not_found -> raise (Failure ("undefined function " ^ fname))) *)
-      | Noexpr -> ""
+        | Noexpr ->[] 
 
     in let rec stmt = function
 	Block sl     -> (*List.map stmt sl*)
-                        (List.fold_left (fun str lst -> str ^ "\n" ^ lst) ""
+                (List.fold_left (fun str lst -> str @ lst) [] 
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
       | Return e     -> expr e
-      | If (p, t, f) -> "let t' = stmt t and f' = stmt f in"
+      | If (p, t, f) -> [Cond_br "asdfasdf"]
+                      (* "let t' = stmt t and f' = stmt f in" *)
         (*"true =" ^ t ^ " false" ^ f'*)
-      | While (e, b) ->
-                      "let b' = stmt b and e' = expr e in"
-      | _ -> "Check something went wron with this expression"
+      | While (e, b) -> []
+                      (*"let b' = stmt b and e' = expr e in"*)
+      | _ -> []
 
-    in  function_start ^     (* Entry: allocate space for locals *)
+    in  function_start @     (* Entry: allocate space for locals *)
     (stmt (Block fdecl.body)) (* Body *)
     (* List.fold_left (fun str lst -> str ^ "\n" ^ lst) "" (stmt (Block fdecl.body)) *)
-     ^ function_exit  (* Default = return 0 *)
+     @ function_exit  (* Default = return 0 *)
 
   in let env = { function_index = function_indexes;
 		 global_index = global_indexes;
@@ -141,7 +113,7 @@ let translate (globals, functions) =
 
   (* Code executed to start the program *)
   let entry_function = try
-    string_of_int (StringMap.find "main" function_indexes)
+          (StringMap.find "main" function_indexes); []
   with Not_found -> raise (Failure ("no \"main\" function"))
   in (* Compile the functions *)
    entry_function :: List.map (translate env) functions
