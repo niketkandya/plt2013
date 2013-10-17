@@ -61,7 +61,6 @@ let translate (globals, functions) =
                 (num_formals + num_locals + num_temp) env.local_index;
                 (num_formals + num_locals + num_temp)
                 in
-                
                 let function_start = [Fstart (num_locals, num_formals)]
                 and function_exit = [Fexit]
                         in
