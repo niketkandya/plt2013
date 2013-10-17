@@ -5,8 +5,7 @@ let program =
   let program = Parser.program Scanner.token lexbuf in
   Compile.translate program;;
 
-let some = List.map print_endline
-(List.map Execute.execute_prog (List.concat program))
+let some = Execute.execute_prog  program
 
 
  

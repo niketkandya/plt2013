@@ -61,7 +61,7 @@ let translate (globals, functions) =
                 (num_formals + num_locals + num_temp) env.local_index;
                 (num_formals + num_locals + num_temp)
                 in
-                let function_start = [Fstart (num_locals, num_formals)]
+                let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
                 and function_exit = [Fexit]
                         in
     let rec expr = function
@@ -77,7 +77,7 @@ let translate (globals, functions) =
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)
       | Call (fname, actuals) -> (* (try *)
-                      [Fcall (Var(3), [])]
+                      [Fcall (fname, [])]
               (* let rec fcall i = function
                       []-> ""
                 |hd::tl -> ( load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
@@ -115,4 +115,4 @@ let translate (globals, functions) =
           (StringMap.find "main" function_indexes); []
   with Not_found -> raise (Failure ("no \"main\" function"))
   in (* Compile the functions *)
-   entry_function :: List.map (translate env) functions
+   List.concat (entry_function :: List.map (translate env) functions)

@@ -6,12 +6,12 @@ type atom =
 
 type bstmt =
    Atom of atom
-  |Fstart of int * int (*start of a function*)
+  |Fstart of string * int * int (*start of a function*)
   | Fexit               (*Restore registers values at exit*)
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
   | Str of string * atom
   | Ldr of string * atom
   | Mov of atom * atom
-  | Fcall of atom * atom list
+  | Fcall of string * atom list
   | Uncond_br of string
   | Cond_br of string
