@@ -62,6 +62,8 @@ let translate (globals, functions) =
                 (num_formals + num_locals + num_temp)
                 in
         let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
+        (* [Uncond_br (StringMap.fold (fun key va str -> str ^"\n "^ key ^ " -> "^
+        string_of_int va ) env.local_index "")] *)
         and function_exit = [Fexit]
                         in
         let atom_of_bstmt stmt = match stmt with
@@ -72,7 +74,7 @@ let translate (globals, functions) =
         Literal i -> [Atom (Lit i)]
       | Id s -> (get_atom s)
       | Binop (e1, op, e2) -> [BinEval (Lvar(2,3), Lvar(2,4), Add, Lvar(3,2))]
-      | Assign (s, e) -> [Ldr ("asdfa", Lvar(3,3))] 
+      | Assign (s, e) -> [Ldr ("r0", Lvar(3,3))] @ [Str ("r0", )] 
 (*	  (try (StringMap.find s env.local_index)
   	  with Not_found -> try (StringMap.find s env.global_index)
 	  with Not_found -> raise (Failure ("undeclared variable " ^ s))) *)

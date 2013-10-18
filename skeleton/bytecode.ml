@@ -6,8 +6,8 @@ type atom =
   | Gvar of string * int (* Globacl var (name,size) *)
 
 type bstmt =
-   Atom of atom
-  |Fstart of string * int * int (*start of a function*)
+    Atom of atom
+  | Fstart of string * int * int (*start of a function*)
   | Fexit               (*Restore registers values at exit*)
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
   | Str of string * atom

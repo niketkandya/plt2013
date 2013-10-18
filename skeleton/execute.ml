@@ -1,12 +1,7 @@
 open Ast
 open Bytecode
 
-
-
-
-
 let execute_prog program = 
-        
 let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
                 and align_size = 4 (*Alignment of the stack *)
                 and var_size = 4 (* right now doing only for integers *)
@@ -16,8 +11,7 @@ let idx_to_offset idx = size_stmfd + ((idx-1) * align_size) + var_size
 in
 let get_atom_val atm = match atm with
         Lit (i) -> "#" ^ string_of_int i
-      | Lvar (idx, sz) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]" ^
-      string_of_int idx ^ " size:" ^ string_of_int sz
+      | Lvar (idx, sz) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
       | Gvar (vname, sz) -> "" (*TODO *)
 in
 let load_code reg var= (* load variable var to register reg *)
@@ -36,8 +30,7 @@ let function_start fname num_locals num_formals =
                     let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i)
-                            (Lvar((num_locals + i),var_size)))
-                            ^ "]\n"
+                            (Lvar((num_locals + i + 1),var_size)))
                     in formals_push_code (num_formals -1)
                     (* TODO : if the variable size is 1 byte, strb should be
                      * used instead and the var_size should be updated
@@ -65,8 +58,8 @@ let asm_code_gen = function
   | Ldr (reg ,atm ) ->  "Load"
   | Mov (dst, src) ->  "Move"
   | Fcall (fname, args ) ->  function_call fname args  (*Whenever a function is called*)
-  | Uncond_br label ->  "Unconditional branch"
-  | Cond_br label ->  "Conditional branch"
+  | Uncond_br label -> label
+  | Cond_br label -> label
 
 in
         (List.map print_endline (List.map asm_code_gen program))
