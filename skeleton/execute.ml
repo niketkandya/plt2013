@@ -54,10 +54,12 @@ let asm_code_gen = function
   | Fstart (fname, num_locals, num_formals) ->  function_start fname num_locals num_formals (*start of a function*)
   | Fexit  ->  function_exit          (*Restore registers values at exit*)
   | BinEval  (dst, var1, op, var2) ->  "BinEval"(*Binary evaluation *)
+  | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
   | Str (reg , atm ) ->  "Store"
   | Ldr (reg ,atm ) ->  "Load"
   | Mov (dst, src) ->  "Move"
-  | Fcall (fname, args ) ->  function_call fname args  (*Whenever a function is called*)
+  | Fcall (fname, args,ret ) ->  function_call fname args  (*Whenever a function
+          is called*) (*TODO do something for the ret value*)
   | Uncond_br label -> label
   | Cond_br label -> label
 
