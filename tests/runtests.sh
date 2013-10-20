@@ -75,7 +75,7 @@ for file in *.s; do
     result_gcc=`out/basename-gcc`
 
 
-    if [ "$result" == "$result_gcc" ]; then
+    if [ "$result" != "$result_gcc" ]; then
         colorprint "Different output!" "red"
         failed=1
     fi
