@@ -43,59 +43,49 @@ let translate (globals, functions) =
     let formal_offsets = enum 1 (num_locals+1) fdecl.formals in
     let env = { env with local_index = string_map_pairs
 		  StringMap.empty (local_offsets @ formal_offsets) } in
-
-            let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
-                and align_size = 4 (*Alignment of the stack *)
-                and var_size = 4 (* right now doing only for integers *)
-                in
+        let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
+          and align_size = 4 (*Alignment of the stack *)
+          and var_size = 4 in (* right now doing only for integers *)
         let get_var var = 
-                (try 
-                (Lvar ( (StringMap.find var env.local_index), var_size))
+                (try (Lvar ( (StringMap.find var env.local_index), var_size))
                 with Not_found -> try (StringMap.find var env.global_index);
-                      (Gvar(var,var_size)) 
-                with Not_found -> raise (Failure ("undeclared variable " ^ var)))
-                in
-        let add_temp size= (*Generate a temporary variable and updates in locals_index *)
+                     (Gvar(var,var_size)) 
+                with Not_found -> raise (Failure ("undeclared variable " ^ var))) in
+        let add_temp size = (*Generate a temp variable and updates in locals_index *)
                 let num_temp = num_temp + 1 in
-                env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp ) 
+                env.local_index = StringMap.add ("__tmp" ^ string_of_int num_temp )
                 (num_formals + num_locals + num_temp) env.local_index;
-                Lvar((num_formals + num_locals + num_temp),size)
-                in
+                Lvar((num_formals + num_locals + num_temp),size) in
         let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
         (* [Uncond_br (StringMap.fold (fun key va str -> str ^"\n "^ key ^ " -> "^
         string_of_int va ) env.local_index "")] *)
         and function_exit = [Fexit]
         in
     let get_atom = function
-            Atom (atm) -> atm
+    Atom (atm) -> atm
   | BinEval  (dst, var1, op, var2) -> dst
   | Fcall (fname, args,ret ) -> ret
   | Assgmt (dst, src) -> dst 
-  | _ -> raise (Failure ("Unexpected value requested for"))
-
-        in
-    let rec expr = function
+  | _ -> raise (Failure ("Unexpected value requested for")) in
+      let rec expr = function
         Literal i -> [Atom (Lit i)]
       | Id s -> [Atom (get_var s)]
-      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2 in v1 @ v2 @ [BinEval (
-              (add_temp var_size) ,(get_atom (List.hd v1)),
-      op,(get_atom(List.hd v2)))]
-      | Assign (s, e) ->  let v1 = (expr e) in v1 @ [Assgmt ((get_var s),get_atom 
-      (List.hd v1))]
-      | Call (fname, actuals) ->  (try
-               (StringMap.find fname env.function_index)
-      with Not_found -> raise (Failure ("undefined function " ^ fname)));
-      let param = List.concat (List.map expr (List.rev actuals)) in param @ [Fcall (fname,List.rev
-      (List.map get_atom param),add_temp var_size)]
-        | Noexpr ->[]
+      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2 in 
+           v1 @ v2 @ [BinEval ((add_temp var_size), (get_atom (List.hd v1)),
+           op,(get_atom(List.hd v2)))]
+      | Assign (s, e) ->  let v1 = (expr e) in v1 @ [Assgmt ((get_var s),
+                                                    get_atom (List.hd v1))]
+      | Call (fname, actuals) -> 
+          (try (StringMap.find fname env.function_index)
+          with Not_found -> raise (Failure ("undefined function " ^ fname)));
+          let param = List.concat (List.map expr (List.rev actuals)) in
+            param @ [Fcall(fname, List.rev(List.map get_atom param), add_temp var_size)]
+      | Noexpr ->[]
 
     in let rec stmt = function
-	Block sl     -> (*List.map stmt sl*)
-                (List.fold_left (fun str lst -> str @ lst) [] 
-                        (List.map stmt sl) )
-                        (*stmt sl*)
-      | Expr e       -> expr e
-      | Return e     -> [Rval (get_atom (List.hd (expr e)))]
+        Block sl -> (List.fold_left (fun str lst -> str @ lst) [] (List.map stmt sl))
+      | Expr e -> expr e
+      | Return e -> [Rval (get_atom (List.hd (expr e)))]
       | If (p, t, f) -> [Cond_br "asdfasdf"]
                       (* "let t' = stmt t and f' = stmt f in" *)
         (*"true =" ^ t ^ " false" ^ f'*)
