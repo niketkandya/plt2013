@@ -99,10 +99,10 @@ let rec expr = function
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
         with Not_found -> raise (Failure ("undefined function " ^ fname)));
-        let param = List.concat (List.map expr (List.rev actuals)) 
+        let param = List.map expr (List.rev actuals)
         and ret = (add_temp var_size)
-        in (gen_atom ret ) @ param @ 
-        [Fcall (fname,List.rev (List.map get_atom param),ret)]
+        in (gen_atom ret ) @ List.concat param @
+        [Fcall (fname,List.rev (List.map (fun par -> get_atom (List.hd par)) param),ret)]
       | Noexpr ->[]
 
     in let rec stmt = function
