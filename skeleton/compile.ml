@@ -67,24 +67,26 @@ let translate (globals, functions) =
         and function_exit = [Fexit]
         in
     let get_atom = function
-            [Atom (atm)] -> atm
-  | [BinEval  (dst, var1, op, var2)] -> dst
-  | [Fcall (fname, args,ret )] -> ret
-  | [Assgmt (dst, src)] -> dst 
+            Atom (atm) -> atm
+  | BinEval  (dst, var1, op, var2) -> dst
+  | Fcall (fname, args,ret ) -> ret
+  | Assgmt (dst, src) -> dst 
   | _ -> raise (Failure ("Unexpected value requested for"))
-
 
         in
     let rec expr = function
         Literal i -> [Atom (Lit i)]
-      | Id s -> [ Atom (get_var s)]
-      | Binop (e1, op, e2) -> [BinEval (Lvar(2,3), Lvar(2,4), Add, Lvar(3,2))]
-      | Assign (s, e) -> let v1 = get_atom (expr e) in [Assgmt ((get_var s),v1 )]
+      | Id s -> [Atom (get_var s)]
+      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2 in v1 @ v2 @ [BinEval (
+              (add_temp var_size) ,(get_atom (List.hd v1)),
+      op,(get_atom(List.hd v2)))]
+      | Assign (s, e) ->  let v1 = (expr e) in v1 @ [Assgmt ((get_var s),get_atom 
+      (List.hd v1))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
       with Not_found -> raise (Failure ("undefined function " ^ fname)));
-                      [Fcall (fname,List.rev (List.map get_atom
-                      (List.map expr (List.rev actuals))),add_temp var_size)]
+      let param = List.concat (List.map expr (List.rev actuals)) in param @ [Fcall (fname,List.rev
+      (List.map get_atom param),add_temp var_size)]
         | Noexpr ->[]
 
     in let rec stmt = function
@@ -93,7 +95,7 @@ let translate (globals, functions) =
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
-      | Return e     -> expr e
+      | Return e     -> [Rval (get_atom (List.hd (expr e)))]
       | If (p, t, f) -> [Cond_br "asdfasdf"]
                       (* "let t' = stmt t and f' = stmt f in" *)
         (*"true =" ^ t ^ " false" ^ f'*)
@@ -103,7 +105,6 @@ let translate (globals, functions) =
 
     in  function_start @     (* Entry: allocate space for locals *)
     (stmt (Block fdecl.body)) (* Body *)
-    (* List.fold_left (fun str lst -> str ^ "\n" ^ lst) "" (stmt (Block fdecl.body)) *)
      @ function_exit  (* Default = return 0 *)
 
   in let env = { function_index = function_indexes;

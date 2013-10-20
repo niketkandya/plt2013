@@ -15,13 +15,15 @@ let get_atom_val atm = match atm with
       | Gvar (vname, sz) -> "" (*TODO *)
 in
 let load_code reg var= (* load variable var to register reg *)
-                "\t ldr  " ^ reg ^ ", "^ (get_atom_val var)^ "\n"
+                "\t ldr  " ^ reg ^ ", "^ let const = (get_atom_val var) in (if
+                        const.[0] = '#' then const.[0] <- '=';const )^ "\n"
 and 
     store_code reg var = (*TODO handle strb case*)
                 "\t str " ^ reg ^ ", "^ (get_atom_val var)^ "\n" in
 
 let function_start fname num_locals num_formals = 
             (* Code generation for function *)
+                ".global " ^ fname ^ "\n" ^
             fname ^ ":\n" ^
                     "\t stmfd sp!, {fp, lr}\n" ^
                     "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^
@@ -38,8 +40,20 @@ let function_start fname num_locals num_formals =
 and function_exit = "\t sub sp, fp, #4\n" ^
                         "\t ldmfd sp!, {fp, pc}\n"
 in
-
-
+let bin_eval dst var1 op var2 = 
+        let oper = "\t " ^  match op with
+        Add -> "add r3, r0, r1"
+      | Sub -> "sub r3, r0, r1" 
+      | Mult -> "mul r3, r0, r1"
+      | Div -> "Division"
+      | Equal -> "cmp r0, r1" 
+      | Neq -> "Negative"
+      | Less -> "Less"
+      | Leq -> "Leq"
+      | Greater -> "Greater"
+      | Geq -> "Geq" ^ "\n"
+in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper
+in
 let function_call fname args =  
               let rec fcall i = function
                       []-> ""
@@ -50,19 +64,22 @@ let function_call fname args =
 in
 
 let asm_code_gen = function
-   Atom (atm) ->  "Atom"
+   Atom (atm) -> ""
   | Fstart (fname, num_locals, num_formals) ->  function_start fname num_locals num_formals (*start of a function*)
   | Fexit  ->  function_exit          (*Restore registers values at exit*)
-  | BinEval  (dst, var1, op, var2) ->  "BinEval"(*Binary evaluation *)
+  | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
   | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
   | Str (reg , atm ) ->  "Store"
   | Ldr (reg ,atm ) ->  "Load"
   | Mov (dst, src) ->  "Move"
-  | Fcall (fname, args,ret ) ->  function_call fname args  (*Whenever a function
+  | Fcall (fname, args,ret) ->  function_call fname args  (*Whenever a function
           is called*) (*TODO do something for the ret value*)
+  | Rval var -> load_code "r0" var
   | Uncond_br label -> label
   | Cond_br label -> label
 
+in 
+let non_atom = (List.filter (fun ele -> match ele with Atom (atm ) -> false | _ -> true) program)
 in
-        (List.map print_endline (List.map asm_code_gen program))
+        (List.map print_endline (List.map asm_code_gen non_atom))
 
