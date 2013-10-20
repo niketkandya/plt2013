@@ -54,12 +54,13 @@ let bin_eval dst var1 op var2 =
       | Geq -> "Geq") ^ "\n"
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
-let function_call fname args =  
+let function_call fname args ret=  
               let rec fcall i = function
                       []-> ""
                 |hd::tl -> (load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
                in fcall 0 args ^ 
-               ("\n\t bl  " ^ fname ^ "\n" )
+               ("\n\t bl  " ^ fname ^ "\n" ) ^
+               (store_code "r0" ret)
                (* TODO implement properly *)
 in
 
@@ -72,7 +73,7 @@ let asm_code_gen = function
   | Str (reg , atm ) ->  "Store"
   | Ldr (reg ,atm ) ->  "Load"
   | Mov (dst, src) ->  "Move"
-  | Fcall (fname, args,ret) ->  function_call fname args  (*Whenever a function
+  | Fcall (fname, args,ret) ->  function_call fname args ret  (*Whenever a function
           is called*) (*TODO do something for the ret value*)
   | Rval var -> load_code "r0" var
   | Uncond_br label -> label

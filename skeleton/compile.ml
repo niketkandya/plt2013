@@ -98,8 +98,8 @@ let rec expr = function
                 [Assgmt ((get_var s),get_atom (List.hd v1))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
-      with Not_found -> raise (Failure ("undefined function " ^ fname)));
-      let param = List.concat (List.map expr (List.rev actuals)) 
+        with Not_found -> raise (Failure ("undefined function " ^ fname)));
+        let param = List.concat (List.map expr (List.rev actuals)) 
         and ret = (add_temp var_size)
         in (gen_atom ret ) @ param @ 
         [Fcall (fname,List.rev (List.map get_atom param),ret)]
@@ -111,7 +111,7 @@ let rec expr = function
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
-      | Return e     -> [Rval (get_atom (List.hd (expr e)))]
+      | Return e     -> let v1 = expr e in v1 @ [Rval (get_atom (List.hd v1))]
       | If (p, t, f) -> [Cond_br "asdfasdf"]
                       (* "let t' = stmt t and f' = stmt f in" *)
         (*"true =" ^ t ^ " false" ^ f'*)
