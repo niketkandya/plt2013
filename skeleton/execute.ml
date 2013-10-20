@@ -41,7 +41,7 @@ and function_exit = "\t sub sp, fp, #4\n" ^
                         "\t ldmfd sp!, {fp, pc}\n"
 in
 let bin_eval dst var1 op var2 = 
-        let oper = "\t " ^  match op with
+        let oper = "\t " ^  (match op with
         Add -> "add r3, r0, r1"
       | Sub -> "sub r3, r0, r1" 
       | Mult -> "mul r3, r0, r1"
@@ -51,8 +51,8 @@ let bin_eval dst var1 op var2 =
       | Less -> "Less"
       | Leq -> "Leq"
       | Greater -> "Greater"
-      | Geq -> "Geq" ^ "\n"
-in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper
+      | Geq -> "Geq") ^ "\n"
+in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
 let function_call fname args =  
               let rec fcall i = function
