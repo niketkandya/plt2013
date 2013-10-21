@@ -2,6 +2,7 @@
 
 
 TESTDIR=tests
+CPI_COMPILER="../microc"
 
 
 passed_tests=0
@@ -37,7 +38,7 @@ mkdir -p "out"
 
 
 # Does test for each assembly file
-for file in *.s; do
+for file in *.cpi; do
     failed=0
     basename=${file%.*}
     
@@ -49,6 +50,8 @@ for file in *.s; do
         exit
     fi
 
+    # Compile
+    $CPI_COMPILER < "$file" > "$basename.s"
 
     # Assemble and link our asm files
     as -o out/$basename.o $basename.s
@@ -69,18 +72,24 @@ for file in *.s; do
 
     
 
-
     # Compare $basename with $basename-gcc
-    result=`out/basename`
-    result_gcc=`out/basename-gcc`
+    result_cpi=`out/$basename-cpp`
+    return_cpi=`echo $?`
+
+    result_gcc=`out/$basename-gcc`
+    return_gcc=`echo $?`
 
 
-    if [ "$result" != "$result_gcc" ]; then
-        colorprint "Different output!" "red"
-        failed=1
+    if [[ "$result_cpi" != "$result_gcc" ]]; then
+        colorprint "Different output!" "red";failed=1
     fi
 
-    if [[ failed ]]; then
+    if [[ "$return_cpi" != "$return_gcc" ]]; then
+        colorprint "Different return (exit code)" "red"; failed=1
+    fi
+
+
+    if [[ "$failed" == "1" ]]; then
         let failed_tests++
         colorprint "Failed: $basename" "red"
     else
