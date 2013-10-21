@@ -28,8 +28,8 @@ microc : $(OBJS)
 	ocamlc -o microc $(OBJS)
 
 .PHONY : test
-test : microc testall.sh
-	./testall.sh
+test : microc
+	cd mytests && ./runtests.sh
 
 scanner.ml : scanner.mll
 	ocamllex scanner.mll
