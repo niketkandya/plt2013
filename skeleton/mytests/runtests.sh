@@ -73,7 +73,7 @@ for file in *.cpi; do
     
 
     # Compare $basename with $basename-gcc
-    result_cpi=`out/$basename-cpp`
+    result_cpi=`out/$basename-cpi`
     return_cpi=`echo $?`
 
     result_gcc=`out/$basename-gcc`
