@@ -42,16 +42,41 @@ and function_exit = "\t sub sp, fp, #4\n" ^
 in
 let bin_eval dst var1 op var2 = 
         let oper = "\t " ^  (match op with
-        Add -> "add r3, r0, r1"
-      | Sub -> "sub r3, r0, r1" 
-      | Mult -> "mul r3, r0, r1"
+        Add -> "adds r3, r0, r1"
+      | Sub -> "subs r3, r0, r1" 
+      | Mult -> "muls r3, r0, r1"
       | Div -> "Division"
-      | Equal -> "cmp r0, r1" 
-      | Neq -> "Negative"
-      | Less -> "Less"
-      | Leq -> "Leq"
-      | Greater -> "Greater"
-      | Geq -> "Geq") ^ "\n"
+      | Equal ->
+        "cmp r0, r1
+        moveq r3,#1
+        movne r3,#0
+        uxtb r3,r3"(*TODO-check the need*)
+      | Neq -> 
+        "cmp r0, r1
+        moveq r3,#0
+        movne r3,#1
+        uxtb r3,r3"
+      | Less -> 
+        "cmp r0, r1
+         movlt r3,#1
+         movge r3,#0
+         uxtb r3,r3"
+      | Leq -> 
+        "cmp r0, r1
+         movle r3,#1
+         movgt r3,#0
+         uxtb r3,r3"
+      | Greater -> 
+        "cmp r0, r1
+         movgt r3,#1
+         movle r3,#0
+         uxtb r3,r3"
+      | Geq -> 
+        "cmp r0, r1
+         movge r3,#1
+         movlt r3,#0
+         uxtb r3,r3"
+        )^ "\n"
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
 let function_call fname args ret=  
@@ -64,6 +89,10 @@ let function_call fname args ret=
                (* TODO implement properly *)
 in
 
+let predicate cond label = (load_code "r0" cond) ^
+                        "\t cmp r0,#0\n" ^
+                        "\t beq " ^ label ^ "\n"
+        in
 let asm_code_gen = function
    Atom (atm) -> ""
   | Fstart (fname, num_locals, num_formals) ->  function_start fname num_locals num_formals (*start of a function*)
@@ -76,8 +105,9 @@ let asm_code_gen = function
   | Fcall (fname, args,ret) ->  function_call fname args ret  (*Whenever a function
           is called*) (*TODO do something for the ret value*)
   | Rval var -> load_code "r0" var
-  | Uncond_br label -> label
-  | Cond_br label -> label
+  | Branch label -> "\tbl " ^ label
+  | Label label -> label ^ ":" 
+  | Predicate (cond,label) -> predicate cond label
 
 in 
 let non_atom = (List.filter (fun ele -> match ele with Atom (atm ) -> false | _ -> true) program)

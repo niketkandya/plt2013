@@ -16,5 +16,6 @@ type bstmt =
   | Ldr of string * atom
   | Mov of atom * atom
   | Fcall of string * atom list * atom 
-  | Uncond_br of string
-  | Cond_br of string
+  | Branch of string
+  | Predicate of atom * string
+  | Label of string

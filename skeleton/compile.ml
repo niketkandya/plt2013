@@ -39,6 +39,8 @@ let translate (globals, functions) =
     let num_formals = List.length fdecl.formals
     and num_locals = List.length fdecl.locals
     and num_temp = ref 0
+    and count_loop = ref 0
+    and count_ifelse = ref 0
     and local_offsets = enum 1 1 fdecl.locals in
     let formal_offsets = enum 1 (num_locals+1) fdecl.formals in
     let env = { env with local_index = string_map_pairs
@@ -61,6 +63,14 @@ let translate (globals, functions) =
                 (num_formals + num_locals + !num_temp) env.local_index;
                 Lvar((num_formals + num_locals + !num_temp),size)
                 in
+        let get_loop_label = "loop" ^ string_of_int ( count_loop := !count_loop
+        +1; !count_loop) in
+        let get_ifelse_label num =  match num with 
+                0 -> "else" ^ string_of_int (count_ifelse := !count_ifelse + 1;
+                        !count_ifelse)
+                |1 -> "end" ^ string_of_int !count_ifelse
+                |_ -> ""
+        in
         let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
         (* [Uncond_br (StringMap.fold (fun key va str -> str ^"\n "^ key ^ " -> "^
         string_of_int va ) env.local_index "")] *)
@@ -87,7 +97,7 @@ in
 let rec expr = function
         Literal i -> gen_atom (Lit i)
       | Id s -> gen_atom (get_var s)
-      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2 
+      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2
                                 and v3 = (add_temp var_size)
         in (gen_atom v3) @  v1 @ v2 @ [BinEval (v3 ,(get_atom (List.hd
               (List.rev v1))), op, (get_atom(List.hd (List.rev v2))))] 
@@ -112,9 +122,12 @@ let rec expr = function
                         (*stmt sl*)
       | Expr e       -> expr e
       | Return e     -> let v1 = expr e in v1 @ [Rval (get_atom (List.hd v1))]
-      | If (p, t, f) -> [Cond_br "asdfasdf"]
-                      (* "let t' = stmt t and f' = stmt f in" *)
-        (*"true =" ^ t ^ " false" ^ f'*)
+      | If (p, t, f) -> let v1 = expr p and v2 = stmt t and v3 = (stmt f) in
+                        let v4 = (get_atom (List.hd(List.rev v1))) in
+                        let l1 = (get_ifelse_label 0) and l2 = (get_ifelse_label 1) in
+                        (match v3 with 
+                        [] -> v1 @ [Predicate (v4, l2)] @ v2  @ [Label l2]
+                        | _ ->v1 @ [Predicate (v4, l1)] @ v2  @ [Branch (l2)]@ [Label l1] @ v3 @ [Label l2])
       | While (e, b) -> []
                       (*"let b' = stmt b and e' = expr e in"*)
       | _ -> []
