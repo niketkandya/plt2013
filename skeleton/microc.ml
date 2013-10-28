@@ -6,6 +6,3 @@ let program =
   Compile.translate program;;
 
 let some = Execute.execute_prog  program
-
-
- 

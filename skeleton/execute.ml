@@ -1,5 +1,8 @@
 open Ast
 open Bytecode
+open Printf
+
+let program_name = "cpi_out";;
 
 let execute_prog program = 
 let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
@@ -111,6 +114,10 @@ let asm_code_gen = function
 
 in 
 let non_atom = (List.filter (fun ele -> match ele with Atom (atm ) -> false | _ -> true) program)
-in
-        (List.map print_endline (List.map asm_code_gen non_atom))
+in 
+    let program_str = String.concat " " (List.map asm_code_gen non_atom)
+    in
+      let out_file = open_out ( program_name ^ ".s") in
+        fprintf out_file "%s\n" program_str;
+        close_out out_file; print_endline program_str
 

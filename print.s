@@ -7,7 +7,7 @@ msg: .asciz "Hello World %d"
 print: 
 push {ip, lr} 
 ldr r0, addr_of_msg
-mov r1, #5
+mov r1, #5 + 6
 bl printf
 pop {ip, lr}
 bx lr  
