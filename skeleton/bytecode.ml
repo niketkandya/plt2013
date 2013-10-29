@@ -17,5 +17,5 @@ type bstmt =
   | Mov of atom * atom
   | Fcall of string * atom list * atom 
   | Branch of string
-  | Predicate of atom * string
+  | Predicate of atom * bool * string
   | Label of string
