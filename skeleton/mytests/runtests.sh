@@ -1,18 +1,24 @@
 #!/bin/bash
 
 
-TESTDIR=tests
 CPI_COMPILER="../microc"
+RESULTS_DIR="../../webserver/tests"
 
+# Get the timestamp of latest commit
+COMMIT_TIMESTAMP=`git show -s --format="%ci"`
+
+RESULTS_FILE="$RESULTS_DIR/$COMMIT_TIMESTAMP.html"
 
 passed_tests=0
 failed_tests=0
+
 
 
 # Takes two arguments
 #   $1, String to print
 #   $2 (optional), color. Possible colors are "red" and "green".
 #                       Otherwise, will default to bold
+# Will print to both console AND results file in /webserver/tests
 colorprint () {
     bold="\033[1;1m"
     red="\033[1;31m"
@@ -29,6 +35,9 @@ colorprint () {
     fi
 
     echo -e "$prefix$1$default"
+
+    # Output result to tests folder in webserver
+    echo -e "$1" >> "$RESULTS_FILE"
 }
 
 
@@ -36,16 +45,19 @@ colorprint () {
 rm -rf "out"
 mkdir -p "out"
 
+# Remove previous results file for this same commit
+rm -f "$RESULTS_FILE"
+
 
 # Does test for each assembly file
 for file in *.cpi; do
-    failed=0
+    error=""
     basename=${file%.*}
     
     colorprint "Testing: $basename"
 
     # Corner case for bash glob suckiness
-    if [ "$basename" == "*" ]; then
+    if [[ "$basename" == "*" ]]; then
         echo "No Assembly files found. Exiting"
         exit
     fi
@@ -56,22 +68,21 @@ for file in *.cpi; do
     # Assemble and link our asm files
     as -o out/$basename.o $basename.s
     if [[ $? != 0 ]]; then
-        colorprint "Assembly error (as)" "red"; failed=1
+        error="Assembly error (as)"
     fi
 
     gcc -o "out/$basename-cpi" out/$basename.o
-    if [[ $? != 0 ]]; then
-        colorprint "Assembly error (gcc)" "red"; failed=1
+    if [[ $? != 0 ]] && [[ "$error" == "" ]]; then
+        error="Assembly error (gcc)"
     fi
 
     # Compile cpi with GCC
     gcc -x c $basename.cpi -o out/$basename-gcc
-    if [[ $? != 0 ]]; then
-        colorprint "GCC compile cpi failed" "red";failed=1
+    if [[ $? != 0 ]] && [[ "$error" == "" ]]; then
+        error="GCC compile cpi failed"
     fi
 
     
-
     # Compare $basename with $basename-gcc
     result_cpi=`out/$basename-cpi`
     return_cpi=`echo $?`
@@ -80,25 +91,29 @@ for file in *.cpi; do
     return_gcc=`echo $?`
 
 
-    if [[ "$result_cpi" != "$result_gcc" ]]; then
-        colorprint "Different output!" "red";failed=1
+    if [[ "$result_cpi" != "$result_gcc" ]] && [[ "$error" == "" ]]; then
+        error="Different output. Got $result_cpi, Expected: $result_gcc"
+        # colorprint "Different output!" "red";failed=1
     fi
 
-    if [[ "$return_cpi" != "$return_gcc" ]]; then
-        colorprint "Different return (exit code)" "red"; failed=1
+    if [[ "$return_cpi" != "$return_gcc" ]] && [[ "$error" == "" ]]; then
+        error="Different return (exit code)"
+        # colorprint "Different return (exit code)" "red"; failed=1
     fi
 
 
-    if [[ "$failed" == "1" ]]; then
+    if [[ "$error" != "" ]]; then
         let failed_tests++
+        colorprint "$error" "red"
         colorprint "Failed: $basename" "red"
+        error=""
     else
         let passed_tests++
-        echo "Passed: $basename"
+        colorprint "Passed: $basename" "green"
     fi
 done
 
 
 colorprint "Test results:"
-colorprint "Passed:$passed_tests" "green"
-colorprint "Failed: $failed_tests" "red"
+colorprint "Total Passed:$passed_tests" "green"
+colorprint "Total Failed:$failed_tests" "red"
