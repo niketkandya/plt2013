@@ -1,0 +1,18 @@
+ fun(a , b)
+ {
+     return a + b;
+ }
+ 
+ main()
+ {
+     int a;
+     int b;
+     int c;
+     a = 10;
+     b = 14;
+     a = fun(b, a * 5);
+     b = fun(a , b);
+     c = fun( a+b, a-b);
+     return c;
+ }
+
