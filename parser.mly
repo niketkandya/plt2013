@@ -5,8 +5,6 @@
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT
 %token <int> LITERAL
-%token <string> LITSTRING
-%token <string> PRINTF
 %token <string> ID
 %token EOF
 
@@ -70,7 +68,6 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
-  | LITSTRING        { Litstring($1) }
   | ID               { Id($1) }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
@@ -83,7 +80,6 @@ expr:
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | ID ASSIGN expr   { Assign($1, $3) }
-  | PRINTF LPAREN actuals_opt RPAREN { Printf($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
 

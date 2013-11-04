@@ -2,12 +2,10 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
 type expr =
     Literal of int
-  | Litstring of string
   | Id of string
   | Binop of expr * op * expr
   | Assign of string * expr
   | Call of string * expr list
-  | Printf of string * expr list
   | Noexpr
 
 type stmt =
@@ -29,7 +27,6 @@ type program = string list * func_decl list
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
-  | Litstring(s) -> s
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^
@@ -40,8 +37,6 @@ let rec string_of_expr = function
       string_of_expr e2
   | Assign(v, e) -> v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
-      f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
-  | Printf(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
 

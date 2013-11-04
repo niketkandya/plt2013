@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-CPI_COMPILER="../microc"
-RESULTS_DIR="../../webserver/tests"
+CPI_COMPILER="../cpi"
+RESULTS_DIR="../webserver/tests"
 
 # Get the timestamp of latest commit
 COMMIT_TIMESTAMP=`git show -s --format="%ci"`
