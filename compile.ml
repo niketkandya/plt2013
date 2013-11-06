@@ -3,12 +3,41 @@ open Bytecode
 
 module StringMap = Map.Make(String)
 
+type var_entry = { 
+        index:int;
+        count:int;
+        typ: cpitypes
+}
+
 (* Symbol table: Information about all the names in scope *)
 type env = {
     function_index : int StringMap.t; (* Index for each function *)
-    global_index   : int StringMap.t; (* "Address" for global variables *)
-    local_index    : int StringMap.t; (* FP offset for args, locals *)
+    global_index   : var_entry StringMap.t; (* "Address" for global variables *)
+    local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
+
+
+(*Careful about calling get_size_* functions *)
+let get_size_type typ = match typ with
+                Char
+                | Chararr -> 1
+                | Int
+                | Intptr
+                | Charptr
+                | Intarr -> 4
+                | _ -> raise (Failure ("Requesting size of wrong type"))
+
+(* Size of datatypes *)
+let get_size_var var = match var with 
+        Var(id,typ,cnt) -> match typ with
+                Int 
+                | Char 
+                | Intptr
+                | Charptr -> get_size_type typ 
+                | Struct 
+                | Intarr
+                | Chararr
+                | Structarr ->cnt 
 
 (* val enum : int -> 'a list -> (int * 'a) list *)
 let rec enum stride n = function
@@ -19,50 +48,67 @@ let rec enum stride n = function
 let string_map_pairs map pairs =
   List.fold_left (fun m (i, n) -> StringMap.add n i m) map pairs
 
-(** Translate a program in AST form into a bytecode program.  Throw an
+
+let build_global_idx map pairs = map
+
+(* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
 let translate (globals, functions) =
 
   (* Allocate "addresses" for each global variable *)
-  let global_indexes = string_map_pairs StringMap.empty (enum 1 0 globals) in
+  let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   (* TODO Code generation for globals *)
-
   (* Assign indexes to function names; built-in "print" is special *)
   let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
   let function_indexes = string_map_pairs built_in_functions
       (enum 1 1 (List.map (fun f -> f.fname) functions)) in
-
+  
   (* Translate a function in AST form into a list of bytecode statements *)
   let translate env fdecl =
     (* Bookkeeping: FP offsets for locals and arguments *)
-    let num_formals = List.length fdecl.formals
-    and num_locals = List.length fdecl.locals
-    and num_temp = ref 0
-    and count_loop = ref 0
-    and count_ifelse = ref 0
-    and local_offsets = enum 1 1 fdecl.locals in
-    let formal_offsets = enum 1 (num_locals+1) fdecl.formals in
-    let env = { env with local_index = string_map_pairs
-		  StringMap.empty (local_offsets @ formal_offsets) } in
+    let num_mlocal = ref 0
+     and num_temp = ref 0
+     and count_loop = ref 0
+     and count_ifelse = ref 0
+     and func_vars = fdecl.locals @ fdecl.formals in
+    let var_offsets = enum 1 1 func_vars in
+    let build_local_idx map pairs =
+        List.fold_left (fun m (i, n) -> match n with 
+        Var(id,tp,cnt) -> num_mlocal := i+cnt;
+        (* Index is assigned based on total number of basic datatypes contained
+         * in the type. e.g if there a variable of type int, it will get one
+         * index more than the previous one. For an array of n elements , it
+         * will get an index n more than the previous one *)
+          (StringMap.add id {index = !num_mlocal; count = cnt; typ = tp} m)) 
+        map pairs
+        (*TODO: Struct should be handled seperately. It should have a Struct type
+         * whose arguments are the list of all its constituent basic datatypes
+         *)
 
-            let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
-                and align_size = 4 (*Alignment of the stack *)
-                and var_size = 4 (* right now doing only for integers *)
-                in
-        let get_var var = 
-                (try 
-                (Lvar ( (StringMap.find var env.local_index), var_size))
-                with Not_found -> try (StringMap.find var env.global_index);
-                      (Gvar(var,var_size)) 
+    in
+    let env = { env with local_index = 
+            (build_local_idx StringMap.empty var_offsets) } in
+        let get_var ?(idx = -1) var = (*idx is when using it for an array subscript*)
+                (try
+                (let a = (StringMap.find var env.local_index) in 
+                let var_idx = if idx = -1 then a.index else a.index - idx
+                and var_cnt = if idx = -1 then a.count else 1 in
+                Lvar (var_idx,(get_size_type a.typ),var_cnt))
+                with Not_found -> try 
+                        let a = (StringMap.find var env.global_index) in
+                        (Gvar(var,(get_size_type a.typ))) (*TODO- *)
                 with Not_found -> raise (Failure ("undeclared variable " ^ var)))
                 in
-        let add_temp size= (*Generate a temporary variable and updates in locals_index *)
+        let conv2_byt_lvar var = match var with
+                Var(id,typ,cnt) -> get_var id
+        in
+        let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
                 num_temp := !num_temp + 1;
-                env.local_index = StringMap.add ("__tmp" ^ string_of_int !num_temp ) 
-                (num_formals + num_locals + !num_temp) env.local_index;
-                Lvar((num_formals + num_locals + !num_temp),size)
-                in
+                env.local_index = StringMap.add ("__tmp" ^ string_of_int !num_temp )
+                {index = (!num_mlocal + !num_temp); count = 1;typ = tp} env.local_index;
+                Lvar((!num_mlocal + !num_temp),(get_size_type tp),1)
+        in
         let get_loop_label num = "loop" ^ match num with
                 0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
                 |1 -> string_of_int !count_loop ^ "_end"
@@ -74,7 +120,8 @@ let translate (globals, functions) =
                 |1 -> "end" ^ string_of_int !count_ifelse
                 |_ -> ""
         in
-        let function_start = [Fstart (fdecl.fname, num_locals, num_formals)]
+        let function_start = [Fstart (fdecl.fname,(List.map conv2_byt_lvar
+        fdecl.locals), (List.map conv2_byt_lvar fdecl.formals))]
         (* [Uncond_br (StringMap.fold (fun key va str -> str ^"\n "^ key ^ " -> "^
         string_of_int va ) env.local_index "")] *)
         and function_exit = [Fexit]
@@ -82,7 +129,6 @@ let translate (globals, functions) =
 
 let gen_atom atm = [Atom (atm)]
 in
-
 let get_atom = function
             Atom (atm) -> atm
   | BinEval  (dst, var1, op, var2) -> dst
@@ -90,32 +136,28 @@ let get_atom = function
   | Assgmt (dst, src) -> dst 
   | _ -> raise (Failure ("Unexpected value requested for"))
 in
-
+(*
 let dbg_get_var_name var = match var with 
             Lit(i) -> "\n" ^string_of_int i
-        | Cstr(s) -> "\n" ^ s
         | Lvar(num,sz) -> "\nLvar " ^ string_of_int num ^ ":" ^ string_of_int sz
         | Gvar(var,sz) -> "\nGvar " ^ var ^ ":" ^ string_of_int sz
 in
-
+*)
 let rec expr = function
         Literal i -> gen_atom (Lit i)
-      | Litstring s -> gen_atom (Cstr s)
       | Id s -> gen_atom (get_var s)
       | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2
-                                and v3 = (add_temp var_size)
-        in (gen_atom v3) @  v1 @ v2 @ [BinEval (v3 ,(get_atom (List.hd
-              (List.rev v1))), op, (get_atom(List.hd (List.rev v2))))] 
-        (*@ [Cond_br ("BinOP:" ^ dbg_get_var_name v3 ^ dbg_get_var_name ( get_atom
-        (List.hd(List.rev v1)) ) ^
-              dbg_get_var_name ( get_atom (List.hd(List.rev v2))))]*)
+                                and v3 = (add_temp Int)
+        in (gen_atom v3) @  v1 @ v2 @ 
+                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
+                (get_atom(List.hd (List.rev v2))))] 
       | Assign (s, e) ->  let v1 = (expr e) in (gen_atom (get_var s)) @ v1 @
                 [Assgmt ((get_var s),get_atom (List.hd v1))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
         with Not_found -> raise (Failure ("undefined function " ^ fname)));
         let param = List.map expr (List.rev actuals)
-        and ret = (add_temp var_size)
+        and ret = (add_temp Int)
         in (gen_atom ret ) @ List.concat param @
         [Fcall (fname,List.rev (List.map (fun par -> get_atom (List.hd par)) param),ret)]
       | Noexpr ->[]

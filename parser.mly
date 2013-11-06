@@ -1,11 +1,10 @@
 %{ open Ast %}
 
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA
+%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA LSUBS RSUBS
 %token PLUS MINUS TIMES DIVIDE ASSIGN
 %token EQ NEQ LT LEQ GT GEQ
-%token RETURN IF ELSE FOR WHILE INT
+%token RETURN IF ELSE FOR WHILE INT CHAR STRUCT
 %token <int> LITERAL
-%token <string> LITSTRING
 %token <string> ID
 %token EOF
 
@@ -30,8 +29,8 @@ program:
 fdecl:
    ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
      { { fname = $1;
-	 formals = $3;
-	 locals = List.rev $6;
+	 formals = $3; 
+         locals = List.rev $6;
 	 body = List.rev $7 } }
 
 formals_opt:
@@ -39,15 +38,24 @@ formals_opt:
   | formal_list   { List.rev $1 }
 
 formal_list:
-    ID                   { [$1] }
-  | formal_list COMMA ID { $3 :: $1 }
+    tdecl                   { [$1] }
+  | formal_list COMMA tdecl { $3 :: $1 }
 
 vdecl_list:
     /* nothing */    { [] }
   | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-   INT ID SEMI { $2 }
+   | tdecl SEMI { $1 }
+
+tdecl:
+     INT ID { Var($2,Int,1) }
+     | CHAR ID { Var($2,Char,1) }
+     | INT TIMES ID { Var($3, Intptr,1) }
+     | CHAR TIMES ID {Var($3, Charptr,1) }
+     | CHAR ID LSUBS LITERAL RSUBS { Var($2,Chararr,$4) }
+     | INT ID LSUBS LITERAL RSUBS { Var($2,Intarr,$4) }
+
 
 stmt_list:
     /* nothing */  { [] }
@@ -69,7 +77,6 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
-  | LITSTRING        { Litstring($1) }
   | ID               { Id($1) }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }

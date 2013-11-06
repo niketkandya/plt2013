@@ -1,57 +1,118 @@
 open Ast
 open Bytecode
 
+module IntMap = Map.Make(
+struct type t = int
+let compare = compare end
+)
+
+module StringMap = Map.Make(String)
+
+type byc_gvar_entry = { (*TODO: add more require elements*)
+        label: string;
+}
+
+type byc_lvar_entry = { 
+        fp_offset:int;
+        size:int;
+        count:int
+}
+
+type byc_local_env = {
+        lmap: byc_lvar_entry IntMap.t;
+        midx : int;
+        mfp  : int
+}
+
+type byc_env = {
+        global_index: byc_gvar_entry StringMap.t;
+        local_data: byc_local_env
+}
+
+
 let execute_prog program = 
-let size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
-                and align_size = 4 (*Alignment of the stack *)
-                and var_size = 4 (* right now doing only for integers *)
-                in
-
-let idx_to_offset idx = size_stmfd + ((idx-1) * align_size) + var_size
+        let p asm = "\t " ^ asm ^ "\n"
+        and size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
+        and align_size = 4 (*Alignment of the stack *)
+        in
+(* lenv is of type byc_local_env *)
+let tmp_idx = ref 0 and tmp_fp = ref 0 in
+let rec build_index lenv= function
+        [] -> lenv
+        | hd :: tl -> let add_align = match hd with
+                Lvar(idx,sz,cnt) -> tmp_idx := idx;
+                                tmp_fp := (lenv.mfp + ((int_of_float (ceil 
+                (float_of_int ((sz * cnt)/align_size))) * align_size)));
+                let rec add_noalign _idx _fp _cnt _map = 
+                    match _cnt with
+                    0 -> _map
+                   | _ -> let m = IntMap.add 
+                        _idx 
+                        {fp_offset = _fp; size = sz; 
+                        count = (if cnt = _cnt then _cnt else 1 )} 
+                        _map 
+                        in add_noalign (_idx -1) (_fp - sz) (_cnt -1) m
+                (* the second argument calculation is to ensure that char has the 
+                 * lowest 1 byte and not the higest one byte when its aligned at 
+                 * align_size bytes *)
+                in add_noalign idx (if cnt = 1 then (!tmp_fp - align_size + sz)
+                        else !tmp_fp) cnt lenv.lmap
+                   | _ -> raise (Failure ("Unexpected for local index building"))
+        in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
 in
-let get_atom_val atm = match atm with
-        Lit (i) -> "#" ^ string_of_int i
-      | Cstr (s) -> s (* TODO *)
-      | Lvar (idx, sz) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
-      | Gvar (vname, sz) -> "" (*TODO *)
-in
-let load_code reg var= (* load variable var to register reg *)
-                "\t ldr  " ^ reg ^ ", "^ let const = (get_atom_val var) in (if
-                        const.[0] = '#' then const.[0] <- '=';const )^ "\n"
-and 
-    store_code reg var = (*TODO handle strb case*)
+let function_start env fname locals formals =
+        let tmp = { env with local_data = build_index 
+                {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
+        let env = { tmp with local_data = build_index tmp.local_data formals } in
+        let idx_to_offset idx = (try
+                let res = IntMap.find idx env.local_data.lmap in
+                res.fp_offset
+                (* When not found, its assumed that its a temporary variable.
+                 * For not assuming all temporaries are Int only and hence this
+                 * calulation is made for the temps
+                 *)
+        with Not_found -> 
+                ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
+        in
+        let get_atom_val atm = match atm with
+         Lit (i) -> "#" ^ string_of_int i
+        | Lvar (idx, sz, cnt) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
+        | Gvar (vname, sz) -> "" (*TODO *)
+        in
+        let load_code reg var = (* load variable var to register reg *)
+                "\t ldr  " ^ reg ^ ", "^ 
+        let const = (get_atom_val var)
+        in (if const.[0] = '#' then const.[0] <- '=';const )^ "\n"
+        and store_code reg var = (*TODO handle strb case*)
                 "\t str " ^ reg ^ ", "^ (get_atom_val var)^ "\n" in
-
-let function_start fname num_locals num_formals = 
+        let func_start_code =
             (* Code generation for function *)
-                ".global " ^ fname ^ "\n" ^
+        ".global " ^ fname ^ "\n" ^
             fname ^ ":\n" ^
-                    "\t stmfd sp!, {fp, lr}\n" ^
-                    "\t add fp, sp,#"^ string_of_int size_stmfd ^"\n" ^
-                    "\t sub sp, sp,#" ^ string_of_int (( num_formals + num_locals) * align_size) ^ 
-                    "\n" ^
-                    let rec formals_push_code i = if i < 0 then "" else 
+                   (p "stmfd sp!, {fp, lr}") ^
+                   (p "add fp, sp,#"^ string_of_int size_stmfd)  ^
+                   (p "sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
+                   let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
-                            (store_code ("r" ^ string_of_int i)
-                            (Lvar((num_locals + i + 1),var_size)))
-                    in formals_push_code (num_formals -1)
-                    (* TODO : if the variable size is 1 byte, strb should be
+                            (store_code ("r" ^ string_of_int i) (List.nth formals i))
+                    in formals_push_code ((List.length formals) -1)
+                    (* TODO : ifjthe variable size is 1 byte, strb should be
                      * used instead and the var_size should be updated
                      * accordingly *)
-and function_exit = "\t sub sp, fp, #4\n" ^
-                        "\t ldmfd sp!, {fp, pc}\n"
-in
+        and func_end_code = p "sub sp, fp, #4" ^
+                       p "ldmfd sp!, {fp, pc}"
+        in
 let bin_eval dst var1 op var2 = 
-        let oper = "\t " ^  (match op with
-        Add -> "adds r3, r0, r1"
-      | Sub -> "subs r3, r0, r1" 
-      | Mult -> "muls r3, r0, r1"
+        let oper = (match op with
+        Add -> p "adds r3, r0, r1"
+      | Sub -> p "subs r3, r0, r1" 
+      | Mult -> p "muls r3, r0, r1"
       | Div -> "Division"
       | Equal ->
-        "cmp r0, r1
-        moveq r3,#1
-        movne r3,#0
-        uxtb r3,r3"(*TODO-check the need*)
+                      p "cmp r0, r1" ^
+                      p "moveq r3,#1" ^
+                      p "movne r3,#0" ^
+                      p "uxtb r3,r3"(*TODO-check the need*)
       | Neq -> 
         "cmp r0, r1
         moveq r3,#0
@@ -80,7 +141,7 @@ let bin_eval dst var1 op var2 =
         )^ "\n"
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
-let function_call fname args ret=  
+let function_call fname args ret=
               let rec fcall i = function
                       []-> ""
                 |hd::tl -> (load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
@@ -97,10 +158,12 @@ let predicate cond jmpontrue label =
                 "\t cmp r0,#1\n" ^
                 brn ^ label ^ "\n"
         in
-let asm_code_gen = function
+let asm_code_gen env = function
    Atom (atm) -> ""
-  | Fstart (fname, num_locals, num_formals) ->  function_start fname num_locals num_formals (*start of a function*)
-  | Fexit  ->  function_exit          (*Restore registers values at exit*)
+  | Fstart (fname, locals, formals) ->  function_start env fname locals
+                                formals; (*start of a function*)
+                                        func_start_code
+  | Fexit  ->  func_end_code          (*Restore registers values at exit*)
   | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
   | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
   | Str (reg , atm ) ->  "Store"
@@ -113,8 +176,11 @@ let asm_code_gen = function
   | Label label -> label ^ ":" 
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
 
-in 
+in
 let non_atom = (List.filter (fun ele -> match ele with Atom (atm ) -> false | _ -> true) program)
 in
-        (List.map print_endline (List.map asm_code_gen non_atom))
-
+let env = {
+        global_index = StringMap.empty;
+         }
+in
+        (List.map print_endline (List.map asm_code_gen env non_atom))

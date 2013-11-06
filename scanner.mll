@@ -7,6 +7,8 @@ rule token = parse
 | ')'      { RPAREN }
 | '{'      { LBRACE }
 | '}'      { RBRACE }
+| '['      { LSUBS }
+| ']'      { RSUBS }
 | ';'      { SEMI }
 | ','      { COMMA }
 | '+'      { PLUS }
@@ -26,7 +28,8 @@ rule token = parse
 | "while"  { WHILE }
 | "return" { RETURN }
 | "int"    { INT }
-| '"' [^'"']* '"'  as lxm { LITSTRING(lxm) }
+| "char"   { CHAR }
+| "struct" { STRUCT }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }

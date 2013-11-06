@@ -2,13 +2,12 @@ open Ast
 
 type atom =
     Lit of int    (*  literal *)
-  | Cstr of string (*  String *)
-  | Lvar of int * int (* Local Var(variable_index, variable_size) *)
+  | Lvar of int * int * int(* Local Var(variable_index, variable_size) *)
   | Gvar of string * int (* Globacl var (name,size) *)
 
 type bstmt =
     Atom of atom
-  | Fstart of string * int * int (*start of a function*)
+  | Fstart of string * atom list * atom list (*start of a function*)
   | Fexit               (*Restore registers values at exit*)
   | Rval of atom
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)

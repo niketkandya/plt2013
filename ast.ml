@@ -1,8 +1,11 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
+type cpitypes = Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
+|Structarr
+
+
 type expr =
     Literal of int
-  | Litstring  of string 
   | Id of string
   | Binop of expr * op * expr
   | Assign of string * expr
@@ -17,18 +20,20 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
+type var_decl = Var of string * cpitypes * int
+
 type func_decl = {
     fname : string;
-    formals : string list;
-    locals : string list;
+    formals : var_decl list;
+    locals : var_decl list;
     body : stmt list;
   }
 
-type program = string list * func_decl list
+type program = var_decl list * func_decl list
 
+(*
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
-  | Litstring(s) -> s 
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^
@@ -41,6 +46,7 @@ let rec string_of_expr = function
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
+  | _ -> ""
 
 let rec string_of_stmt = function
     Block(stmts) ->
@@ -66,3 +72,4 @@ let string_of_fdecl fdecl =
 let string_of_program (vars, funcs) =
   String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
   String.concat "\n" (List.map string_of_fdecl funcs)
+  *)
