@@ -1,0 +1,14 @@
+fun(char a,int b,int c[5],char d[4])
+{
+	return a + b;
+}
+
+main()
+{
+	int a;
+	int *b;
+	int c[5];
+	char aa;
+	char *ab;
+	char ac[5];
+}
