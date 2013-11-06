@@ -93,12 +93,14 @@ in
 
 let dbg_get_var_name var = match var with 
             Lit(i) -> "\n" ^string_of_int i
+        | Cstr(s) -> "\n" ^ s
         | Lvar(num,sz) -> "\nLvar " ^ string_of_int num ^ ":" ^ string_of_int sz
         | Gvar(var,sz) -> "\nGvar " ^ var ^ ":" ^ string_of_int sz
 in
 
 let rec expr = function
         Literal i -> gen_atom (Lit i)
+      | Litstring s -> gen_atom (Cstr s)
       | Id s -> gen_atom (get_var s)
       | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2
                                 and v3 = (add_temp var_size)

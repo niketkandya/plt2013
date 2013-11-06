@@ -11,6 +11,7 @@ let idx_to_offset idx = size_stmfd + ((idx-1) * align_size) + var_size
 in
 let get_atom_val atm = match atm with
         Lit (i) -> "#" ^ string_of_int i
+      | Cstr (s) -> s (* TODO *)
       | Lvar (idx, sz) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
       | Gvar (vname, sz) -> "" (*TODO *)
 in

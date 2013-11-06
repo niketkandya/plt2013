@@ -2,6 +2,7 @@ open Ast
 
 type atom =
     Lit of int    (*  literal *)
+  | Cstr of string (*  String *)
   | Lvar of int * int (* Local Var(variable_index, variable_size) *)
   | Gvar of string * int (* Globacl var (name,size) *)
 
