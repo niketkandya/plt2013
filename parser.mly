@@ -4,7 +4,8 @@
 %token PLUS MINUS TIMES DIVIDE ASSIGN
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT
-%token AMPERSAND CONSTCHAR
+%token AMPERSAND 
+%token <string> CONSTCHAR
 %token <int> LITERAL
 %token <string> ID
 %token EOF
@@ -84,6 +85,7 @@ expr_opt:
 expr:
     LITERAL          { Literal($1) }
   | AMPERSAND ID     { Addrof($2) }
+  | CONSTCHAR        { ConstCh($1) }
   | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
