@@ -48,14 +48,12 @@ let rec enum stride n = function
 let string_map_pairs map pairs =
   List.fold_left (fun m (i, n) -> StringMap.add n i m) map pairs
 
-
 let build_global_idx map pairs = map
 
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
 let translate (globals, functions) =
-
   (* Allocate "addresses" for each global variable *)
   let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   (* TODO Code generation for globals *)
@@ -63,9 +61,10 @@ let translate (globals, functions) =
   let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
   let function_indexes = string_map_pairs built_in_functions
       (enum 1 1 (List.map (fun f -> f.fname) functions)) in
-  
-  (* Translate a function in AST form into a list of bytecode statements *)
-  let translate env fdecl =
+
+
+(* Translate a function in AST form into a list of bytecode statements *)
+let translate env fdecl =
     (* Bookkeeping: FP offsets for locals and arguments *)
     let num_mlocal = ref 0
      and num_temp = ref 0
@@ -120,22 +119,15 @@ let translate (globals, functions) =
                 |1 -> "end" ^ string_of_int !count_ifelse
                 |_ -> ""
         in
-        let function_start = [Fstart (fdecl.fname,(List.map conv2_byt_lvar
-        fdecl.locals), (List.map conv2_byt_lvar fdecl.formals))]
-        (* [Uncond_br (StringMap.fold (fun key va str -> str ^"\n "^ key ^ " -> "^
-        string_of_int va ) env.local_index "")] *)
-        and function_exit = [Fexit]
+        let gen_atom atm = [Atom (atm)]
         in
-
-let gen_atom atm = [Atom (atm)]
-in
-let get_atom = function
+        let get_atom = function
             Atom (atm) -> atm
-  | BinEval  (dst, var1, op, var2) -> dst
-  | Fcall (fname, args,ret ) -> ret
-  | Assgmt (dst, src) -> dst 
-  | _ -> raise (Failure ("Unexpected value requested for"))
-in
+        | BinEval  (dst, var1, op, var2) -> dst
+        | Fcall (fname, args,ret ) -> ret
+        | Assgmt (dst, src) -> dst 
+        | _ -> raise (Failure ("Unexpected value requested for"))
+        in
 (*
 let dbg_get_var_name var = match var with 
             Lit(i) -> "\n" ^string_of_int i
@@ -146,53 +138,72 @@ in
 let rec expr = function
         Literal i -> gen_atom (Lit i)
       | Id s -> gen_atom (get_var s)
-      | Binop (e1, op, e2) -> let v1 = expr e1 and v2 = expr e2
+      | Binop (e1, op, e2) -> let v1 = expr e1 
+                                and v2 = expr e2
                                 and v3 = (add_temp Int)
-        in (gen_atom v3) @  v1 @ v2 @ 
+                in (gen_atom v3) @  v1 @ v2 @ 
                 [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
-                (get_atom(List.hd (List.rev v2))))] 
-      | Assign (s, e) ->  let v1 = (expr e) in (gen_atom (get_var s)) @ v1 @
+                (get_atom(List.hd (List.rev v2))))]
+      | Assign (s, e) ->
+                      let v1 = (expr e) 
+                      in (gen_atom (get_var s)) @ v1 @
                 [Assgmt ((get_var s),get_atom (List.hd v1))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
-        with Not_found -> raise (Failure ("undefined function " ^ fname)));
-        let param = List.map expr (List.rev actuals)
-        and ret = (add_temp Int)
-        in (gen_atom ret ) @ List.concat param @
-        [Fcall (fname,List.rev (List.map (fun par -> get_atom (List.hd par)) param),ret)]
+                with Not_found -> raise (Failure ("undefined function " ^ fname)));
+                let param = List.map expr (List.rev actuals)
+                and ret = (add_temp Int)
+                in (gen_atom ret ) @ List.concat param @
+                [Fcall (fname,List.rev 
+                (List.map (fun par -> get_atom (List.hd par)) param)
+                ,ret)]
       | Noexpr ->[]
 
-    in let rec stmt = function
-	Block sl     -> (*List.map stmt sl*)
+    in 
+let rec stmt = function
+	Block sl     ->
                 (List.fold_left (fun str lst -> str @ lst) [] 
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
       | Return e     -> let v1 = expr e in v1 @ [Rval (get_atom (List.hd v1))]
-      | If (p, t, f) -> let v1 = expr p and v2 = stmt t and v3 = (stmt f) in
+      | If (p, t, f) -> let v1 = expr p 
+                        and v2 = stmt t 
+                        and v3 = (stmt f) in
                         let v4 = (get_atom (List.hd(List.rev v1))) in
-                        let l1 = (get_ifelse_label 0) and l2 = (get_ifelse_label 1) in
-                        (match v3 with 
-                        [] -> v1 @ [Predicate (v4,false, l2)] @ v2  @ [Label l2]
-                        | _ ->v1 @ [Predicate (v4,false, l1)] @ v2  @ [Branch (l2)]@ [Label l1] @ v3 @ [Label l2])
-      | While (e, b) -> let v1 = stmt b and v2 = expr e
-                        and l0 = (get_loop_label 0) and l1 = (get_loop_label 1) in
+                        let l1 = (get_ifelse_label 0) 
+                        and l2 = (get_ifelse_label 1) in (match v3 with
+                                [] -> v1 @ [Predicate (v4,false, l2)] 
+                                        @ v2  @ [Label l2]
+                                | _ ->v1 @ [Predicate (v4,false, l1)] @ v2  @ 
+                                        [Branch (l2)]@ [Label l1] @ v3 @ [Label l2])
+      | While (e, b) -> let v1 = stmt b 
+                        and v2 = expr e
+                        and l0 = (get_loop_label 0) 
+                        and l1 = (get_loop_label 1) in
                         let v3 = (get_atom (List.hd(List.rev v2))) in
                         [Branch l1] @ [Label l0] @ v1 @ [Label l1] 
                         @ v2 @ [Predicate (v3,true,l0)]
       | _ -> []
 
-    in  function_start @     (* Entry: allocate space for locals *)
-    (stmt (Block fdecl.body)) (* Body *)
-     @ function_exit  (* Default = return 0 *)
+in [Fstart (
+            fdecl.fname,
+            (List.map conv2_byt_lvar fdecl.locals), 
+            (List.map conv2_byt_lvar fdecl.formals), 
+            (stmt (Block fdecl.body))
+    )]
 
-  in let env = { function_index = function_indexes;
+in let env = { function_index = function_indexes;
 		 global_index = global_indexes;
 		 local_index = StringMap.empty } in
 
   (* Code executed to start the program *)
-  let entry_function = try
+let entry_function = try
           (StringMap.find "main" function_indexes); []
-  with Not_found -> raise (Failure ("no \"main\" function"))
-  in (* Compile the functions *)
+        with Not_found -> raise (Failure ("no \"main\" function"))
+in 
+(* Compile the functions *)
    List.concat (entry_function :: List.map (translate env) functions)
+(* TODO: Globals might need to be passed before at the point where
+ * entry_function is present. Globals can be passed as a list, like that of
+ * Fstart *)

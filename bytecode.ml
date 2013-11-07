@@ -7,8 +7,6 @@ type atom =
 
 type bstmt =
     Atom of atom
-  | Fstart of string * atom list * atom list (*start of a function*)
-  | Fexit               (*Restore registers values at exit*)
   | Rval of atom
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
   | Assgmt of atom * atom
@@ -19,3 +17,7 @@ type bstmt =
   | Branch of string
   | Predicate of atom * bool * string
   | Label of string
+
+type prog = 
+  Fstart of string * atom list * atom list * bstmt list (*start of a function*)
+  | Global of atom list

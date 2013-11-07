@@ -12,7 +12,7 @@ type byc_gvar_entry = { (*TODO: add more require elements*)
         label: string;
 }
 
-type byc_lvar_entry = { 
+type byc_lvar_entry = {
         fp_offset:int;
         size:int;
         count:int
@@ -60,10 +60,7 @@ let rec build_index lenv= function
                    | _ -> raise (Failure ("Unexpected for local index building"))
         in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
 in
-let function_start env fname locals formals =
-        let tmp = { env with local_data = build_index 
-                {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
-        let env = { tmp with local_data = build_index tmp.local_data formals } in
+let function_code_gen env fname formals body = 
         let idx_to_offset idx = (try
                 let res = IntMap.find idx env.local_data.lmap in
                 res.fp_offset
@@ -82,42 +79,25 @@ let function_start env fname locals formals =
         let load_code reg var = (* load variable var to register reg *)
                 "\t ldr  " ^ reg ^ ", "^ 
         let const = (get_atom_val var)
-        in (if const.[0] = '#' then const.[0] <- '=';const )^ "\n"
+        in (if const.[0] = '#' then const.[0] <- '=';const ) ^ "\n"
         and store_code reg var = (*TODO handle strb case*)
                 "\t str " ^ reg ^ ", "^ (get_atom_val var)^ "\n" in
-        let func_start_code =
-            (* Code generation for function *)
-        ".global " ^ fname ^ "\n" ^
-            fname ^ ":\n" ^
-                   (p "stmfd sp!, {fp, lr}") ^
-                   (p "add fp, sp,#"^ string_of_int size_stmfd)  ^
-                   (p "sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
-                   let rec formals_push_code i = if i < 0 then "" else 
-                            (formals_push_code (i-1)) ^ 
-                            (store_code ("r" ^ string_of_int i) (List.nth formals i))
-                    in formals_push_code ((List.length formals) -1)
-                    (* TODO : ifjthe variable size is 1 byte, strb should be
-                     * used instead and the var_size should be updated
-                     * accordingly *)
-        and func_end_code = p "sub sp, fp, #4" ^
-                       p "ldmfd sp!, {fp, pc}"
-        in
 let bin_eval dst var1 op var2 = 
         let oper = (match op with
         Add -> p "adds r3, r0, r1"
       | Sub -> p "subs r3, r0, r1" 
       | Mult -> p "muls r3, r0, r1"
-      | Div -> "Division"
+      | Div -> p "Division"
       | Equal ->
                       p "cmp r0, r1" ^
                       p "moveq r3,#1" ^
                       p "movne r3,#0" ^
                       p "uxtb r3,r3"(*TODO-check the need*)
       | Neq -> 
-        "cmp r0, r1
-        moveq r3,#0
-        movne r3,#1
-        uxtb r3,r3"
+                      p "cmp r0, r1" ^ 
+                      p "moveq r3,#0" ^ 
+                      p "movne r3,#1" ^ 
+                      p "uxtb r3,r3"
       | Less -> 
         "cmp r0, r1
          movlt r3,#1
@@ -158,12 +138,8 @@ let predicate cond jmpontrue label =
                 "\t cmp r0,#1\n" ^
                 brn ^ label ^ "\n"
         in
-let asm_code_gen env = function
+let asm_code_gen = function
    Atom (atm) -> ""
-  | Fstart (fname, locals, formals) ->  function_start env fname locals
-                                formals; (*start of a function*)
-                                        func_start_code
-  | Fexit  ->  func_end_code          (*Restore registers values at exit*)
   | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
   | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
   | Str (reg , atm ) ->  "Store"
@@ -175,12 +151,47 @@ let asm_code_gen env = function
   | Branch label -> "\tbl " ^ label
   | Label label -> label ^ ":" 
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
-
 in
-let non_atom = (List.filter (fun ele -> match ele with Atom (atm ) -> false | _ -> true) program)
+let non_atom lst = (List.filter (fun ele -> match ele with 
+                Atom (atm ) -> false
+                | _ -> true) lst)
+in
+let func_start_code =
+            (* Code generation for function *)
+        ".global " ^ fname ^ "\n" ^
+            fname ^ ":\n" ^
+                   (p "stmfd sp!, {fp, lr}") ^
+                   (p "add fp, sp,#"^ string_of_int size_stmfd)  ^
+                   (p "sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
+                   let rec formals_push_code i = if i < 0 then "" else 
+                            (formals_push_code (i-1)) ^ 
+                            (store_code ("r" ^ string_of_int i) (List.nth formals i))
+                    in formals_push_code ((List.length formals) -1)
+                    (* TODO : ifjthe variable size is 1 byte, strb should be
+                     * used instead and the var_size should be updated
+                     * accordingly *)
+        and func_end_code = p "sub sp, fp, #4" ^
+                       p "ldmfd sp!, {fp, pc}"
+        in func_start_code ^
+        (List.fold_left 
+                (fun str lst -> str ^ (asm_code_gen lst)) 
+                "" (non_atom body))
+        ^ func_end_code
 in
 let env = {
         global_index = StringMap.empty;
+        local_data = {lmap=IntMap.empty;
+                        mfp =0;
+                        midx = 0}
          }
-in
-        (List.map print_endline (List.map asm_code_gen env non_atom))
+in let rec print_program = function 
+        [] -> "" 
+        | hd :: tl ->
+                (match hd with
+                Global (atmlst) -> "" (*TODO: Global functions code *)
+                | Fstart (fname, locals, formals, body) ->  let env =
+                        let tmp = { env with local_data = build_index 
+                        {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
+                        { tmp with local_data = build_index tmp.local_data formals } in
+                        function_code_gen env fname formals body) ^ (print_program tl)
+in print_string (print_program program)
