@@ -71,6 +71,7 @@ stmt_list:
 stmt:
     expr SEMI { Expr($1) }
   | RETURN expr SEMI { Return($2) }
+  | RETURN consts SEMI { Return($2) }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
@@ -84,8 +85,6 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
-  | AMPERSAND ID     { Addrof($2) }
-  | CONSTCHAR        { ConstCh($1) }
   | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
@@ -98,6 +97,7 @@ expr:
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | lvalue ASSIGN expr   { Assign($1, $3) }
+  | lvalue ASSIGN consts   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
 
@@ -106,10 +106,16 @@ lvalue:
         | ptr   { Ptr($1) }
         | arr   { Arr( fst $1, snd $1) } 
 
+consts:
+   AMPERSAND ID     { Addrof($2) }
+  | CONSTCHAR        { ConstCh($1) }
+
 actuals_opt:
     /* nothing */ { [] }
   | actuals_list  { List.rev $1 }
 
 actuals_list:
-    expr                    { [$1] }
+   expr                    { [$1] }
+  |consts                 { [$1] }
   | actuals_list COMMA expr { $3 :: $1 }
+  | actuals_list COMMA consts { $3 :: $1 }
