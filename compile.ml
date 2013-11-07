@@ -145,7 +145,7 @@ let rec expr = function
                 [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
                 (get_atom(List.hd (List.rev v2))))]
       | Assign (s, e) ->
-                      let v1 = (expr e) 
+                      let v1 = (expr e)
                       in (gen_atom (get_var s)) @ v1 @
                 [Assgmt ((get_var s),get_atom (List.hd v1))]
       | Call (fname, actuals) ->  (try
