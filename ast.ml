@@ -6,9 +6,12 @@ type cpitypes = Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
 
 type expr =
     Literal of int
+  | Addrof of string
   | Id of string
+  | Ptr of string
+  | Arr of string * int
   | Binop of expr * op * expr
-  | Assign of string * expr
+  | Assign of expr * expr
   | Call of string * expr list
   | Noexpr
 

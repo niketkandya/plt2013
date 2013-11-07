@@ -51,11 +51,16 @@ vdecl:
 tdecl:
      INT ID { Var($2,Int,1) }
      | CHAR ID { Var($2,Char,1) }
-     | INT TIMES ID { Var($3, Intptr,1) }
-     | CHAR TIMES ID {Var($3, Charptr,1) }
-     | CHAR ID LSUBS LITERAL RSUBS { Var($2,Chararr,$4) }
-     | INT ID LSUBS LITERAL RSUBS { Var($2,Intarr,$4) }
+     | INT ptr { Var($2, Intptr,1) }
+     | CHAR ptr {Var($2, Charptr,1) }
+     | CHAR arr { Var((fst $2),Chararr,(snd $2)) }
+     | INT arr { Var((fst $2),Intarr,(snd $2)) }
 
+arr:
+        ID LSUBS LITERAL RSUBS { $1,$3 }
+
+ptr:
+        TIMES ID        {$2}
 
 stmt_list:
     /* nothing */  { [] }
@@ -77,7 +82,8 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
-  | ID               { Id($1) }
+  | AMPERSAND ID     { Addrof(Id($2)) }
+  | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
   | expr TIMES  expr { Binop($1, Mult,  $3) }
@@ -88,9 +94,14 @@ expr:
   | expr LEQ    expr { Binop($1, Leq,   $3) }
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
-  | ID ASSIGN expr   { Assign($1, $3) }
+  | lvalue ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
+
+lvalue:
+        ID      { Id($1) }
+        | ptr   { Ptr($1) }
+        | arr   { Arr( fst $1, snd $1) } 
 
 actuals_opt:
     /* nothing */ { [] }
