@@ -37,12 +37,14 @@ let execute_prog program =
         in
 (* lenv is of type byc_local_env *)
 let tmp_idx = ref 0 and tmp_fp = ref 0 in
+let f i = float_of_int i 
+in
 let rec build_index lenv= function
         [] -> lenv
         | hd :: tl -> let add_align = match hd with
                 Lvar(idx,sz,cnt) -> tmp_idx := idx;
                                 tmp_fp := (lenv.mfp + ((int_of_float (ceil 
-                (float_of_int ((sz * cnt)/align_size))) * align_size)));
+                ( (f (sz * cnt)) /. (f align_size) )) * align_size)));
                 let rec add_noalign _idx _fp _cnt _map = 
                     match _cnt with
                     0 -> _map
@@ -60,7 +62,7 @@ let rec build_index lenv= function
                    | _ -> raise (Failure ("Unexpected for local index building"))
         in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
 in
-let function_code_gen env fname formals body = 
+let function_code_gen env fname formals body =
         let idx_to_offset idx = (try
                 let res = IntMap.find idx env.local_data.lmap in
                 res.fp_offset
@@ -68,7 +70,7 @@ let function_code_gen env fname formals body =
                  * For not assuming all temporaries are Int only and hence this
                  * calulation is made for the temps
                  *)
-        with Not_found -> 
+        with Not_found ->
                 ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
         in
         let get_atom_val atm = match atm with
@@ -161,8 +163,8 @@ let func_start_code =
         ".global " ^ fname ^ "\n" ^
             fname ^ ":\n" ^
                    (p "stmfd sp!, {fp, lr}") ^
-                   (p "add fp, sp,#"^ string_of_int size_stmfd)  ^
-                   (p "sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
+                   p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
+                   p ("sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
