@@ -31,6 +31,9 @@ cpi : $(OBJS)
 test : cpi
 	cd mytests && ./runtests.sh
 
+test_edpi :
+	ssh edpi 'cd plt2013; git pull; make test'
+
 scanner.ml : scanner.mll
 	ocamllex scanner.mll
 
