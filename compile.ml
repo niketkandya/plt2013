@@ -9,9 +9,13 @@ type var_entry = {
         typ: cpitypes
 }
 
+type func_entry = { 
+        param : var_entry list;
+        ret_ty : cpitypes 
+         }
 (* Symbol table: Information about all the names in scope *)
 type env = {
-    function_index : int StringMap.t; (* Index for each function *)
+    function_index : func_entry StringMap.t; (* Index for each function *)
     global_index   : var_entry StringMap.t; (* "Address" for global variables *)
     local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
@@ -50,21 +54,41 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
+
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
 let translate (globals, functions) =
 
         (* Allocate "addresses" for each global variable *)
-  let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   (* TODO Code generation for globals *)
-  (* Assign indexes to function names; built-in "print" is special *)
+  let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   
-  let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
-  let function_indexes = string_map_pairs built_in_functions
-      (enum 1 1 (List.map (fun f -> f.fname) functions)) in
+  (*TODO: Add the buil-in-function printf to the below list *)
+let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
+let function_indexes = List.fold_left 
+        (fun map fdecl -> 
+           let rec var_to_lst ind = function
+                  [] -> []
+                | hd:: tl -> (match hd with
+                  Var(id,ty,cn) -> 
+                      { index = ind;
+                        count = cn;
+                        typ = ty
+                      } 
+                      :: (var_to_lst (ind+1) tl)
+                | _ -> raise (Failure(" Unexpected var_to_lst"))
+                ) in
+          StringMap.add fdecl.fname 
+                {
+                   param = (var_to_lst 0 fdecl.formals);
+                   ret_ty = fdecl.ret
+                } map
+        )
+        StringMap.empty functions
+in
 
-
+  
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
@@ -98,6 +122,10 @@ let translate env fdecl=
             (build_local_idx StringMap.empty ( fdecl.locals @ fdecl.formals)) }
 
     in
+        let get_func_entry name = (try
+                        StringMap.find name env.function_index
+        with Not_found -> raise (Failure("Function not found : " ^ name))) in
+
         let get_var ?(idx = -1) var = (*idx is when using it for an array subscript*)
                 (try
                 (let a = (StringMap.find var env.local_index) in 
@@ -117,10 +145,10 @@ let translate env fdecl=
                 (match tmp with
                    1 -> []
                    | _ -> conv2_byt_tmp ( tmp - 1) )
- 
         in
-        let get_tmp_lst = if !num_temp > 0 then ( conv2_byt_tmp !num_temp) else
-                [] in
+        let get_tmp_lst = if !num_temp > 0 
+                then ( conv2_byt_tmp !num_temp) 
+                else [] in
         let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
                 num_temp := !num_temp + 1;
                 env.local_index = StringMap.add (temp_prefix ^ string_of_int !num_temp )
@@ -171,7 +199,7 @@ let rec expr = function
                (StringMap.find fname env.function_index)
                 with Not_found -> raise (Failure ("undefined function " ^ fname)));
                 let param = List.map expr (List.rev actuals)
-                and ret = (add_temp fdecl.ret)
+                and ret = (add_temp (get_func_entry fname).ret_ty)
                 in (gen_atom ret ) @ List.concat param @
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd par)) param)

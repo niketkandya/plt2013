@@ -73,6 +73,7 @@ let function_code_gen env fname formals body temps =
         with Not_found ->
                 ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
         in
+        
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
@@ -97,9 +98,9 @@ let function_code_gen env fname formals body temps =
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
        in
-        let load_code reg var = (* load variable var to register reg *)
+       let load_code reg var = (* load variable var to register reg *)
                 gen_ldr_str_code "ldr" "=" reg var
-        and store_code reg var = (*TODO handle strb case*)
+       and store_code reg var =
                 gen_ldr_str_code "str" "#" reg var in
 let bin_eval dst var1 op var2 = 
         let oper = (match op with
@@ -139,6 +140,12 @@ let bin_eval dst var1 op var2 =
          uxtb r3,r3"
         )^ "\n"
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
+in
+let dbg_print var = match var with
+        Lvar(i,s,c) -> "Index: " ^ string_of_int i ^
+                        "Size: " ^ string_of_int s ^
+                        "Count: " ^ string_of_int c
+        | _ -> "IMPLEMENT"
 in
 let function_call fname args ret=
               let rec fcall i = function
