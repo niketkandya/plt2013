@@ -87,8 +87,8 @@ let function_code_gen env fname formals body temps =
         | Gvar (vname, sz) -> "" (*TODO *)
         | Addr (vnm) -> (match vnm with
                 Lvar(idx,sz,cnt) -> 
-                        p "sub " ^reg^", fp,#" ^ 
-                        string_of_int (idx_to_offset idx)
+                        p ("sub " ^reg^", fp,#" ^ 
+                        string_of_int (idx_to_offset idx))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                    | _ -> raise(Failure ("Lvars only should be passed")))
         | Pntr (vnm) -> (match vnm with
