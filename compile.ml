@@ -69,7 +69,7 @@ let translate (globals, functions) =
 let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
     let num_mlocal = ref 0
-     and num_temp = ref 5
+     and num_temp = ref 0
      and count_loop = ref 0
      and count_ifelse = ref 0
      and temp_prefix = "__temp"
@@ -115,11 +115,12 @@ let translate env fdecl=
         let rec conv2_byt_tmp tmp = 
                 get_var (temp_prefix ^ string_of_int tmp) ::
                 (match tmp with
-                   0 -> []
-                   | _ -> conv2_byt_tmp (tmp -1) )
+                   1 -> []
+                   | _ -> conv2_byt_tmp ( tmp - 1) )
  
         in
-        let get_tmp_lst =  conv2_byt_tmp !num_temp in
+        let get_tmp_lst = if !num_temp > 0 then ( conv2_byt_tmp !num_temp) else
+                [] in
         let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
                 num_temp := !num_temp + 1;
                 env.local_index = StringMap.add (temp_prefix ^ string_of_int !num_temp )
