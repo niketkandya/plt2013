@@ -29,11 +29,17 @@ program:
  | program fdecl { fst $1, ($2 :: snd $1) }
 
 fdecl:
-   ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
-     { { fname = $1;
-	 formals = $3; 
-         locals = List.rev $6;
-	 body = List.rev $7 } }
+   retval formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+     { { fname = snd $1;
+	 formals = $2; 
+         locals = List.rev $5;
+         body = List.rev $6;
+         ret = fst $1
+         } }
+
+retval:
+        INT ID LPAREN { Int, $2  }
+        |CHAR ID LPAREN { Char, $2  }
 
 formals_opt:
     /* nothing */ { [] }
@@ -104,6 +110,7 @@ expr:
 lvalue:
         var     { $1 }
         | ptr   { Ptr($1) }
+
 
 var:
         ID      { Id($1) }

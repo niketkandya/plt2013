@@ -31,6 +31,7 @@ type func_decl = {
     formals : var_decl list;
     locals : var_decl list;
     body : stmt list;
+    ret : cpitypes
   }
 
 type program = var_decl list * func_decl list
