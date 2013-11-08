@@ -54,41 +54,50 @@ let build_global_idx map pairs = map
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
 let translate (globals, functions) =
-  (* Allocate "addresses" for each global variable *)
+
+        (* Allocate "addresses" for each global variable *)
   let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   (* TODO Code generation for globals *)
   (* Assign indexes to function names; built-in "print" is special *)
+  
   let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
   let function_indexes = string_map_pairs built_in_functions
       (enum 1 1 (List.map (fun f -> f.fname) functions)) in
 
 
 (* Translate a function in AST form into a list of bytecode statements *)
-let translate env fdecl =
+let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
     let num_mlocal = ref 0
-     and num_temp = ref 0
+     and num_temp = ref 5
      and count_loop = ref 0
      and count_ifelse = ref 0
-     and func_vars = fdecl.locals @ fdecl.formals in
-    let var_offsets = enum 1 1 func_vars in
-        (* Index is assigned based on total number of basic datatypes contained
+     and temp_prefix = "__temp"
+     in
+        
+    (* Index is assigned based on total number of basic datatypes contained
          * in the type. e.g if there a variable of type int, it will get one
          * index more than the previous one. For an array of n elements , it
          * will get an index n more than the previous one *)
-    let build_local_idx map pairs =
-        List.fold_left (fun m (i, n) -> match n with 
-        Var(id,tp,cnt) -> num_mlocal := i+cnt;
-          (StringMap.add id {index = !num_mlocal; count = cnt; typ = tp} m)
-        | _ -> raise (Failure("Unable to build_index for this type"))
-          ) map pairs
+    
+    let build_local_idx map fun_var =
+        List.fold_left 
+        (fun m v -> match v with 
+                Var(id,tp,cnt) -> num_mlocal := !num_mlocal + cnt;
+                        (StringMap.add id 
+                        {index = !num_mlocal; count = cnt; typ = tp} m)
+                | _ -> raise (Failure("Build index: Unexpected type"))
+        ) map fun_var 
+   
           (*TODO: Struct should be handled seperately. It should have a Struct type
          * whose arguments are the list of all its constituent basic datatypes
          *)
 
     in
     let env = { env with local_index = 
-            (build_local_idx StringMap.empty var_offsets) } in
+            (build_local_idx StringMap.empty ( fdecl.locals @ fdecl.formals)) }
+
+    in
         let get_var ?(idx = -1) var = (*idx is when using it for an array subscript*)
                 (try
                 (let a = (StringMap.find var env.local_index) in 
@@ -98,14 +107,22 @@ let translate env fdecl =
                 with Not_found -> try 
                         let a = (StringMap.find var env.global_index) in
                         (Gvar(var,(get_size_type a.typ))) (*TODO- *)
-                with Not_found -> raise (Failure ("undeclared variable " ^ var)))
+                with Not_found -> raise (Failure ("Undeclared variable " ^ var)))
                 in
         let conv2_byt_lvar var = match var with
                 Var(id,typ,cnt) -> get_var id
         in
+        let rec conv2_byt_tmp tmp = 
+                get_var (temp_prefix ^ string_of_int tmp) ::
+                (match tmp with
+                   0 -> []
+                   | _ -> conv2_byt_tmp (tmp -1) )
+ 
+        in
+        let get_tmp_lst =  conv2_byt_tmp !num_temp in
         let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
                 num_temp := !num_temp + 1;
-                env.local_index = StringMap.add ("__tmp" ^ string_of_int !num_temp )
+                env.local_index = StringMap.add (temp_prefix ^ string_of_int !num_temp )
                 {index = (!num_mlocal + !num_temp); count = 1;typ = tp} env.local_index;
                 Lvar((!num_mlocal + !num_temp),(get_size_type tp),1)
         in
@@ -195,7 +212,8 @@ in [Fstart (
             fdecl.fname,
             (List.map conv2_byt_lvar fdecl.locals), 
             (List.map conv2_byt_lvar fdecl.formals), 
-            (stmt (Block fdecl.body))
+            (stmt (Block fdecl.body)), 
+            (get_tmp_lst)
     )]
 
 in let env = { function_index = function_indexes;
@@ -208,7 +226,7 @@ let entry_function = try
         with Not_found -> raise (Failure ("no \"main\" function"))
 in 
 (* Compile the functions *)
-   List.concat (entry_function :: List.map (translate env) functions)
+List.concat (entry_function :: List.map (translate env) functions)
 (* TODO: Globals might need to be passed before at the point where
  * entry_function is present. Globals can be passed as a list, like that of
  * Fstart *)

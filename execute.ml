@@ -62,7 +62,7 @@ let rec build_index lenv= function
                    | _ -> raise (Failure ("Unexpected for local index building"))
         in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
 in
-let function_code_gen env fname formals body =
+let function_code_gen env fname formals body temps =
         let idx_to_offset idx = (try
                 let res = IntMap.find idx env.local_data.lmap in
                 res.fp_offset
@@ -206,11 +206,17 @@ let env = {
 in let rec print_program = function 
         [] -> "" 
         | hd :: tl ->
-                (match hd with
-                Global (atmlst) -> "" (*TODO: Global functions code *)
-                | Fstart (fname, locals, formals, body) ->  let env =
-                        let tmp = { env with local_data = build_index 
-                        {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
-                        { tmp with local_data = build_index tmp.local_data formals } in
-                        function_code_gen env fname formals body) ^ (print_program tl)
+           (match hd with
+             Global (atmlst) -> "" (*TODO: Global functions code *)
+             | Fstart (fname, locals, formals, body, temps) ->
+
+                let env = { env with local_data = build_index 
+                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty } 
+                      (locals @ formals @ temps) } in
+          (*     let env =
+               let tmp = { env with local_data = build_index 
+                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
+                      { tmp with local_data = build_index tmp.local_data formals
+                      } in*)
+                 function_code_gen env fname formals body temps) ^ (print_program tl)
 in print_string (print_program program)
