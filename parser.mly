@@ -102,12 +102,15 @@ expr:
   | LPAREN expr RPAREN { $2 }
 
 lvalue:
-        ID      { Id($1) }
+        var     { $1 }
         | ptr   { Ptr($1) }
+
+var:
+        ID      { Id($1) }
         | arr   { Arr( fst $1, snd $1) } 
 
 consts:
-   AMPERSAND ID     { Addrof($2) }
+   AMPERSAND var      { Addrof($2)  }
   | CONSTCHAR        { ConstCh($1) }
 
 actuals_opt:

@@ -74,9 +74,12 @@ let function_code_gen env fname formals body =
                 ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
         in
         let get_atom_val atm = match atm with
-         Lit (i) -> "#" ^ string_of_int i
+          Lit (i) -> "#" ^ string_of_int i
+        | Cchar (ch) -> "#" ^ string_of_int (int_of_char ch) 
         | Lvar (idx, sz, cnt) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
         | Gvar (vname, sz) -> "" (*TODO *)
+        | Addr (vnm) ->
+        | Pntr (vnm) ->
         in
         let load_code reg var = (* load variable var to register reg *)
                 "\t ldr  " ^ reg ^ ", "^ 

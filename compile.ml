@@ -72,16 +72,17 @@ let translate env fdecl =
      and count_ifelse = ref 0
      and func_vars = fdecl.locals @ fdecl.formals in
     let var_offsets = enum 1 1 func_vars in
-    let build_local_idx map pairs =
-        List.fold_left (fun m (i, n) -> match n with 
-        Var(id,tp,cnt) -> num_mlocal := i+cnt;
         (* Index is assigned based on total number of basic datatypes contained
          * in the type. e.g if there a variable of type int, it will get one
          * index more than the previous one. For an array of n elements , it
          * will get an index n more than the previous one *)
-          (StringMap.add id {index = !num_mlocal; count = cnt; typ = tp} m)) 
-        map pairs
-        (*TODO: Struct should be handled seperately. It should have a Struct type
+    let build_local_idx map pairs =
+        List.fold_left (fun m (i, n) -> match n with 
+        Var(id,tp,cnt) -> num_mlocal := i+cnt;
+          (StringMap.add id {index = !num_mlocal; count = cnt; typ = tp} m)
+        | _ -> raise (Failure("Unable to build_index for this type"))
+          ) map pairs
+          (*TODO: Struct should be handled seperately. It should have a Struct type
          * whose arguments are the list of all its constituent basic datatypes
          *)
 
@@ -122,7 +123,7 @@ let translate env fdecl =
         let gen_atom atm = [Atom (atm)]
         in
         let get_atom = function
-            Atom (atm) -> atm
+          Atom (atm) -> atm
         | BinEval  (dst, var1, op, var2) -> dst
         | Fcall (fname, args,ret ) -> ret
         | Assgmt (dst, src) -> dst 
@@ -146,8 +147,8 @@ let rec expr = function
                 (get_atom(List.hd (List.rev v2))))]
       | Assign (s, e) ->
                       let v1 = (expr e)
-                      in (gen_atom (get_var s)) @ v1 @
-                [Assgmt ((get_var s),get_atom (List.hd v1))]
+                      in (expr s) @ v1 @
+                [Assgmt ((get_atom(List.hd (expr s))),get_atom (List.hd v1))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
                 with Not_found -> raise (Failure ("undefined function " ^ fname)));
@@ -157,6 +158,10 @@ let rec expr = function
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd par)) param)
                 ,ret)]
+      | Ptr(v) ->  gen_atom (Pntr(get_var v ))
+      | Arr(nm,ind) -> gen_atom (get_var ~idx:ind nm)
+      | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
+      | ConstCh(ch) -> gen_atom(Cchar(ch.[0]))
       | Noexpr ->[]
 
     in 

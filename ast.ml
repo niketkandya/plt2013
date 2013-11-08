@@ -6,8 +6,8 @@ type cpitypes = Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
 
 type expr =
     Literal of int
-  | Addrof of string
-  | ConstCh of string 
+  | Addrof of expr
+  | ConstCh of string
   | Id of string
   | Ptr of string
   | Arr of string * int
