@@ -3,7 +3,7 @@
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA LSUBS RSUBS
 %token PLUS MINUS TIMES DIVIDE ASSIGN
 %token EQ NEQ LT LEQ GT GEQ
-%token RETURN IF ELSE FOR WHILE INT CHAR STRUCT
+%token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
 %token AMPERSAND 
 %token <string> CONSTCHAR
 %token <int> LITERAL
@@ -40,6 +40,7 @@ fdecl:
 retval:
         INT ID LPAREN { Int, $2  }
         |CHAR ID LPAREN { Char, $2  }
+        |VOID ID LPAREN { Void, $2  }
 
 formals_opt:
     /* nothing */ { [] }

@@ -77,24 +77,28 @@ let function_code_gen env fname formals body temps =
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
-                let pre sz =  oper ^ (if sz = 1 then "b" else "")
-                        ^" "^reg ^", " in 
+                let pre sz = if sz != 0 then(  oper ^ (if sz = 1 then "b" else "")
+                        ^" "^reg ^", ") else "" in 
                 match atm with
           Lit (i) -> p ( (pre 0)  ^ sym ^ string_of_int i)
         | Cchar (ch) -> p ((pre 1) ^ sym ^ string_of_int (int_of_char ch))
-        | Lvar (idx, sz, cnt) -> p ( (pre sz) ^ "[fp,#-" ^ string_of_int
-                                 (idx_to_offset idx) ^"]")
+        | Lvar (idx, sz, cnt) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
+                                 (idx_to_offset idx) ^"]"))
         | Gvar (vname, sz) -> "" (*TODO *)
         | Addr (vnm) -> (match vnm with
-                Lvar(idx,sz,cnt) -> 
+                Lvar(idx,sz,cnt) -> (match sz with
+                  0 -> ""
+                | _ -> 
                         p ("sub " ^reg^", fp,#" ^ 
-                        string_of_int (idx_to_offset idx))
+                        string_of_int (idx_to_offset idx)))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                    | _ -> raise(Failure ("Lvars only should be passed")))
         | Pntr (vnm) -> (match vnm with
-                Lvar(idx,sz,cnt) -> 
+                Lvar(idx,sz,cnt) ->( match sz with
+                        0 -> ""
+                        | _ ->
                         (gen_ldr_str_code "ldr" "=" "r4" vnm) ^
-                        p ((pre sz) ^ "[r4,#0]")
+                        p ((pre sz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
        in

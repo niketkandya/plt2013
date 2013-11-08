@@ -23,7 +23,8 @@ type env = {
 
 (*Careful about calling get_size_* functions *)
 let get_size_type typ = match typ with
-                Char
+                  Void -> 0
+                | Char
                 | Chararr -> 1
                 | Int
                 | Intptr
@@ -34,8 +35,9 @@ let get_size_type typ = match typ with
 (* Size of datatypes *)
 let get_size_var var = match var with 
         Var(id,typ,cnt) -> match typ with
-                Int 
-                | Char 
+                Void
+                | Int
+                | Char
                 | Intptr
                 | Charptr -> get_size_type typ 
                 | Struct 

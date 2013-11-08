@@ -1,6 +1,6 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
-type cpitypes = Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
+type cpitypes = Void | Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
                 |Structarr
 
 

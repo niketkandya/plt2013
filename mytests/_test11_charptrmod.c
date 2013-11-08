@@ -1,11 +1,10 @@
-int fun(char b) {
-	return b;
+int fun(char *b) {
+	*b = 'c';
 }
 char main()
 {
-	char *a;
 	char b;
 	b = 'a';
-	a = &b;
-	return *a;
+	fun(&b);
+	return b;
 }
