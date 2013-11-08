@@ -161,7 +161,7 @@ let rec expr = function
       | Ptr(v) ->  gen_atom (Pntr(get_var v ))
       | Arr(nm,ind) -> gen_atom (get_var ~idx:ind nm)
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
-      | ConstCh(ch) -> gen_atom(Cchar(ch.[0]))
+      | ConstCh(ch) -> gen_atom(Cchar(ch.[1]))
       | Noexpr ->[]
 
     in 
