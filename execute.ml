@@ -73,20 +73,29 @@ let function_code_gen env fname formals body =
         with Not_found ->
                 ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
         in
-        let get_atom_val atm = match atm with
-          Lit (i) -> "#" ^ string_of_int i
-        | Cchar (ch) -> "#" ^ string_of_int (int_of_char ch) 
-        | Lvar (idx, sz, cnt) -> "[fp,#-" ^ string_of_int (idx_to_offset idx) ^"]"
+        (* Note register r4 will be left as a temporary register 
+         * so that anybody can use .eg in gen_ldr_str_code *)
+        let rec gen_ldr_str_code oper sym reg atm = 
+                let pre =  oper ^" "^reg ^", " in 
+                match atm with
+          Lit (i) -> p (pre ^ sym ^ string_of_int i)
+        | Cchar (ch) -> p (pre ^ sym ^ string_of_int (int_of_char ch))
+        | Lvar (idx, sz, cnt) -> p (pre ^ "[fp,#-" ^ string_of_int
+                                 (idx_to_offset idx) ^"]")
         | Gvar (vname, sz) -> "" (*TODO *)
-        | Addr (vnm) ->
-        | Pntr (vnm) ->
+        | Addr (vnm) -> (match vnm with
+                Lvar(idx,sz,cnt) -> 
+                        p "sub " ^reg^", fp,#" ^ 
+                        string_of_int (idx_to_offset idx)
+                |Gvar(vname,sz) -> "" (*TODO: Globals*)
+                   | _ -> raise(Failure ("Lvars only should be passed")))
+        | Pntr (vnm) -> (gen_ldr_str_code "ldr" "=" "r4" vnm) ^
+                        p (pre ^ "[r4,#0]")
         in
         let load_code reg var = (* load variable var to register reg *)
-                "\t ldr  " ^ reg ^ ", "^ 
-        let const = (get_atom_val var)
-        in (if const.[0] = '#' then const.[0] <- '=';const ) ^ "\n"
+                gen_ldr_str_code "ldr" "=" reg var
         and store_code reg var = (*TODO handle strb case*)
-                "\t str " ^ reg ^ ", "^ (get_atom_val var)^ "\n" in
+                gen_ldr_str_code "str" "#" reg var in
 let bin_eval dst var1 op var2 = 
         let oper = (match op with
         Add -> p "adds r3, r0, r1"
