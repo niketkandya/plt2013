@@ -1,8 +1,10 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
-type cpitypes = Void | Int | Char |Intptr | Charptr | Struct | Intarr | Chararr
+type cpitypes = Void | Int | Char |Intptr | Charptr | Structtyp | Intarr | Chararr
                 |Structarr
 
+type var_decl = Var of string * cpitypes * int
+                | Struct of string * var_decl list
 
 type expr =
     Literal of int
@@ -24,7 +26,6 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
-type var_decl = Var of string * cpitypes * int
 
 type func_decl = {
     fname : string;
@@ -34,8 +35,8 @@ type func_decl = {
     ret : cpitypes
   }
 
-type program = var_decl list * func_decl list
 
+type program = var_decl list * func_decl list
 (*
 let rec string_of_expr = function
     Literal(l) -> string_of_int l

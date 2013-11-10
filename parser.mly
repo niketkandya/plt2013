@@ -25,8 +25,10 @@
 
 program:
    /* nothing */ { [], [] }
+ | program sdecl { ($2 :: fst $1), snd $1 }
  | program vdecl { ($2 :: fst $1), snd $1 }
  | program fdecl { fst $1, ($2 :: snd $1) }
+
 
 fdecl:
    retval formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
@@ -41,6 +43,9 @@ retval:
         INT ID LPAREN { Int, $2  }
         |CHAR ID LPAREN { Char, $2  }
         |VOID ID LPAREN { Void, $2  }
+
+sdecl:
+        STRUCT ID LBRACE vdecl_list RBRACE SEMI { Struct($2,$4) }
 
 formals_opt:
     /* nothing */ { [] }

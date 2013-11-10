@@ -46,16 +46,17 @@ let get_size_btype typ = match typ with
 
 (* Size of datatypes *)
 let get_size_var var = match var with 
-        Var(id,typ,cnt) -> match typ with
+        Var(id,typ,cnt) -> (match typ with
                 Void
                 | Int
                 | Char
                 | Intptr
                 | Charptr -> get_size_type typ 
-                | Struct 
+                | Structtyp
                 | Intarr
                 | Chararr
-                | Structarr ->cnt 
+                | Structarr ->cnt)
+        | Struct(varn,varlist) -> List.length varlist 
 
 (* val enum : int -> 'a list -> (int * 'a) list *)
 let rec enum stride n = function
@@ -79,7 +80,7 @@ let translate (globals, functions) =
   let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
   
   (*TODO: Add the buil-in-function printf to the below list *)
-let built_in_functions = StringMap.add "print" (-1) StringMap.empty in
+(* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
 let function_indexes = List.fold_left 
         (fun map fdecl -> 
            let rec var_to_lst ind = function
@@ -149,8 +150,8 @@ let translate env fdecl=
                         Lvar (var_idx,var_sz,var_cnt))
                 with Not_found -> try 
                         let a = (StringMap.find var env.global_index) in
-                let var_idx = if idx = -1 then a.index else a.index - idx
-                and var_cnt = if idx = -1 then a.count else 1 in
+               (* let var_idx = if idx = -1 then a.index else a.index - idx
+                and var_cnt = if idx = -1 then a.count else 1 in*)
                 let var_sz = if bty then (get_size_btype a.typ) else
                                 (get_size_type a.typ) in
                         (Gvar(var,var_sz)) (*TODO- *)
@@ -163,6 +164,7 @@ let translate env fdecl=
         in 
         let conv2_byt_lvar var = match var with
                 Var(id,typ,cnt) -> get_var id
+                | Struct(vnm, vlst) -> get_var vnm
         in
         let rec conv2_byt_tmp tmp = 
                 get_var (temp_prefix ^ string_of_int tmp) ::
