@@ -1,9 +1,9 @@
-fun(char a,int b,int c[5],char d[4])
+int fun(char a,int b,int c[5],char d[4])
 {
 	return a + b;
 }
 
-main()
+int main()
 {
 	int a;
 	int *b;

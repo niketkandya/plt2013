@@ -72,12 +72,14 @@ let build_global_idx map pairs = map
 
 let rec build_struct_idx map count= function
        [] -> map
-       | hd:: tl ->let tmp = ref 0 in  build_struct_idx (match hd with 
-           Var(id,tp,cnt) ->  tmp := count + cnt;
+       | hd:: tl -> build_struct_idx (match hd with 
+           Var(id,tp,cnt) ->  count := !count + cnt;
               (StringMap.add id 
-              {index = !tmp; count = cnt; typ = tp} map)
+              {index = !count; count = cnt; typ = tp} map)
            | _ -> raise (Failure("Build index: Unexpected type"))
-        ) !tmp tl
+        ) count tl
+
+
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
@@ -89,7 +91,7 @@ let translate (globals, functions) =
   let struct_indexes = List.fold_left (fun map stct -> 
                 (match stct with
                 Struct(nm,lst)-> (StringMap.add nm 
-                (build_struct_idx StringMap.empty 0 lst) map)
+                (build_struct_idx StringMap.empty (ref 0) lst) map)
                 | _ -> map)) StringMap.empty globals
           in
   (*TODO: Add the buil-in-function printf to the below list *)
@@ -147,7 +149,7 @@ let translate env fdecl=
 
     in
     let env = { env with local_index = 
-            (build_local_idx StringMap.empty ( fdecl.locals @ fdecl.formals)) }
+            (build_struct_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
 
     in
         let get_func_entry name = (try
