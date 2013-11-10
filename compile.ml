@@ -17,7 +17,7 @@ type func_entry = {
 type env = {
     function_index : func_entry StringMap.t; (* Index for each function *)
     global_index   : var_entry StringMap.t; (* "Address" for global variables *)
-    struct_index   : var_entry StringMap.t StringMap.t;
+    struct_index   : var_decl list StringMap.t;
     local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
 
@@ -43,9 +43,7 @@ let get_size_btype typ = match typ with
                 | Intarr -> get_size_type Int
                 | _ -> raise (Failure ("Requesting size of wrong type"))
 
-
-
-(* Size of datatypes *)
+                (* Size of datatypes *)
 let get_size_var var = match var with 
         Var(id,typ,cnt) -> (match typ with
                 Void
@@ -70,19 +68,6 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
-    (* Index is assigned based on total number of basic datatypes contained
-         * in the type. e.g if there a variable of type int, it will get one
-         * index more than the previous one. For an array of n elements , it
-         * will get an index n more than the previous one *)
-let rec build_local_idx map count= function
-       [] -> map
-       | hd:: tl -> build_local_idx (match hd with 
-           Var(id,tp,cnt) ->  count := !count + cnt;
-              (StringMap.add id 
-              {index = !count; count = cnt; typ = tp} map)
-           | _ -> raise (Failure("Build index: Unexpected type"))
-        ) count tl
-
 
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
@@ -95,7 +80,7 @@ let translate (globals, functions) =
   let struct_indexes = List.fold_left (fun map stct -> 
                 (match stct with
                 Struct(nm,lst)-> (StringMap.add nm 
-                (build_local_idx StringMap.empty (ref 0) lst) map)
+                lst map)
                 | _ -> map)) StringMap.empty globals
           in
   (*TODO: Add the buil-in-function printf to the below list *)
@@ -132,8 +117,21 @@ let translate env fdecl=
      and count_ifelse = ref 0
      and temp_prefix = "__temp"
      in
-        
-   
+
+     (* Index is assigned based on total number of basic datatypes contained
+         * in the type. e.g if there a variable of type int, it will get one
+         * index more than the previous one. For an array of n elements , it
+         * will get an index n more than the previous one *)
+
+    let rec build_local_idx map count= function
+       [] -> map
+       | hd:: tl -> build_local_idx (match hd with 
+           Var(id,tp,cnt) ->  count := !count + cnt;
+              (StringMap.add id 
+              {index = !count; count = cnt; typ = tp} map)
+           | _ -> raise (Failure("Build index: Unexpected type"))
+        ) count tl
+    in
     let env = { env with local_index = 
             (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
 

@@ -69,6 +69,7 @@ tdecl:
      | CHAR ptr {Var($2, Charptr,1) }
      | CHAR arr { Var((fst $2),Chararr,(snd $2)) }
      | INT arr { Var((fst $2),Intarr,(snd $2)) }
+     | STRUCT ID ID {Var($2^"."^$3, Structtyp,1) }
 
 arr:
         ID LSUBS LITERAL RSUBS { $1,$3 }
