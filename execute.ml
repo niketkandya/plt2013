@@ -129,26 +129,26 @@ let bin_eval dst var1 op var2 =
                       p "movne r3,#1" ^ 
                       p "uxtb r3,r3"
       | Less -> 
-        "cmp r0, r1
-         movlt r3,#1
-         movge r3,#0
-         uxtb r3,r3"
+        p "cmp r0, r1" ^
+        p "movlt r3,#1" ^
+        p "movge r3,#0" ^
+        p "uxtb r3,r3"
       | Leq -> 
-        "cmp r0, r1
-         movle r3,#1
-         movgt r3,#0
-         uxtb r3,r3"
+        p "cmp r0, r1" ^
+        p "movle r3,#1" ^
+        p "movgt r3,#0"^
+        p "uxtb r3,r3"
       | Greater -> 
-        "cmp r0, r1
-         movgt r3,#1
-         movle r3,#0
-         uxtb r3,r3"
+        p "cmp r0, r1"^
+        p "movgt r3,#1"^
+        p "movle r3,#0"^
+        p "uxtb r3,r3"
       | Geq -> 
-        "cmp r0, r1
-         movge r3,#1
-         movlt r3,#0
-         uxtb r3,r3"
-        )^ "\n"
+        p "cmp r0, r1"^
+        p "movge r3,#1"^
+        p "movlt r3,#0"^
+        p "uxtb r3,r3"
+        )
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
 let function_call fname args ret=
@@ -163,7 +163,7 @@ in
 
 let predicate cond jmpontrue label = 
         let brn = if jmpontrue then "\t beq "
-                    else "\t beq "
+                    else "\t bne "
         in (load_code "r0" cond) ^
                 "\t cmp r0,#1\n" ^
                 brn ^ label ^ "\n"
@@ -178,8 +178,8 @@ let asm_code_gen = function
   | Fcall (fname, args,ret) ->  function_call fname args ret  (*Whenever a function
           is called*) (*TODO do something for the ret value*)
   | Rval var -> load_code "r0" var
-  | Branch label -> "\tbl " ^ label
-  | Label label -> label ^ ":" 
+  | Branch label -> p ("bl " ^ label)
+  | Label label -> label ^ ":" ^ "\n"
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 

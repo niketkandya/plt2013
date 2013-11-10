@@ -118,16 +118,16 @@ let translate env fdecl=
      and temp_prefix = "__temp"
      in
 
-     (* Index is assigned based on total number of basic datatypes contained
-         * in the type. e.g if there a variable of type int, it will get one
-         * index more than the previous one. For an array of n elements , it
-         * will get an index n more than the previous one *)
+    (* Index is assigned based on total number of basic datatypes contained
+     * in the type. e.g if there a variable of type int, it will get one
+     * index more than the previous one. For an array of n elements , it
+     * will get an index n more than the previous one *)
 
     let rec build_local_idx map count= function
        [] -> map
        | hd:: tl -> build_local_idx (match hd with 
            Var(id,tp,cnt) ->  count := !count + cnt;
-              (StringMap.add id 
+              (StringMap.add id
               {index = !count; count = cnt; typ = tp} map)
            | _ -> raise (Failure("Build index: Unexpected type"))
         ) count tl
