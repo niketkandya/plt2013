@@ -10,30 +10,36 @@ notes on how we will do the testing.
 
 
 ### Config instructions
-1. Put in your ~/.ssh/config file:
+Put in your ~/.ssh/config file:
 
     Host CONFIGNAME 
     Hostname HOSTNAME
     User pi
     Port PORTNUM (not needed if port is the default 22)
 
-2.  Add your public key to ~/.ssh/authorized_keys on the remote machine (or
+Add your public key to ~/.ssh/authorized_keys on the remote machine (or
     your qemu)
 
 ### Using Eddie's pi
 Follow config instructions
+
 CONFIGNAME is edpi
+
 HOSTNAME is the hostname we all know
 
 ### Testing with QEMU
 I'm running qemu with
+
     qemu-system-arm -kernel kernel-qemu -cpu arm1176 -m 256 -M versatilepb
     -no-reboot -serial stdio -append "root=/dev/sda2 panic=1" -hda
     2013-09-25-wheezy-raspbian.img -redir tcp:5022::22
 
 Follow config instructions
+
 CONFIGNAME is qemupi
+
 HOSTNAME is localhost
+
 PORTNUM is 5022
 
 ## Running the tests
