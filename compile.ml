@@ -17,6 +17,7 @@ type func_entry = {
 type env = {
     function_index : func_entry StringMap.t; (* Index for each function *)
     global_index   : var_entry StringMap.t; (* "Address" for global variables *)
+    struct_index   : var_entry StringMap.t StringMap.t;
     local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
 
@@ -69,7 +70,14 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
-
+let rec build_struct_idx map count= function
+       [] -> map
+       | hd:: tl ->let tmp = ref 0 in  build_struct_idx (match hd with 
+           Var(id,tp,cnt) ->  tmp := count + cnt;
+              (StringMap.add id 
+              {index = !tmp; count = cnt; typ = tp} map)
+           | _ -> raise (Failure("Build index: Unexpected type"))
+        ) !tmp tl
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
@@ -78,7 +86,12 @@ let translate (globals, functions) =
         (* Allocate "addresses" for each global variable *)
   (* TODO Code generation for globals *)
   let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
-  
+  let struct_indexes = List.fold_left (fun map stct -> 
+                (match stct with
+                Struct(nm,lst)-> (StringMap.add nm 
+                (build_struct_idx StringMap.empty 0 lst) map)
+                | _ -> map)) StringMap.empty globals
+          in
   (*TODO: Add the buil-in-function printf to the below list *)
 (* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
 let function_indexes = List.fold_left 
@@ -118,7 +131,7 @@ let translate env fdecl=
          * in the type. e.g if there a variable of type int, it will get one
          * index more than the previous one. For an array of n elements , it
          * will get an index n more than the previous one *)
-    
+   
     let build_local_idx map fun_var =
         List.fold_left 
         (fun m v -> match v with 
@@ -273,6 +286,7 @@ in [Fstart (
 
 in let env = { function_index = function_indexes;
 		 global_index = global_indexes;
+                 struct_index = struct_indexes;
 		 local_index = StringMap.empty } in
 
   (* Code executed to start the program *)
