@@ -104,8 +104,7 @@ for file in *.cpi; do
 
     if [[ "$error" != "" ]]; then
         let failed_tests++
-        colorprint "$error" "red"
-        colorprint "Failed: $basename" "red"
+        colorprint "Failed: $basename. $error" "red"
         error=""
     else
         let passed_tests++
