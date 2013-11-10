@@ -1,19 +1,14 @@
-/*This test should return an error since fun is missing an argument*/
-
-
-int fun(a , b)
+int fun(char a,int b,int c[5],char d[4])
 {
-    return a + b;
+	return a + b;
 }
 
 int main()
 {
-    int a;
-    int b;
-    int c;
-    a = 10;
-    b = 14;
-    c = fun( a*4 );
-    return c;
+	int a;
+	int *b;
+	int c[5];
+	char aa;
+	char *ab;
+	char ac[5];
 }
-
