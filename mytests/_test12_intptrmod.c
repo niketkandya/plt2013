@@ -1,10 +1,10 @@
-void fun(char *b) {
-	*b = 'c';
+void fun(int *b) {
+	*b = 45;
 }
 char main()
 {
-	char b;
-	b = 'a';
+	int b;
+	b = 20;
 	fun(&b);
 	return b;
 }

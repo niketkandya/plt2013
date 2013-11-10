@@ -5,7 +5,7 @@ type atom =
   | Cchar of char
   | Lvar of int * int * int(* Lvar(index,size,cnt) *)
   | Gvar of string * int (* Globacl var (name,size) *)
-  | Pntr of atom
+  | Pntr of atom * int
   | Addr of atom
 
 type bstmt =

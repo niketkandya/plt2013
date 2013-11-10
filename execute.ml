@@ -39,6 +39,12 @@ let execute_prog program =
 let tmp_idx = ref 0 and tmp_fp = ref 0 in
 let f i = float_of_int i 
 in
+let dbg_print var = match var with
+        Lvar(i,s,c) -> "Index: " ^ string_of_int i ^
+                        "Size: " ^ string_of_int s ^
+                        "Count: " ^ string_of_int c
+        | _ -> "IMPLEMENT"
+in
 let rec build_index lenv= function
         [] -> lenv
         | hd :: tl -> let add_align = match hd with
@@ -80,7 +86,7 @@ let function_code_gen env fname formals body temps =
                 let pre sz = if sz != 0 then(  oper ^ (if sz = 1 then "b" else "")
                         ^" "^reg ^", ") else "" in 
                 match atm with
-          Lit (i) -> p ( (pre 0)  ^ sym ^ string_of_int i)
+          Lit (i) -> p ( (pre 4)  ^ sym ^ string_of_int i)
         | Cchar (ch) -> p ((pre 1) ^ sym ^ string_of_int (int_of_char ch))
         | Lvar (idx, sz, cnt) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
                                  (idx_to_offset idx) ^"]"))
@@ -90,15 +96,15 @@ let function_code_gen env fname formals body temps =
                   0 -> ""
                 | _ -> 
                         p ("sub " ^reg^", fp,#" ^ 
-                        string_of_int (idx_to_offset idx)))
+                        string_of_int (idx_to_offset idx) ))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                    | _ -> raise(Failure ("Lvars only should be passed")))
-        | Pntr (vnm) -> (match vnm with
+        | Pntr (vnm,bsz) -> (match vnm with
                 Lvar(idx,sz,cnt) ->( match sz with
                         0 -> ""
                         | _ ->
                         (gen_ldr_str_code "ldr" "=" "r4" vnm) ^
-                        p ((pre sz) ^ "[r4,#0]"))
+                        p ((pre bsz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
        in
@@ -144,12 +150,6 @@ let bin_eval dst var1 op var2 =
          uxtb r3,r3"
         )^ "\n"
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
-in
-let dbg_print var = match var with
-        Lvar(i,s,c) -> "Index: " ^ string_of_int i ^
-                        "Size: " ^ string_of_int s ^
-                        "Count: " ^ string_of_int c
-        | _ -> "IMPLEMENT"
 in
 let function_call fname args ret=
               let rec fcall i = function
@@ -201,7 +201,7 @@ let func_start_code =
                      * used instead and the var_size should be updated
                      * accordingly *)
         and func_end_code = p "sub sp, fp, #4" ^
-                       p "ldmfd sp!, {fp, pc}"
+                       p "ldmfd sp!, {fp, pc}" ^ "\n"
         in func_start_code ^
         (List.fold_left 
                 (fun str lst -> str ^ (asm_code_gen lst)) 
@@ -229,5 +229,6 @@ in let rec print_program = function
                       {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
                       { tmp with local_data = build_index tmp.local_data formals
                       } in*)
-                 function_code_gen env fname formals body temps) ^ (print_program tl)
+                 function_code_gen env fname formals body temps) 
+                        ^ (print_program tl)
 in print_string (print_program program)

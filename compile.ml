@@ -32,6 +32,18 @@ let get_size_type typ = match typ with
                 | Intarr -> 4
                 | _ -> raise (Failure ("Requesting size of wrong type"))
 
+let get_size_btype typ = match typ with
+                  Void -> get_size_type Void
+                | Char -> get_size_type Char
+                | Chararr -> get_size_type Char
+                | Charptr -> get_size_type Char 
+                | Int -> get_size_type Int
+                | Intptr -> get_size_type Int
+                | Intarr -> get_size_type Int
+                | _ -> raise (Failure ("Requesting size of wrong type"))
+
+
+
 (* Size of datatypes *)
 let get_size_var var = match var with 
         Var(id,typ,cnt) -> match typ with
@@ -127,18 +139,28 @@ let translate env fdecl=
         let get_func_entry name = (try
                         StringMap.find name env.function_index
         with Not_found -> raise (Failure("Function not found : " ^ name))) in
-
-        let get_var ?(idx = -1) var = (*idx is when using it for an array subscript*)
+        let get_var ?(bty = false) ?(idx = -1) var = (*idx is when using it for an array subscript*)
                 (try
                 (let a = (StringMap.find var env.local_index) in 
                 let var_idx = if idx = -1 then a.index else a.index - idx
                 and var_cnt = if idx = -1 then a.count else 1 in
-                Lvar (var_idx,(get_size_type a.typ),var_cnt))
+                let var_sz = if bty then (get_size_btype a.typ) else
+                                (get_size_type a.typ) in
+                        Lvar (var_idx,var_sz,var_cnt))
                 with Not_found -> try 
                         let a = (StringMap.find var env.global_index) in
-                        (Gvar(var,(get_size_type a.typ))) (*TODO- *)
+                let var_idx = if idx = -1 then a.index else a.index - idx
+                and var_cnt = if idx = -1 then a.count else 1 in
+                let var_sz = if bty then (get_size_btype a.typ) else
+                                (get_size_type a.typ) in
+                        (Gvar(var,var_sz)) (*TODO- *)
                 with Not_found -> raise (Failure ("Undeclared variable " ^ var)))
                 in
+        let get_varname_size ?(bt = false) ?(ix = -1) varname = 
+                match (get_var ~bty:bt ~idx:ix varname) with
+                Lvar(i,s,c) -> s
+                |Gvar(vn,s) -> s
+        in 
         let conv2_byt_lvar var = match var with
                 Var(id,typ,cnt) -> get_var id
         in
@@ -206,8 +228,8 @@ let rec expr = function
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd par)) param)
                 ,ret)]
-      | Ptr(v) ->  gen_atom (Pntr(get_var v ))
-      | Arr(nm,ind) -> gen_atom (get_var ~idx:ind nm)
+      | Ptr(v) ->  gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
+      | Arr(nm,ind) -> gen_atom (get_var ~bty:true ~idx:ind nm)
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | ConstCh(ch) -> gen_atom(Cchar(ch.[1]))
       | Noexpr ->[]
