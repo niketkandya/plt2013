@@ -1,9 +1,9 @@
-fun(a , b)
+int fun(int a , int b)
 {
 	return a + b;
 }
 
-main()
+int main()
 {
 	int a;
 	int b;

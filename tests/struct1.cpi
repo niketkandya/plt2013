@@ -3,7 +3,7 @@ struct S {
     int b;
 };
 
-main()
+int main()
 {
     struct S s;
     s.a = 1;
