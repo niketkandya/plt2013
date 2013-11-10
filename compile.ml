@@ -70,9 +70,13 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
-let rec build_struct_idx map count= function
+    (* Index is assigned based on total number of basic datatypes contained
+         * in the type. e.g if there a variable of type int, it will get one
+         * index more than the previous one. For an array of n elements , it
+         * will get an index n more than the previous one *)
+let rec build_local_idx map count= function
        [] -> map
-       | hd:: tl -> build_struct_idx (match hd with 
+       | hd:: tl -> build_local_idx (match hd with 
            Var(id,tp,cnt) ->  count := !count + cnt;
               (StringMap.add id 
               {index = !count; count = cnt; typ = tp} map)
@@ -91,7 +95,7 @@ let translate (globals, functions) =
   let struct_indexes = List.fold_left (fun map stct -> 
                 (match stct with
                 Struct(nm,lst)-> (StringMap.add nm 
-                (build_struct_idx StringMap.empty (ref 0) lst) map)
+                (build_local_idx StringMap.empty (ref 0) lst) map)
                 | _ -> map)) StringMap.empty globals
           in
   (*TODO: Add the buil-in-function printf to the below list *)
@@ -129,27 +133,9 @@ let translate env fdecl=
      and temp_prefix = "__temp"
      in
         
-    (* Index is assigned based on total number of basic datatypes contained
-         * in the type. e.g if there a variable of type int, it will get one
-         * index more than the previous one. For an array of n elements , it
-         * will get an index n more than the previous one *)
    
-    let build_local_idx map fun_var =
-        List.fold_left 
-        (fun m v -> match v with 
-                Var(id,tp,cnt) -> num_mlocal := !num_mlocal + cnt;
-                        (StringMap.add id 
-                        {index = !num_mlocal; count = cnt; typ = tp} m)
-                | _ -> raise (Failure("Build index: Unexpected type"))
-        ) map fun_var 
-   
-          (*TODO: Struct should be handled seperately. It should have a Struct type
-         * whose arguments are the list of all its constituent basic datatypes
-         *)
-
-    in
     let env = { env with local_index = 
-            (build_struct_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
+            (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
 
     in
         let get_func_entry name = (try
