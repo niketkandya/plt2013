@@ -220,7 +220,6 @@ in let rec print_program = function
            (match hd with
              Global (atmlst) -> "" (*TODO: Global functions code *)
              | Fstart (fname, locals, formals, body, temps) ->
-
                 let env = { env with local_data = build_index 
                       {midx =0;mfp = size_stmfd;lmap = IntMap.empty } 
                       (locals @ formals @ temps) } in

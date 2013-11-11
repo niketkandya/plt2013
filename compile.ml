@@ -179,9 +179,15 @@ let translate env fdecl=
                 Lvar(i,s,c) -> s
                 |Gvar(vn,s) -> s
         in 
-        let conv2_byt_lvar var = match var with
-                Var(id,typ,cnt) -> get_var id
-                | Struct(vnm, vlst) -> get_var vnm
+        let rec conv2_byt_lvar = function
+                [] -> []
+                | hd::tl -> (match hd with
+                  Var(id,typ,cnt) -> (
+                          match typ with
+                          Structtyp -> conv2_byt_lvar ( (gen_struct_varlst id)@tl)
+                          | _ -> (get_var id) :: (conv2_byt_lvar tl)
+                          )
+                | _ -> raise (Failure("Unexpected in bytecode conversion")))
         in
         let rec conv2_byt_tmp tmp = 
                 get_var (temp_prefix ^ string_of_int tmp) ::
@@ -282,8 +288,8 @@ let rec stmt = function
 
 in [Fstart (
             fdecl.fname,
-            (List.map conv2_byt_lvar fdecl.locals),
-            (List.map conv2_byt_lvar fdecl.formals),
+            (conv2_byt_lvar fdecl.locals),
+            (conv2_byt_lvar fdecl.formals),
             (stmt (Block fdecl.body)),
             (get_tmp_lst)
     )]
