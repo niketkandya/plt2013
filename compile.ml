@@ -123,14 +123,32 @@ let translate env fdecl=
      * index more than the previous one. For an array of n elements , it
      * will get an index n more than the previous one *)
 
+    let gen_struct_varlst dotnm = 
+        let dotind = String.index dotnm '.' in
+        let structnm = String.sub dotnm 0 dotind in
+        let varlen = ((String.length dotnm) - (dotind + 1)) in
+        let varnm = String.sub dotnm (dotind +1) varlen in
+        let varlst = (try
+                (StringMap.find structnm env.struct_index)
+                with Not_found -> raise (Failure("Struct '"^structnm^"' not
+                found"))) in 
+        let rec create_lst = (function
+                [] -> []
+                |hd::tl ->(match hd with
+                Var(nm,t,c) -> Var(varnm^"."^nm,t,c)
+                        :: (create_lst tl)
+                |_ -> raise (Failure("Unexpected in list")))
+                ) in create_lst varlst
+    in
     let rec build_local_idx map count= function
        [] -> map
-       | hd:: tl -> build_local_idx (match hd with 
-           Var(id,tp,cnt) ->  count := !count + cnt;
-              (StringMap.add id
-              {index = !count; count = cnt; typ = tp} map)
+       | hd:: tl -> match hd with 
+           Var(id,tp,cnt) -> (match tp with 
+              Structtyp -> build_local_idx map count ((gen_struct_varlst id)@tl)
+                | _ -> count := !count + cnt;
+                build_local_idx (StringMap.add id
+                {index = !count; count = cnt; typ = tp} map) count tl )
            | _ -> raise (Failure("Build index: Unexpected type"))
-        ) count tl
     in
     let env = { env with local_index = 
             (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
@@ -264,9 +282,9 @@ let rec stmt = function
 
 in [Fstart (
             fdecl.fname,
-            (List.map conv2_byt_lvar fdecl.locals), 
-            (List.map conv2_byt_lvar fdecl.formals), 
-            (stmt (Block fdecl.body)), 
+            (List.map conv2_byt_lvar fdecl.locals),
+            (List.map conv2_byt_lvar fdecl.formals),
+            (stmt (Block fdecl.body)),
             (get_tmp_lst)
     )]
 

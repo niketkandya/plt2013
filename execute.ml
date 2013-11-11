@@ -116,38 +116,38 @@ let bin_eval dst var1 op var2 =
         let oper = (match op with
         Add -> p "adds r3, r0, r1"
       | Sub -> p "subs r3, r0, r1" 
-      | Mult -> p "muls r3, r0, r1"
+      | Mult ->p "muls r3, r0, r1"
       | Div -> p "Division"
       | Equal ->
-                      p "cmp r0, r1" ^
-                      p "moveq r3,#1" ^
-                      p "movne r3,#0" ^
-                      p "uxtb r3,r3"(*TODO-check the need*)
+               p "cmp r0, r1" ^
+               p "moveq r3,#1" ^
+               p "movne r3,#0" ^
+               p "uxtb r3,r3"(*TODO-check the need*)
       | Neq -> 
-                      p "cmp r0, r1" ^ 
-                      p "moveq r3,#0" ^ 
-                      p "movne r3,#1" ^ 
-                      p "uxtb r3,r3"
+               p "cmp r0, r1" ^ 
+               p "moveq r3,#0" ^ 
+               p "movne r3,#1" ^ 
+               p "uxtb r3,r3"
       | Less -> 
-        p "cmp r0, r1" ^
-        p "movlt r3,#1" ^
-        p "movge r3,#0" ^
-        p "uxtb r3,r3"
+               p "cmp r0, r1" ^
+               p "movlt r3,#1" ^
+               p "movge r3,#0" ^
+               p "uxtb r3,r3"
       | Leq -> 
-        p "cmp r0, r1" ^
-        p "movle r3,#1" ^
-        p "movgt r3,#0"^
-        p "uxtb r3,r3"
+               p "cmp r0, r1" ^
+               p "movle r3,#1" ^
+               p "movgt r3,#0"^
+               p "uxtb r3,r3"
       | Greater -> 
-        p "cmp r0, r1"^
-        p "movgt r3,#1"^
-        p "movle r3,#0"^
-        p "uxtb r3,r3"
+               p "cmp r0, r1"^
+               p "movgt r3,#1"^
+               p "movle r3,#0"^
+               p "uxtb r3,r3"
       | Geq -> 
-        p "cmp r0, r1"^
-        p "movge r3,#1"^
-        p "movlt r3,#0"^
-        p "uxtb r3,r3"
+               p "cmp r0, r1"^
+               p "movge r3,#1"^
+               p "movlt r3,#0"^
+               p "uxtb r3,r3"
         )
 in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
 in
@@ -224,11 +224,6 @@ in let rec print_program = function
                 let env = { env with local_data = build_index 
                       {midx =0;mfp = size_stmfd;lmap = IntMap.empty } 
                       (locals @ formals @ temps) } in
-          (*     let env =
-               let tmp = { env with local_data = build_index 
-                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty } locals } in
-                      { tmp with local_data = build_index tmp.local_data formals
-                      } in*)
                  function_code_gen env fname formals body temps) 
                         ^ (print_program tl)
 in print_string (print_program program)

@@ -34,7 +34,8 @@ rule token = parse
 | "void"   { VOID }
 | ''' ['a'-'z' 'A'-'Z'] as ch ''' { CONSTCHAR(ch) }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
-| ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
+| ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* ('.' ['a'-'z' 'A'-'Z' '0'-'9'
+'_']+)? as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
