@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-CPI_COMPILER="../cpi"
+CPI_COMPILER="../cpi --stdout --stdin"
 RESULTS_DIR="../webserver/tests"
 
 # Get the timestamp of latest commit
