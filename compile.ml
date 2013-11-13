@@ -14,11 +14,11 @@ type func_entry = {
         ret_ty : cpitypes 
          }
 (* Symbol table: Information about all the names in scope *)
-type env = {
+type envt = {
     function_index : func_entry StringMap.t; (* Index for each function *)
     global_index   : var_entry StringMap.t; (* "Address" for global variables *)
     struct_index   : var_decl list StringMap.t;
-    local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
+    local_index    : var_entry StringMap.t ref; (* FP offset for args, locals *)
   }
 
 
@@ -112,12 +112,11 @@ in
 let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
     let num_mlocal = ref 0
-     and num_temp = ref 0
      and count_loop = ref 0
      and count_ifelse = ref 0
      and temp_prefix = "__temp"
+     and temp_list = ref []
      in
-
     (* Index is assigned based on total number of basic datatypes contained
      * in the type. e.g if there a variable of type int, it will get one
      * index more than the previous one. For an array of n elements , it
@@ -144,22 +143,27 @@ let translate env fdecl=
        [] -> map
        | hd:: tl -> match hd with 
            Var(id,tp,cnt) -> (match tp with 
-              Structtyp -> build_local_idx map count ((gen_struct_varlst id)@tl)
+              Structtyp -> build_local_idx map count ((gen_struct_varlst id) @ tl)
                 | _ -> count := !count + cnt;
                 build_local_idx (StringMap.add id
                 {index = !count; count = cnt; typ = tp} map) count tl )
            | _ -> raise (Failure("Build index: Unexpected type"))
     in
-    let env = { env with local_index = 
+    let env = { env with local_index = ref
             (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
-
     in
+        let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
+                let lvar = Lvar(!num_mlocal+ 1+(List.length !temp_list),(get_size_type tp),1)
+                in
+                temp_list :=(lvar :: !temp_list);
+                lvar in
+
         let get_func_entry name = (try
                         StringMap.find name env.function_index
         with Not_found -> raise (Failure("Function not found : " ^ name))) in
-        let get_var ?(bty = false) ?(idx = -1) var = (*idx is when using it for an array subscript*)
+        let get_var ?(en = env.local_index) ?(bty = false) ?(idx = -1) var = (*idx is when using it for an array subscript*)
                 (try
-                (let a = (StringMap.find var env.local_index) in 
+                (let a = (StringMap.find var !(en)) in 
                 let var_idx = if idx = -1 then a.index else a.index - idx
                 and var_cnt = if idx = -1 then a.count else 1 in
                 let var_sz = if bty then (get_size_btype a.typ) else
@@ -188,21 +192,6 @@ let translate env fdecl=
                           | _ -> (get_var id) :: (conv2_byt_lvar tl)
                           )
                 | _ -> raise (Failure("Unexpected in bytecode conversion")))
-        in
-        let rec conv2_byt_tmp tmp = 
-                get_var (temp_prefix ^ string_of_int tmp) ::
-                (match tmp with
-                   1 -> []
-                   | _ -> conv2_byt_tmp ( tmp - 1) )
-        in
-        let get_tmp_lst = if !num_temp > 0 
-                then ( conv2_byt_tmp !num_temp) 
-                else [] in
-        let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
-                num_temp := !num_temp + 1;
-                env.local_index = StringMap.add (temp_prefix ^ string_of_int !num_temp )
-                {index = (!num_mlocal + !num_temp); count = 1;typ = tp} env.local_index;
-                Lvar((!num_mlocal + !num_temp),(get_size_type tp),1)
         in
         let get_loop_label num = "loop" ^ match num with
                 0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
@@ -237,7 +226,7 @@ let rec expr = function
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2
                                 and v3 = (add_temp Int)
-                in (gen_atom v3) @  v1 @ v2 @ 
+                in (gen_atom v3) @  v1 @ v2  @
                 [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
                 (get_atom(List.hd (List.rev v2))))]
       | Assign (s, e) ->
@@ -285,19 +274,27 @@ let rec stmt = function
                         [Branch l1] @ [Label l0] @ v1 @ [Label l1] 
                         @ v2 @ [Predicate (v3,true,l0)]
       | _ -> []
-
-in [Fstart (
+      in 
+      let asdf =
+            (stmt (Block fdecl.body)) in
+[Fstart (
             fdecl.fname,
             (conv2_byt_lvar fdecl.locals),
             (conv2_byt_lvar fdecl.formals),
-            (stmt (Block fdecl.body)),
-            (get_tmp_lst)
+            asdf,
+            (!temp_list)
+        (*let rec conv2_byt_tmp tmp = 
+                get_var ~en:env.local_index (temp_prefix ^ string_of_int tmp) ::
+                (match tmp with
+                   1 -> []
+                   | _ -> conv2_byt_tmp ( tmp - 1) )
+        in ( conv2_byt_tmp !num_temp) *)
     )]
 
 in let env = { function_index = function_indexes;
 		 global_index = global_indexes;
                  struct_index = struct_indexes;
-		 local_index = StringMap.empty } in
+		 local_index = ref StringMap.empty } in
 
   (* Code executed to start the program *)
 let entry_function = try

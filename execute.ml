@@ -43,12 +43,13 @@ let dbg_print var = match var with
         Lvar(i,s,c) -> "Index: " ^ string_of_int i ^
                         "Size: " ^ string_of_int s ^
                         "Count: " ^ string_of_int c
+        | Debug(s) -> "Debug" ^ s ^"\n"
         | _ -> "IMPLEMENT"
 in
 let rec build_index lenv= function
         [] -> lenv
         | hd :: tl -> let add_align = match hd with
-                Lvar(idx,sz,cnt) -> tmp_idx := idx;
+                Lvar(idx,sz,cnt) -> (tmp_idx := idx;
                                 tmp_fp := (lenv.mfp + ((int_of_float (ceil 
                 ( (f (sz * cnt)) /. (f align_size) )) * align_size)));
                 let rec add_noalign _idx _fp _cnt _map = 
@@ -64,11 +65,15 @@ let rec build_index lenv= function
                  * lowest 1 byte and not the higest one byte when its aligned at 
                  * align_size bytes *)
                 in add_noalign idx (if cnt = 1 then (!tmp_fp - align_size + sz)
-                        else !tmp_fp) cnt lenv.lmap
+                        else !tmp_fp) cnt lenv.lmap)
+                   | Debug(s)-> lenv.lmap
                    | _ -> raise (Failure ("Unexpected for local index building"))
         in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
 in
 let function_code_gen env fname formals body temps =
+        let branch lb = p ("b " ^ lb) in
+        let gen_label lbl = lbl ^ ":" ^ "\n" in
+        let exit_label = fname ^ "_exit" in
         let idx_to_offset idx = (try
                 let res = IntMap.find idx env.local_data.lmap in
                 res.fp_offset
@@ -79,7 +84,6 @@ let function_code_gen env fname formals body temps =
         with Not_found ->
                 ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
         in
-        
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
@@ -177,9 +181,9 @@ let asm_code_gen = function
   | Mov (dst, src) ->  "Move"
   | Fcall (fname, args,ret) ->  function_call fname args ret  (*Whenever a function
           is called*) (*TODO do something for the ret value*)
-  | Rval var -> load_code "r0" var
-  | Branch label -> p ("bl " ^ label)
-  | Label label -> label ^ ":" ^ "\n"
+  | Rval var -> (load_code "r0" var) ^ (branch exit_label)
+  | Branch label -> branch label
+  | Label label -> gen_label label
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 
@@ -192,6 +196,8 @@ let func_start_code =
             fname ^ ":\n" ^
                    (p "stmfd sp!, {fp, lr}") ^
                    p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
+                  (* List.fold_left (fun s v->s ^ "\n" ^ (dbg_print v)) "" temps
+                   ^*)
                    p ("sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
@@ -200,7 +206,8 @@ let func_start_code =
                     (* TODO : ifjthe variable size is 1 byte, strb should be
                      * used instead and the var_size should be updated
                      * accordingly *)
-        and func_end_code = p "sub sp, fp, #4" ^
+        and func_end_code = (gen_label exit_label) ^
+                p "sub sp, fp, #4" ^
                        p "ldmfd sp!, {fp, pc}" ^ "\n"
         in func_start_code ^
         (List.fold_left 
@@ -220,8 +227,8 @@ in let rec print_program = function
            (match hd with
              Global (atmlst) -> "" (*TODO: Global functions code *)
              | Fstart (fname, locals, formals, body, temps) ->
-                let env = { env with local_data = build_index 
-                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty } 
+                let env = { env with local_data = build_index
+                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty}
                       (locals @ formals @ temps) } in
                  function_code_gen env fname formals body temps) 
                         ^ (print_program tl)
