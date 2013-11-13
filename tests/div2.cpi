@@ -1,0 +1,20 @@
+int recDivide( int a, int b)
+{
+    int c;
+    c = a/b;
+    if (c > 8){
+        return recDivide(c, b);
+    }else{
+        return c;
+    }
+}
+
+
+int main()
+{
+    int a;
+    int b;
+    a = 200;
+    b = 4;
+    return recDivide(a, b);
+}

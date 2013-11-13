@@ -121,7 +121,8 @@ let bin_eval dst var1 op var2 =
         Add -> p "adds r3, r0, r1"
       | Sub -> p "subs r3, r0, r1" 
       | Mult ->p "muls r3, r0, r1"
-      | Div -> p "Division"
+      | Div -> p "bl __aeabi_idiv" ^
+               p "mov r3, r0"
       | Equal ->
                p "cmp r0, r1" ^
                p "moveq r3,#1" ^

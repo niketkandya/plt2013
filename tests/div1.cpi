@@ -1,0 +1,8 @@
+int main()
+{
+    int a;
+    int b;
+    a = 39/3;
+    b = (38 + 38)/ 2;
+    return a + b;
+}
