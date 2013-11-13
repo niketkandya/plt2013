@@ -232,4 +232,4 @@ in let rec print_program = function
                       (locals @ formals @ temps) } in
                  function_code_gen env fname formals body temps) 
                         ^ (print_program tl)
-in print_string (print_program program)
+in (print_program program)
