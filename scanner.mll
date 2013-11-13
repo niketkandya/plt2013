@@ -33,6 +33,7 @@ rule token = parse
 | "struct" { STRUCT }
 | "void"   { VOID }
 | ''' ['a'-'z' 'A'-'Z'] as ch ''' { CONSTCHAR(ch) }
+| '"' [^'"']* '"'  as lxm { STRING(lxm) }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* ('.' ['a'-'z' 'A'-'Z' '0'-'9'
 '_']+)? as lxm { ID(lxm) }

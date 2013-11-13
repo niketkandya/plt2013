@@ -8,6 +8,7 @@ type var_decl = Var of string * cpitypes * int
 
 type expr =
     Literal of int
+  | String of string
   | Addrof of expr
   | ConstCh of string
   | Id of string

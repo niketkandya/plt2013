@@ -68,7 +68,6 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
-
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
@@ -222,6 +221,7 @@ in
 *)
 let rec expr = function
         Literal i -> gen_atom (Lit i)
+      | String s -> gen_atom (Sstr s)
       | Id s -> gen_atom (get_var s)
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2
