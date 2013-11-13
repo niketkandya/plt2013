@@ -10,7 +10,7 @@ int main()
 	a = 5;
 	b = 0;
 	while( a != 0) {
-		b = b + a;
+		b = fun(a,b);
 		a = a - 1;
 	}
 	return b;

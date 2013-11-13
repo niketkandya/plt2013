@@ -1,0 +1,11 @@
+int main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	*a = 12;
+
+    *a = *a + b - 59;
+
+	return *a + b;
+}

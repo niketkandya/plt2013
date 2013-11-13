@@ -1,6 +1,5 @@
 struct a {
 	int a;
-	char c;
 	int arr[3];
 	char carr[3];
 };
@@ -8,4 +7,11 @@ struct a {
 
 int main() {
 	struct a b;
+
+    b.a = 1;
+    b.arr[0] = 1;
+    b.arr[1] = 2;
+    b.arr[2] = 3;
+
+    return (b.arr[0] + b.arr[2] - b.a);
 }

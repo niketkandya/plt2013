@@ -1,0 +1,18 @@
+int main()
+{
+	int a;
+	int b;
+    int *c;
+	a = 7;
+	b = 10;
+    *c = 15;
+
+    if (b + *c  >  b * *c -1 ) {
+	    a = a + 2; 
+    } else {
+	    a = a + 1;
+	}
+
+    return a;
+}
+

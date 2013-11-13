@@ -1,0 +1,15 @@
+char main()
+{
+
+    int hello[5];
+    hello[0] = 1 - 395;
+    hello[1] = 19 * 47;
+    hello[2] = 2 + 5;
+    hello[3] = hello[1] * hello[2];
+    hello[4] = hello[3] - hello[2];
+
+
+    hello[0] = hello[1] * (hello[3] -  hello[3]) + hello[4] + hello[2];
+
+    return hello[0] + hello[3];
+}

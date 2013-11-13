@@ -1,0 +1,6 @@
+int main()
+{
+	char a;
+	a = 'b' + 8;
+	return a;
+}
