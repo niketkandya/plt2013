@@ -69,6 +69,10 @@ let rec build_index lenv= function
                    | Debug(s)-> lenv.lmap
                    | _ -> raise (Failure ("Unexpected for local index building"))
         in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
+        in let size_of_lvar l = match l with
+                Lvar(i,s,c)-> s
+                   | Gvar(n,s)-> s
+                   | _ -> raise (Failure("Cannot generate size"))
 in
 let function_code_gen env fname formals body temps =
         let branch lb = p ("b " ^ lb) in
@@ -111,6 +115,17 @@ let function_code_gen env fname formals body temps =
                         p ((pre bsz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
+        | Array(arr,ind) -> (load_code reg ind) ^
+                            (load_code "r4" arr) ^
+                            p ("mla "^reg^","^reg^"#"^ (size_of_lvar arr
+                            )^",r4") ^
+
+
+                        
+                        (load_code "r0" Addr(arr))
+                                ^ (load_code "r1" ind)
+                                ^ p ("add r0,r0,r1")
+                                ^ p ((pre 
        in
        let load_code reg var = (* load variable var to register reg *)
                 gen_ldr_str_code "ldr" "=" reg var
@@ -164,7 +179,6 @@ let function_call fname args ret=
                (store_code "r0" ret)
                (* TODO implement properly *)
 in
-
 let predicate cond jmpontrue label = 
         let brn = if jmpontrue then "\t beq "
                     else "\t bne "
@@ -232,4 +246,4 @@ in let rec print_program = function
                       (locals @ formals @ temps) } in
                  function_code_gen env fname formals body temps) 
                         ^ (print_program tl)
-in (print_program program)
+in print_string (print_program program)

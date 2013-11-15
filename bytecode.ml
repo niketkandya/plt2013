@@ -8,6 +8,7 @@ type atom =
   | Pntr of atom * int
   | Addr of atom
   | Debug of string
+  | Array of atom * atom
 
 type bstmt =
     Atom of atom

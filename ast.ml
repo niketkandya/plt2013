@@ -1,18 +1,30 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
-type cpitypes = Void | Int | Char |Intptr | Charptr | Structtyp | Intarr | Chararr
-                |Structarr
+type cpitypes = Void | Int | Char | Struct of string | Ptr | Arr
 
-type var_decl = Var of string * cpitypes * int
-                | Struct of string * var_decl list
+type resolve = Dot | Ind
+
+
+type var_decl = {
+        vname: string;
+        vtype: cpitypes list;
+        vcount: int
+}
+
+type struct_decl = {
+        sname: string;
+        smembers: var_decl list
+}
+
 
 type expr =
     Literal of int
   | Addrof of expr
   | ConstCh of string
   | Id of string
-  | Ptr of string
-  | Arr of string * int
+  | MultiId of string * resolve * expr
+  | Pointer of expr
+  | Array of string * expr
   | Binop of expr * op * expr
   | Assign of expr * expr
   | Call of string * expr list
@@ -36,7 +48,12 @@ type func_decl = {
   }
 
 
-type program = var_decl list * func_decl list
+type program = {
+        gdecls : var_decl list;
+        sdecls : struct_decl list;
+        fdecls : func_decl list
+}
+
 (*
 let rec string_of_expr = function
     Literal(l) -> string_of_int l

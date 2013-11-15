@@ -243,7 +243,10 @@ let rec expr = function
                 (List.map (fun par -> get_atom (List.hd par)) param)
                 ,ret)]
       | Ptr(v) ->  gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
-      | Arr(nm,ind) -> gen_atom (get_var ~bty:true ~idx:ind nm)
+      | Arr(nm,ind) ->(try
+                      gen_atom (get_var ~bty:true ~idx:(int_of_string ind) nm)
+                      with _ ->gen_atom(Array(gen_atom(get_var nm),gen_atom(get_var
+                        nm))))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | ConstCh(ch) -> gen_atom(Cchar(ch.[1]))
       | Noexpr ->[]

@@ -4,7 +4,7 @@
 %token PLUS MINUS TIMES DIVIDE ASSIGN
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
-%token AMPERSAND 
+%token AMPERSAND INDIRECTION DOT
 %token <string> CONSTCHAR
 %token <int> LITERAL
 %token <string> ID
@@ -45,7 +45,12 @@ retval:
         |VOID ID LPAREN { Void, $2  }
 
 sdecl:
-        STRUCT ID LBRACE vdecl_list RBRACE SEMI { Struct($2,$4) }
+        STRUCT ID LBRACE vdecl_list RBRACE SEMI 
+        { {
+          sname = $2;
+          smembers = $4;
+           }
+        }
 
 formals_opt:
     /* nothing */ { [] }
@@ -63,19 +68,52 @@ vdecl:
    | tdecl SEMI { $1 }
 
 tdecl:
-     INT ID { Var($2,Int,1) }
-     | CHAR ID { Var($2,Char,1) }
-     | INT ptr { Var($2, Intptr,1) }
-     | CHAR ptr {Var($2, Charptr,1) }
-     | CHAR arr { Var((fst $2),Chararr,(snd $2)) }
-     | INT arr { Var((fst $2),Intarr,(snd $2)) }
-     | STRUCT ID ID {Var($2^"."^$3, Structtyp,1) }
+        INT rdecl      {  
+                        {
+                        vname = $2.vname;
+                        vtype = $2.vtype @ [Int];
+                        vcount = $2.vcount
+                        } 
+                       }
+     | CHAR rdecl      { 
+                        {
+                        vname = $2.vname;
+                        vtype = $2.vtype @ [Char];
+                        vcount = $2.vcount
+                        }
+                       }
+     | STRUCT ID rdecl {
+                      { vname = $3.vname; 
+                        vtype = $3.vtype @ [Struct($2)]; 
+                        vcount = $3.vcount
+                      }
+                       }
 
-arr:
-        ID LSUBS LITERAL RSUBS { $1,$3 }
+rdecl: 
+        ID           { 
+                      { vname = $1;
+                        vtype = [];
+                        vcount = 1 
+                      }
+                     }
+     
+        | arrdecl       { {
+                        vname = $1.vname;
+                        vtype = $1.vtype @ [Arr];
+                        vcount = $1.vcount
+                        } }
+        | TIMES rdecl   { {
+                        vname = $2.vname;
+                        vtype = $2.vtype @ [Ptr];
+                        vcount = $2.vcount
+                        } }
 
-ptr:
-        TIMES ID        {$2}
+arrdecl:
+        ID LSUBS LITERAL RSUBS { {
+          vname = $1;
+          vtype = [Arr];
+          vcount = $3
+           } }
 
 stmt_list:
     /* nothing */  { [] }
@@ -84,7 +122,6 @@ stmt_list:
 stmt:
     expr SEMI { Expr($1) }
   | RETURN expr SEMI { Return($2) }
-  | RETURN consts SEMI { Return($2) }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
@@ -98,6 +135,8 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
+  | AMPERSAND lvalue { Addrof($2)  }
+  | CONSTCHAR        { ConstCh($1) }
   | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
@@ -109,23 +148,25 @@ expr:
   | expr LEQ    expr { Binop($1, Leq,   $3) }
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
-  | lvalue ASSIGN expr   { Assign($1, $3) }
-  | lvalue ASSIGN consts   { Assign($1, $3) }
+  | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
 
 lvalue:
-        var     { $1 }
-        | ptr   { Ptr($1) }
+        ptr   {$1}
+        |var  {$1}
 
+ptr:
+        TIMES expr { $2}
 
 var:
         ID      { Id($1) }
-        | arr   { Arr( fst $1, snd $1) } 
+        | arr   { Array( fst $1, snd $1) }
+        | ID DOT var { MultiId($1,Dot,$3) }
+        | ID INDIRECTION var { MultiId($1,Ind,$3) }
 
-consts:
-   AMPERSAND var      { Addrof($2)  }
-  | CONSTCHAR        { ConstCh($1) }
+arr:
+        ID LSUBS expr RSUBS { $1,$3 }
 
 actuals_opt:
     /* nothing */ { [] }
@@ -133,6 +174,4 @@ actuals_opt:
 
 actuals_list:
    expr                    { [$1] }
-  |consts                 { [$1] }
   | actuals_list COMMA expr { $3 :: $1 }
-  | actuals_list COMMA consts { $3 :: $1 }
