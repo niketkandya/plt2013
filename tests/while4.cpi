@@ -1,0 +1,22 @@
+int main()
+{
+	int i;
+    int k;
+	int sum;
+	sum = 0;
+	i = 0;
+    k = 5; 
+    
+    
+	while ( i < 5) {
+        sum = sum + i;
+        i = i + 2;
+	}
+	
+    while ( k >= 0) {
+        sum = sum - i;
+        k = k - 1;
+	}
+
+	return sum * i - k;
+}

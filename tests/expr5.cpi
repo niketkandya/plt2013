@@ -1,0 +1,21 @@
+int main()
+{
+    int *a;
+    int b;
+    int *c;
+    int d;
+    int result1;
+    int result2;
+
+    *a = 4 - 90;
+    b = 10 - 50;
+    c = &b;
+    d = 40;
+
+    
+    result1 = *c * *a / (2 + 8 - *a);
+    b = 3;
+    result2 = *a / *c + 32;  
+
+    return result1 - result2;
+}

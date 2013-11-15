@@ -3,6 +3,7 @@ open Ast
 type atom =
     Lit of int    (*  literal *)
   | Cchar of char
+  | Sstr of string
   | Lvar of int * int * int(* Lvar(index,size,cnt) *)
   | Gvar of string * int (* Globacl var (name,size) *)
   | Pntr of atom * int

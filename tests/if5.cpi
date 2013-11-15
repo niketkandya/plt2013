@@ -1,0 +1,63 @@
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( 1 > 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 < 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 == 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 >= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 < 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 == 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 > 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+}

@@ -1,0 +1,12 @@
+void fun(int *b) {
+	*b = 50;
+}
+int main()
+{
+	int b;
+    int *a;
+	b = 20;
+    a = &b; 
+	fun(&b);
+	return b * *a;
+}

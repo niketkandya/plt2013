@@ -1,6 +1,11 @@
-int fun(char a,int b,int c[5],char d[4])
+int foo(char a, int b, int c, char d)
 {
-	return a + b;
+	return a + b + c +d;
+}
+
+int bar(int *c, char *d)
+{
+	return *c + *d;
 }
 
 int main()
@@ -11,4 +16,15 @@ int main()
 	char aa;
 	char *ab;
 	char ac[5];
+
+    aa = 5;
+    *ab = aa;
+    aa = 5 + 7;
+
+    a = 8 - 94;
+    *b = 50;
+    c[0] = *b - 25; 
+    ac[0] = 4;
+
+    return foo( aa, *b, c[0], ac[0]) + bar(&c[0], &ac[0]); 
 }

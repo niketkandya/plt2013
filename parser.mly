@@ -6,6 +6,7 @@
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
 %token AMPERSAND INDIRECTION DOT
 %token <string> CONSTCHAR
+%token <string> STRING
 %token <int> LITERAL
 %token <string> ID
 %token EOF
@@ -137,6 +138,7 @@ expr:
     LITERAL          { Literal($1) }
   | AMPERSAND lvalue { Addrof($2)  }
   | CONSTCHAR        { ConstCh($1) }
+  | STRING           { String($1) }
   | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }

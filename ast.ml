@@ -19,6 +19,7 @@ type struct_decl = {
 
 type expr =
     Literal of int
+  | String of string
   | Addrof of expr
   | ConstCh of string
   | Id of string

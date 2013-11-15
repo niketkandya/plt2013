@@ -1,0 +1,66 @@
+int main()
+{
+	int a;
+	int b;
+    int *c;
+	a = 7;
+	b = 10;
+    *c = 15;
+
+    if (b  > *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( b < *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( *c == b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( *c <= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c >= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c <= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( b < *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c == (b+5)) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( (*c - 4) >  ( b+ 7 )) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+
+}
