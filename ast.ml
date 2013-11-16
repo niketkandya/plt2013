@@ -1,6 +1,6 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
-type cpitypes = Void | Int | Char | Struct of string | Ptr | Arr
+type cpitypes = Void | Int | Char | Ptr | Arr of int | Struct of string 
 
 type resolve = Dot | Ind
 
@@ -8,7 +8,6 @@ type resolve = Dot | Ind
 type var_decl = {
         vname: string;
         vtype: cpitypes list;
-        vcount: int
 }
 
 type struct_decl = {

@@ -69,51 +69,41 @@ vdecl:
    | tdecl SEMI { $1 }
 
 tdecl:
-        INT rdecl      {  
+        INT rdecl      {
                         {
                         vname = $2.vname;
-                        vtype = $2.vtype @ [Int];
-                        vcount = $2.vcount
-                        } 
+                        vtype = $2.vtype @ [Int]
+                        }
                        }
      | CHAR rdecl      { 
                         {
                         vname = $2.vname;
-                        vtype = $2.vtype @ [Char];
-                        vcount = $2.vcount
+                        vtype = $2.vtype @ [Char]
                         }
                        }
      | STRUCT ID rdecl {
                       { vname = $3.vname; 
-                        vtype = $3.vtype @ [Struct($2)]; 
-                        vcount = $3.vcount
+                        vtype = $3.vtype @ [Struct($2)]
                       }
                        }
 
 rdecl: 
         ID           { 
                       { vname = $1;
-                        vtype = [];
-                        vcount = 1 
+                        vtype = []
                       }
                      }
      
-        | arrdecl       { {
-                        vname = $1.vname;
-                        vtype = $1.vtype @ [Arr];
-                        vcount = $1.vcount
-                        } }
+        | arrdecl       { $1 }
         | TIMES rdecl   { {
                         vname = $2.vname;
                         vtype = $2.vtype @ [Ptr];
-                        vcount = $2.vcount
                         } }
 
 arrdecl:
         ID LSUBS LITERAL RSUBS { {
           vname = $1;
-          vtype = [Arr];
-          vcount = $3
+          vtype = [Arr($3)]
            } }
 
 stmt_list:

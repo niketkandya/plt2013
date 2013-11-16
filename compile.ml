@@ -4,12 +4,12 @@ open Bytecode
 module StringMap = Map.Make(String)
 
 type var_entry = { 
-        index:int;
+        offset:int;
         count:int;
-        typ: cpitypes
+        typ: cpitypes list
 }
 
-type func_entry = { 
+type func_entry = {
         param : var_entry list;
         ret_ty : cpitypes 
          }
@@ -23,22 +23,24 @@ type struct_entry = {
 (* Symbol table: Information about all the names in scope *)
 type envt = {
     function_index : func_entry StringMap.t; (* Index for each function *)
-    global_index   : var_entry StringMap.t; (* "Address" for global variables *)
     struct_index   : struct_entry StringMap.t;
+    global_index   : var_entry StringMap.t; (* "Address" for global variables *)
     local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
 
 
 (*Careful about calling get_size_* functions *)
-let get_size_type lenv typ = match typ with
-                  Void -> 0
-                | Char -> 1
-                | Int
-                | Ptr
-                | Arr -> 4
-                | Struct(sname) -> (StringMap.find sname 
-                        lenv.struct_index).size
-                | _ -> raise (Failure ("Requesting size of wrong type"))
+let get_size_type lenv typlst = function 
+                |[] -> raise (Failure("List empty"))
+                | hd::tl -> (match hd with
+                        Void -> 0
+                        | Char -> 1
+                        | Int
+                        | Ptr -> 4
+                        | Arr(sz) -> sz * 
+                        | Struct(sname) -> (StringMap.find sname 
+                                lenv.struct_index).size
+                        | _ -> raise (Failure ("Requesting size of wrong type")))
 
 let get_idx_count lenv var = var.vcount * 
                 (match (List.hd (List.rev var.vtype)) with
@@ -50,22 +52,14 @@ let get_idx_count lenv var = var.vcount *
 
 
 (* Size of datatypes *)
-let get_size_var var = var.vcount * (get_size_type (List.hd var.vtype))
+let get_size_var var = var.vcount * (get_size_type var.vtype)
 
-(* val enum : int -> 'a list -> (int * 'a) list *)
-let rec enum stride n = function
-    [] -> []
-  | hd::tl -> (n, hd) :: enum stride (n+stride) tl
+let build_global_idx map = map
 
-(* val string_map_pairs StringMap 'a -> (int * 'a) list -> StringMap 'a *)
-let string_map_pairs map pairs =
-  List.fold_left (fun m (i, n) -> StringMap.add n i m) map pairs
-
-let build_global_idx map pairs = map
-
-let rec build_local_idx map count= function
+let rec build_local_idx map env offset hole= function
        [] -> map
-       | hd:: tl -> match (List.hd (List.rev hd.vtype)) with 
+       | hd:: tl -> match (List.hd hd.vtype) with 
+                Arr(sz) -> 
            Struct(sname) -> 
               build_local_idx map count ((gen_struct_varlst id) @ tl)
                 | _ -> count := !count + cnt;
@@ -111,8 +105,8 @@ let function_indexes = List.fold_left
         )
         StringMap.empty functions
 in
-
-  
+let align_size = 4
+in 
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
@@ -122,10 +116,6 @@ let translate env fdecl=
      and temp_prefix = "__temp"
      and temp_list = ref []
      in
-    (* Index is assigned based on total number of basic datatypes contained
-     * in the type. e.g if there a variable of type int, it will get one
-     * index more than the previous one. For an array of n elements , it
-     * will get an index n more than the previous one *)
 
     let gen_struct_varlst dotnm = 
         let dotind = String.index dotnm '.' in
