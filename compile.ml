@@ -13,49 +13,44 @@ type func_entry = {
         param : var_entry list;
         ret_ty : cpitypes 
          }
+
+type struct_entry = {
+        ind_count: int;
+        size: int;
+        memb_index: var_entry StringMap.t
+}
+
 (* Symbol table: Information about all the names in scope *)
 type envt = {
     function_index : func_entry StringMap.t; (* Index for each function *)
     global_index   : var_entry StringMap.t; (* "Address" for global variables *)
-    struct_index   : var_decl list StringMap.t;
-    local_index    : var_entry StringMap.t ref; (* FP offset for args, locals *)
+    struct_index   : struct_entry StringMap.t;
+    local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
 
 
 (*Careful about calling get_size_* functions *)
-let get_size_type typ = match typ with
+let get_size_type lenv typ = match typ with
                   Void -> 0
-                | Char
-                | Chararr -> 1
+                | Char -> 1
                 | Int
-                | Intptr
-                | Charptr
-                | Intarr -> 4
+                | Ptr
+                | Arr -> 4
+                | Struct(sname) -> (StringMap.find sname 
+                        lenv.struct_index).size
                 | _ -> raise (Failure ("Requesting size of wrong type"))
 
-let get_size_btype typ = match typ with
-                  Void -> get_size_type Void
-                | Char -> get_size_type Char
-                | Chararr -> get_size_type Char
-                | Charptr -> get_size_type Char 
-                | Int -> get_size_type Int
-                | Intptr -> get_size_type Int
-                | Intarr -> get_size_type Int
+let get_idx_count lenv var = var.vcount * 
+                (match (List.hd (List.rev var.vtype)) with
+                Char
+                | Int -> 1
+                | Struct(sname) -> (StringMap.find sname
+                        lenv.struct_index).ind_count
                 | _ -> raise (Failure ("Requesting size of wrong type"))
 
-                (* Size of datatypes *)
-let get_size_var var = match var with 
-        Var(id,typ,cnt) -> (match typ with
-                Void
-                | Int
-                | Char
-                | Intptr
-                | Charptr -> get_size_type typ 
-                | Structtyp
-                | Intarr
-                | Chararr
-                | Structarr ->cnt)
-        | Struct(varn,varlist) -> List.length varlist 
+
+(* Size of datatypes *)
+let get_size_var var = var.vcount * (get_size_type (List.hd var.vtype))
 
 (* val enum : int -> 'a list -> (int * 'a) list *)
 let rec enum stride n = function
@@ -68,10 +63,21 @@ let string_map_pairs map pairs =
 
 let build_global_idx map pairs = map
 
+let rec build_local_idx map count= function
+       [] -> map
+       | hd:: tl -> match (List.hd (List.rev hd.vtype)) with 
+           Struct(sname) -> 
+              build_local_idx map count ((gen_struct_varlst id) @ tl)
+                | _ -> count := !count + cnt;
+                build_local_idx (StringMap.add id
+                {index = !count; count = cnt; typ = tp} map) count tl )
+           | _ -> raise (Failure("Build index: Unexpected type"))
+
+
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
-let translate (globals, functions) =
+let translate structs globals functions =
 
         (* Allocate "addresses" for each global variable *)
   (* TODO Code generation for globals *)
@@ -80,7 +86,7 @@ let translate (globals, functions) =
                 (match stct with
                 Struct(nm,lst)-> (StringMap.add nm 
                 lst map)
-                | _ -> map)) StringMap.empty globals
+                | _ -> map)) StringMap.empty structs
           in
   (*TODO: Add the buil-in-function printf to the below list *)
 (* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
@@ -137,16 +143,6 @@ let translate env fdecl=
                         :: (create_lst tl)
                 |_ -> raise (Failure("Unexpected in list")))
                 ) in create_lst varlst
-    in
-    let rec build_local_idx map count= function
-       [] -> map
-       | hd:: tl -> match hd with 
-           Var(id,tp,cnt) -> (match tp with 
-              Structtyp -> build_local_idx map count ((gen_struct_varlst id) @ tl)
-                | _ -> count := !count + cnt;
-                build_local_idx (StringMap.add id
-                {index = !count; count = cnt; typ = tp} map) count tl )
-           | _ -> raise (Failure("Build index: Unexpected type"))
     in
     let env = { env with local_index = ref
             (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
