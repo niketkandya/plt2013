@@ -7,8 +7,8 @@
 %token AMPERSAND INDIRECTION DOT
 %token <string> CONSTCHAR
 %token <string> STRING
-%token <int> LITERAL
 %token <string> ID
+%token <int> LITERAL
 %token EOF
 
 %nonassoc NOELSE
@@ -25,10 +25,10 @@
 %%
 
 program:
-   /* nothing */ { [], [] }
- | program sdecl { ($2 :: fst $1), snd $1 }
- | program vdecl { ($2 :: fst $1), snd $1 }
- | program fdecl { fst $1, ($2 :: snd $1) }
+        /* nothing */ { {gdecls=[];sdecls=[];fdecls=[] } }
+ | program sdecl { {gdecls= $1.gdecls; sdecls=$2::$1.sdecls; fdecls= $1.fdecls} }
+ | program vdecl { {gdecls= $2::$1.gdecls; sdecls=$1.sdecls; fdecls=$1.fdecls} }
+ | program fdecl { {gdecls= $1.gdecls; sdecls=$1.sdecls; fdecls=$2::$1.fdecls} }
 
 
 fdecl:
