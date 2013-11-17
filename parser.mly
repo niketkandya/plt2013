@@ -93,7 +93,6 @@ rdecl:
                         vtype = []
                       }
                      }
-     
         | arrdecl       { $1 }
         | TIMES rdecl   { {
                         vname = $2.vname;

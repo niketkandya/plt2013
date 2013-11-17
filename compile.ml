@@ -5,7 +5,6 @@ module StringMap = Map.Make(String)
 
 type var_entry = { 
         offset:int;
-        count:int;
         typ: cpitypes list
 }
 
@@ -29,43 +28,33 @@ type envt = {
   }
 
 
-(*Careful about calling get_size_* functions *)
-let get_size_type lenv typlst = function 
+let rec get_size_type lenv typlst = function 
                 |[] -> raise (Failure("List empty"))
                 | hd::tl -> (match hd with
                         Void -> 0
                         | Char -> 1
                         | Int
                         | Ptr -> 4
-                        | Arr(sz) -> sz * 
+                        | Arr(sz) -> sz * (get_size_type tl)
                         | Struct(sname) -> (StringMap.find sname 
                                 lenv.struct_index).size
                         | _ -> raise (Failure ("Requesting size of wrong type")))
 
-let get_idx_count lenv var = var.vcount * 
-                (match (List.hd (List.rev var.vtype)) with
-                Char
-                | Int -> 1
-                | Struct(sname) -> (StringMap.find sname
-                        lenv.struct_index).ind_count
-                | _ -> raise (Failure ("Requesting size of wrong type"))
-
-
-(* Size of datatypes *)
-let get_size_var var = var.vcount * (get_size_type var.vtype)
 
 let build_global_idx map = map
 
-let rec build_local_idx map env offset hole= function
+let rec build_local_idx map env offset= function
        [] -> map
-       | hd:: tl -> match (List.hd hd.vtype) with 
-                Arr(sz) -> 
-           Struct(sname) -> 
-              build_local_idx map count ((gen_struct_varlst id) @ tl)
-                | _ -> count := !count + cnt;
-                build_local_idx (StringMap.add id
-                {index = !count; count = cnt; typ = tp} map) count tl )
-           | _ -> raise (Failure("Build index: Unexpected type"))
+       | hd:: tl -> offset := !offset + get_size_type hd.vtype
+                in match (List.hd hd.vtype) with
+                Char -> build_local_idx 
+                (StringMap.add hd.vname 
+                {offset=!offset; typ= hd.vtype} map) env offset
+                | _ -> offset := align_size *
+                        int_of_float(ceil ((float_of_int offset ) /.
+                        (float_of_int align_size)))
+                in build_local_idx (StringMap.add hd.vname
+                {offset=!offset; typ=hd.vtype} map) env offset
 
 
 (* Translate a program in AST form into a bytecode program.  Throw an
@@ -110,7 +99,7 @@ in
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
     (* Bookkeeping: FP offsets for locals and arguments *)
-    let num_mlocal = ref 0
+    let curr_offset = ref 0
      and count_loop = ref 0
      and count_ifelse = ref 0
      and temp_prefix = "__temp"
@@ -134,8 +123,9 @@ let translate env fdecl=
                 |_ -> raise (Failure("Unexpected in list")))
                 ) in create_lst varlst
     in
-    let env = { env with local_index = ref
-            (build_local_idx StringMap.empty num_mlocal (fdecl.locals @ fdecl.formals)) }
+    let env = { env with local_index =
+            (build_local_idx StringMap.empty env (fdecl.locals @
+            fdecl.formals) curr_offset ) }
     in
         let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
                 let lvar = Lvar(!num_mlocal+ 1+(List.length !temp_list),(get_size_type tp),1)
