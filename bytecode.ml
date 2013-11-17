@@ -6,7 +6,7 @@ type atom =
   | Sstr of string
   | Lvar of int * int(* Lvar(offset,cnt) *)
   | Gvar of string * int (* Globacl var (name,size) *)
-  | Pntr of int * 'a list 
+  | Pntr of atom * atom (* Pntr(base, offset) *)
   | Addr of atom
   | Debug of string
 

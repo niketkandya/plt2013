@@ -119,7 +119,7 @@ let translate env fdecl=
         let get_func_entry name = (try
                         StringMap.find name env.function_index
         with Not_found -> raise (Failure("Function not found : " ^ name))) in
-        let get_var ?(en = env.local_index) ?(bty = false) ?(idx = -1) var = (*idx is when using it for an array subscript*)
+        (* let get_var ?(en = env.local_index) ?(bty = false) ?(idx = -1) var = 
                 (try
                 (let a = (StringMap.find var !(en)) in 
                 let var_idx = if idx = -1 then a.index else a.index - idx
@@ -135,12 +135,27 @@ let translate env fdecl=
                                 (get_size_type a.typ) in
                         (Gvar(var,var_sz)) (*TODO- *)
                 with Not_found -> raise (Failure ("Undeclared variable " ^ var)))
-                in
+                in*)
+        let get_varname_lvar var = 
+                (try
+                        Lvar(StringMap.find var env.local_index,
+                        (get_varname_size var))
+                 with Not_found -> (try
+                         Gvar(StringMap.find var env.local_index,
+                        (get_varname_size var))
+                 with Not_found -> raise Failure(var ^": Not found")))
+        in 
         let get_varname_size ?(bt = false) ?(ix = -1) varname = 
                 match (get_var ~bty:bt ~idx:ix varname) with
                 Lvar(i,s,c) -> s
                 |Gvar(vn,s) -> s
         in 
+        let get_size_varname varname =
+                (try
+                get_size_type (StringMap.find varname env.local_index).typ
+                with Not_found -> raise Failure("Varname not found")
+                )
+                in
         let rec conv2_byt_lvar = function
                 [] -> []
                 | hd::tl -> (match hd with
@@ -185,7 +200,7 @@ let rec expr = function
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2
                                 and v3 = (add_temp Int)
-                in (gen_atom v3) @  v1 @ v2  @
+                in (gen_atom v3) @  v1 @ v2 @
                 [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
                 (get_atom(List.hd (List.rev v2))))]
       | Assign (s, e) ->
@@ -202,10 +217,11 @@ let rec expr = function
                 (List.map (fun par -> get_atom (List.hd par)) param)
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
-      | Arr(nm,ind) ->(try
-                      gen_atom (get_var ~bty:true ~idx:(int_of_string ind) nm)
-                      with _ ->gen_atom(Array(gen_atom(get_var nm),gen_atom(get_var
-                        nm))))
+      | Array(base,e) -> let v1 = expr e
+                        and v2 = add_temp Int
+                         in [BinEval (v2, (Lit (get_size_varname base)),
+                         Mult,(get_atom(List.hd (List.rev v2))))] @
+                         (get_atom (Pntr((get_varname_lvar base),v2)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | ConstCh(ch) -> gen_atom(Cchar(ch.[1]))
       | Noexpr ->[]
