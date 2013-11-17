@@ -43,9 +43,8 @@ let rec get_size_type sindex typlst = function
 
 let build_global_idx map = map
 
-let align_size = 4
-in
-let calc_offset sidx offset typlst = let offset = offset + get_size_type sidx typlst
+let calc_offset sidx offset typlst = let align_size = 4 in
+                let offset = offset + get_size_type sidx typlst
                 in match (List.hd typlst) with
                 Char -> offset
                 | _ ->  align_size *
@@ -55,8 +54,8 @@ let calc_offset sidx offset typlst = let offset = offset + get_size_type sidx ty
 
 let rec build_local_idx map sidx offset = function
        [] -> map
-       | hd:: tl ->offset := (calc_offset sidx !offset hd.vtype) in
-                build_local_idx (StringMap.add hd.vname 
+       | hd:: tl -> offset := (calc_offset sidx !offset hd.vtype);
+                build_local_idx (StringMap.add hd.vname
                 {offset = !offset; typ=hd.vtype} map) sidx offset
 
 
@@ -99,43 +98,26 @@ let function_indexes = List.fold_left
         )
         StringMap.empty functions
 in
-in 
+
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
-    (* Bookkeeping: FP offsets for locals and arguments *)
     let curr_offset = ref 0
-     and count_loop = ref 0
-     and count_ifelse = ref 0
-     in
+        and count_loop = ref 0
+        and count_ifelse = ref 0
+                in
     let env = { env with local_index =
-            (build_local_idx StringMap.empty env (fdecl.locals @
-            fdecl.formals) curr_offset ) }
-    in
+            (build_local_idx StringMap.empty env 
+            (fdecl.locals @ fdecl.formals) curr_offset ) }
+                in
         let add_temp typlst =
                 curr_offset := calc_offset env.struct_index !curr_offset
                 typlst in
                 Lvar(!curr_offset,(get_size_type env.struct_index typlst))
-        in
+                in
         let get_func_entry name = (try
                         StringMap.find name env.function_index
-        with Not_found -> raise (Failure("Function not found : " ^ name))) in
-        (* let get_var ?(en = env.local_index) ?(bty = false) ?(idx = -1) var = 
-                (try
-                (let a = (StringMap.find var !(en)) in 
-                let var_idx = if idx = -1 then a.index else a.index - idx
-                and var_cnt = if idx = -1 then a.count else 1 in
-                let var_sz = if bty then (get_size_btype a.typ) else
-                                (get_size_type a.typ) in
-                        Lvar (var_idx,var_sz,var_cnt))
-                with Not_found -> try 
-                        let a = (StringMap.find var env.global_index) in
-               (* let var_idx = if idx = -1 then a.index else a.index - idx
-                and var_cnt = if idx = -1 then a.count else 1 in*)
-                let var_sz = if bty then (get_size_btype a.typ) else
-                                (get_size_type a.typ) in
-                        (Gvar(var,var_sz)) (*TODO- *)
-                with Not_found -> raise (Failure ("Undeclared variable " ^ var)))
-                in*)
+        with Not_found -> raise (Failure("Function not found : " ^ name))) 
+                in
         let get_varname_lvar var = 
                 (try
                         Lvar(StringMap.find var env.local_index,
@@ -193,7 +175,7 @@ let translate env fdecl=
                 0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
                 |1 -> string_of_int !count_loop ^ "_end"
                 |_ -> ""
-        in
+                in
         let get_ifelse_label num =  match num with 
                 0 -> "else" ^ string_of_int (count_ifelse := !count_ifelse + 1;
                         !count_ifelse)
@@ -203,11 +185,11 @@ let translate env fdecl=
         let gen_atom atm = [Atom (atm)]
                 in
         let get_atom = function
-          Atom (atm) -> atm
-        | BinEval  (dst, var1, op, var2) -> dst
-        | Fcall (fname, args,ret ) -> ret
-        | Assgmt (dst, src) -> dst 
-        | _ -> raise (Failure ("Unexpected value requested for"))
+                Atom (atm) -> atm
+                | BinEval  (dst, var1, op, var2) -> dst
+                | Fcall (fname, args,ret ) -> ret
+                | Assgmt (dst, src) -> dst 
+                | _ -> raise (Failure ("Unexpected value requested for"))
                 in
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
@@ -264,11 +246,14 @@ let rec expr = function
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd(List.tl par))) param)
                 ,ret)]
-      | Pointer(e) -> let v1 = expr e in gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
+      | Pointer(e) -> let v1 = expr e in gen_atom (Pntr( get_atom (List.hd
+                        (List.tl v1))))
       | Array(base,e) -> let v1 = expr e in
-                         let v2 = add_temp (get_binres_type v1)
-                         in incr_by_ptrsz v1 (get_ptrsize_varname base) @
-                         (get_atom (Pntr((get_varname_lvar base),v2)))
+                         let v2 = add_temp (get_binres_type v1) in
+                         let v3 = add_temp (get_type_varname base)
+                         in (incr_by_ptrsz v1 (get_ptrsize_varname base) v2) @
+                         [BinEval (v3,Addr(v1),Add,v2)] @
+                         (gen_atom (Pntr(v3)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | Noexpr ->[]
 
@@ -318,7 +303,7 @@ let rec stmt = function
 in let env = { function_index = function_indexes;
 		 global_index = global_indexes;
                  struct_index = struct_indexes;
-		 local_index = ref StringMap.empty } in
+		 local_index = StringMap.empty } in
 
   (* Code executed to start the program *)
 let entry_function = try
