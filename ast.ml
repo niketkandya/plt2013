@@ -44,7 +44,7 @@ type func_decl = {
     formals : var_decl list;
     locals : var_decl list;
     body : stmt list;
-    ret : cpitypes
+    ret : cpitypes list
   }
 
 

@@ -10,7 +10,7 @@ type var_entry = {
 
 type func_entry = {
         param : var_entry list;
-        ret_ty : cpitypes 
+        ret_ty : cpitypes list
          }
 
 type struct_entry = {
@@ -161,13 +161,11 @@ let translate env fdecl=
                 in
         let rec conv2_byt_lvar = function
                 [] -> []
-                | hd::tl -> (match hd with
-                  Var(id,typ,cnt) -> (
-                          match typ with
-                          Structtyp -> conv2_byt_lvar ( (gen_struct_varlst id)@tl)
-                          | _ -> (get_var id) :: (conv2_byt_lvar tl)
-                          )
-                | _ -> raise (Failure("Unexpected in bytecode conversion")))
+                | hd::tl -> let entry = StringMap.find hd.vname
+                env.local_index 
+                in Lvar(entry.offset, 
+                (get_size_type env.struct_index entry.typ))
+                :: (conv2_byt_lvar tl) 
                 in
         let get_loop_label num = "loop" ^ match num with
                 0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
@@ -200,11 +198,13 @@ let dbg_get_var_name var = match var with
 in
 *)
 let rec expr = function
-        Literal i -> (gen_binres_type Int) @ gen_atom (Lit i)
+        Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
       char]*)
-      | ConstCh(ch) -> (gen_binres_type Char) @ gen_atom(Cchar(ch.[1]))
-      | Id s -> ( gen_binres_type(get_varname_type s)) @ gen_atom (get_var s)
+      | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
+      | Id s -> ( gen_binres_type(get_type_varname s)) @ gen_atom
+                (get_lvar_varname s)
+      | MultiId(fstr,resolve,e) -> expr e
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
@@ -216,15 +216,16 @@ let rec expr = function
                 if (List.hd binres) = Ptr then
                         (if List.hd v1binres = Ptr then
                                 let tmp = (add_temp v2binres) in
-                (incr_by_ptrsz v2 (get_size_type (List.tl (get_binres_type v1)))
-                tmp)
-                @ [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
-                tmp)]
+                (incr_by_ptrsz v2 (get_size_type env.struct_index 
+                (List.tl (get_binres_type v1)))
+                tmp) @ 
+                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)]
                         else
                                 let tmp = (add_temp v1binres) in
-                (incr_by_ptrsz v1 (get_size_type (List.tl (get_binres_type v2)))
-                tmp)
-                @ [BinEval (v3 ,tmp, op,(get_atom (List.hd (List.rev v2))))]
+                (incr_by_ptrsz v1 (get_size_type env.struct_index 
+                (List.tl (get_binres_type v2)))
+                tmp) @ 
+                [BinEval (v3 ,tmp, op,(get_atom (List.hd (List.rev v2))))]
                         )
                 else
                 [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
@@ -232,7 +233,7 @@ let rec expr = function
       | Assign (s, e) ->
                       let v1 = (expr e)
                       and v2 = (expr s)
-                      in (get_binres_type v2) @ v1 @ v2 @
+                      in (gen_binres_type (get_binres_type v2)) @ v1 @ v2 @
                 [Assgmt ((get_atom(List.hd (List.tl v2))),get_atom (List.hd
                 (List.tl v1)))]
       | Call (fname, actuals) ->  (try
@@ -250,12 +251,11 @@ let rec expr = function
                          let v2 = add_temp (get_binres_type v1) in
                          let v3 = add_temp (get_type_varname base)
                          in (incr_by_ptrsz v1 (get_ptrsize_varname base) v2) @
-                         [BinEval (v3,Addr(v1),Add,v2)] @
+                         [BinEval (v3,Addr(get_lvar_varname base ),Add,v2)] @
                          (gen_atom (Pntr(v3)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | Noexpr ->[]
-
-    in 
+    in
 let rec stmt = function
 	Block sl     ->
                 (List.fold_left (fun str lst -> str @ lst) [] 
@@ -284,10 +284,8 @@ let rec stmt = function
       in 
 [Fstart (
             fdecl.fname,
-            (conv2_byt_lvar fdecl.locals),
             (conv2_byt_lvar fdecl.formals),
-            (stmt (Block fdecl.body)),
-            (!temp_list)
+            (stmt (Block fdecl.body))
     )]
 
 in let env = { function_index = function_indexes;

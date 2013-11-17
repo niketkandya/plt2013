@@ -12,21 +12,8 @@ type byc_gvar_entry = { (*TODO: add more require elements*)
         label: string;
 }
 
-type byc_lvar_entry = {
-        fp_offset:int;
-        size:int;
-        count:int
-}
-
-type byc_local_env = {
-        lmap: byc_lvar_entry IntMap.t;
-        midx : int;
-        mfp  : int
-}
-
 type byc_env = {
         global_index: byc_gvar_entry StringMap.t;
-        local_data: byc_local_env
 }
 
 
@@ -46,30 +33,7 @@ let dbg_print var = match var with
         | Debug(s) -> "Debug" ^ s ^"\n"
         | _ -> "IMPLEMENT"
 in
-let rec build_index lenv= function
-        [] -> lenv
-        | hd :: tl -> let add_align = match hd with
-                Lvar(idx,sz,cnt) -> (tmp_idx := idx;
-                                tmp_fp := (lenv.mfp + ((int_of_float (ceil 
-                ( (f (sz * cnt)) /. (f align_size) )) * align_size)));
-                let rec add_noalign _idx _fp _cnt _map = 
-                    match _cnt with
-                    0 -> _map
-                   | _ -> let m = IntMap.add 
-                        _idx 
-                        {fp_offset = _fp; size = sz; 
-                        count = (if cnt = _cnt then _cnt else 1 )} 
-                        _map 
-                        in add_noalign (_idx -1) (_fp - sz) (_cnt -1) m
-                (* the second argument calculation is to ensure that char has the 
-                 * lowest 1 byte and not the higest one byte when its aligned at 
-                 * align_size bytes *)
-                in add_noalign idx (if cnt = 1 then (!tmp_fp - align_size + sz)
-                        else !tmp_fp) cnt lenv.lmap)
-                   | Debug(s)-> lenv.lmap
-                   | _ -> raise (Failure ("Unexpected for local index building"))
-        in build_index {midx = !tmp_idx; mfp = !tmp_fp ; lmap = add_align} tl
-        in let size_of_lvar l = match l with
+        let size_of_lvar l = match l with
                 Lvar(i,s,c)-> s
                    | Gvar(n,s)-> s
                    | _ -> raise (Failure("Cannot generate size"))
@@ -78,16 +42,6 @@ let function_code_gen env fname formals body temps =
         let branch lb = p ("b " ^ lb) in
         let gen_label lbl = lbl ^ ":" ^ "\n" in
         let exit_label = fname ^ "_exit" in
-        let idx_to_offset idx = (try
-                let res = IntMap.find idx env.local_data.lmap in
-                res.fp_offset
-                (* When not found, its assumed that its a temporary variable.
-                 * For not assuming all temporaries are Int only and hence this
-                 * calulation is made for the temps
-                 *)
-        with Not_found ->
-                ((idx - env.local_data.midx) * 4 ) + env.local_data.mfp)
-        in
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
@@ -232,19 +186,13 @@ let func_start_code =
 in
 let env = {
         global_index = StringMap.empty;
-        local_data = {lmap=IntMap.empty;
-                        mfp =0;
-                        midx = 0}
          }
 in let rec print_program = function 
         [] -> "" 
         | hd :: tl ->
            (match hd with
              Global (atmlst) -> "" (*TODO: Global functions code *)
-             | Fstart (fname, locals, formals, body, temps) ->
-                let env = { env with local_data = build_index
-                      {midx =0;mfp = size_stmfd;lmap = IntMap.empty}
-                      (locals @ formals @ temps) } in
-                 function_code_gen env fname formals body temps) 
+             | Fstart (fname, formals, body) ->
+                 function_code_gen fname formals body)
                         ^ (print_program tl)
 in print_string (print_program program)

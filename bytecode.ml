@@ -25,5 +25,5 @@ type bstmt =
   | Label of string
 
 type prog = 
-  Fstart of string * atom list * atom list * bstmt list * atom list (*start of a function*)
+  Fstart of string * atom list * bstmt list (*start of a function*)
   | Global of atom list

@@ -41,9 +41,9 @@ fdecl:
          } }
 
 retval:
-        INT ID LPAREN { Int, $2  }
-        |CHAR ID LPAREN { Char, $2  }
-        |VOID ID LPAREN { Void, $2  }
+        INT ID LPAREN { [Int], $2  }
+        |CHAR ID LPAREN { [Char], $2  }
+        |VOID ID LPAREN { [Void], $2  }
 
 sdecl:
         STRUCT ID LBRACE vdecl_list RBRACE SEMI 
