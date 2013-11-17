@@ -14,7 +14,6 @@ type func_entry = {
          }
 
 type struct_entry = {
-        ind_count: int;
         size: int;
         memb_index: var_entry StringMap.t
 }
@@ -28,7 +27,8 @@ type envt = {
   }
 
 
-let rec get_size_type lenv typlst = function 
+
+let rec get_size_type sindex typlst = function 
                 |[] -> raise (Failure("List empty"))
                 | hd::tl -> (match hd with
                         Void -> 0
@@ -37,24 +37,27 @@ let rec get_size_type lenv typlst = function
                         | Ptr -> 4
                         | Arr(sz) -> sz * (get_size_type tl)
                         | Struct(sname) -> (StringMap.find sname 
-                                lenv.struct_index).size
+                                sindex).size
                         | _ -> raise (Failure ("Requesting size of wrong type")))
 
 
 let build_global_idx map = map
 
-let rec build_local_idx map env offset= function
-       [] -> map
-       | hd:: tl -> offset := !offset + get_size_type hd.vtype
-                in match (List.hd hd.vtype) with
-                Char -> build_local_idx 
-                (StringMap.add hd.vname 
-                {offset=!offset; typ= hd.vtype} map) env offset
-                | _ -> offset := align_size *
+let align_size = 4
+in
+let calc_offset sidx offset typlst = let offset = offset + get_size_type sidx typlst
+                in match (List.hd typlst) with
+                Char -> offset
+                | _ ->  align_size *
                         int_of_float(ceil ((float_of_int offset ) /.
                         (float_of_int align_size)))
-                in build_local_idx (StringMap.add hd.vname
-                {offset=!offset; typ=hd.vtype} map) env offset
+
+
+let rec build_local_idx map sidx offset = function
+       [] -> map
+       | hd:: tl ->offset := (calc_offset sidx !offset hd.vtype) in
+                build_local_idx (StringMap.add hd.vname 
+                {offset = !offset; typ=hd.vtype} map) sidx offset
 
 
 (* Translate a program in AST form into a bytecode program.  Throw an
@@ -65,11 +68,13 @@ let translate structs globals functions =
         (* Allocate "addresses" for each global variable *)
   (* TODO Code generation for globals *)
   let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
-  let struct_indexes = List.fold_left (fun map stct -> 
-                (match stct with
-                Struct(nm,lst)-> (StringMap.add nm 
-                lst map)
-                | _ -> map)) StringMap.empty structs
+  let struct_indexes = List.fold_left (fun map stct ->
+                let soffset = ref 0 in
+                let index = build_local_idx StringMap.empty 
+                map soffset stct.smembers in
+                (StringMap.add stct.sname
+                {size = !soffset; memb_index = index} map))
+                StringMap.empty structs
           in
   (*TODO: Add the buil-in-function printf to the below list *)
 (* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
@@ -94,7 +99,6 @@ let function_indexes = List.fold_left
         )
         StringMap.empty functions
 in
-let align_size = 4
 in 
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
@@ -102,36 +106,12 @@ let translate env fdecl=
     let curr_offset = ref 0
      and count_loop = ref 0
      and count_ifelse = ref 0
-     and temp_prefix = "__temp"
-     and temp_list = ref []
      in
-
-    let gen_struct_varlst dotnm = 
-        let dotind = String.index dotnm '.' in
-        let structnm = String.sub dotnm 0 dotind in
-        let varlen = ((String.length dotnm) - (dotind + 1)) in
-        let varnm = String.sub dotnm (dotind +1) varlen in
-        let varlst = (try
-                (StringMap.find structnm env.struct_index)
-                with Not_found -> raise (Failure("Struct '"^structnm^"' not
-                found"))) in 
-        let rec create_lst = (function
-                [] -> []
-                |hd::tl ->(match hd with
-                Var(nm,t,c) -> Var(varnm^"."^nm,t,c)
-                        :: (create_lst tl)
-                |_ -> raise (Failure("Unexpected in list")))
-                ) in create_lst varlst
-    in
     let env = { env with local_index =
             (build_local_idx StringMap.empty env (fdecl.locals @
             fdecl.formals) curr_offset ) }
     in
-        let add_temp tp = (*Generate a temporary variable and updates in locals_index *)
-                let lvar = Lvar(!num_mlocal+ 1+(List.length !temp_list),(get_size_type tp),1)
-                in
-                temp_list :=(lvar :: !temp_list);
-                lvar in
+        let add_temp typlst =  in
 
         let get_func_entry name = (try
                         StringMap.find name env.function_index
