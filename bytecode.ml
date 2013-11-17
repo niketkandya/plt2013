@@ -6,7 +6,7 @@ type atom =
   | Sstr of string
   | Lvar of int * int(* Lvar(offset,cnt) *)
   | Gvar of string * int (* Globacl var (name,size) *)
-  | Pntr of atom * atom (* Pntr(base, offset) *)
+  | Pntr of atom (* Pntr(addr) *)
   | Addr of atom
   | Debug of string
 
@@ -14,6 +14,7 @@ type bstmt =
     Atom of atom
   | Rval of atom
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
+  | BinRes of cpitypes list
   | Assgmt of atom * atom
   | Str of string * atom
   | Ldr of string * atom

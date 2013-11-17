@@ -144,17 +144,40 @@ let translate env fdecl=
                          Gvar(StringMap.find var env.local_index,
                         (get_varname_size var))
                  with Not_found -> raise Failure(var ^": Not found")))
-        in 
+                in 
         let get_varname_size ?(bt = false) ?(ix = -1) varname = 
                 match (get_var ~bty:bt ~idx:ix varname) with
                 Lvar(i,s,c) -> s
                 |Gvar(vn,s) -> s
-        in 
+                in 
         let get_size_varname varname =
+                get_size_type (get_type_varname varname)
+                in
+        let get_ptrsize_varname varname =
+                get_size_type (List.tl (get_type_varname varname))
+                in
+        let get_type_varname varname =
                 (try
-                get_size_type (StringMap.find varname env.local_index).typ
+                (StringMap.find varname env.local_index).typ
                 with Not_found -> raise Failure("Varname not found")
                 )
+                in
+        let get_binres_type e = match List.hd e with
+                BinRes(typ) -> typ
+                | _ -> raise (Failure("Unexpted type: Expected BinRes"))
+                in
+        let gen_binres_type typ = 
+                [BinRes(typ)]
+                in
+        let get_dom_type typ1 typ1 =
+                if  List.hd typ1 = Ptr then typ1
+                else( if List.hd typ2 = Ptr then typ2
+                      else(
+                           if (get_size_type typ1) <= (get_size_type typ1) 
+                           then typ2 
+                           else typ1
+                           )
+                      )
                 in
         let rec conv2_byt_lvar = function
                 [] -> []
@@ -165,7 +188,7 @@ let translate env fdecl=
                           | _ -> (get_var id) :: (conv2_byt_lvar tl)
                           )
                 | _ -> raise (Failure("Unexpected in bytecode conversion")))
-        in
+                in
         let get_loop_label num = "loop" ^ match num with
                 0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
                 |1 -> string_of_int !count_loop ^ "_end"
@@ -176,16 +199,19 @@ let translate env fdecl=
                         !count_ifelse)
                 |1 -> "end" ^ string_of_int !count_ifelse
                 |_ -> ""
-        in
+                in
         let gen_atom atm = [Atom (atm)]
-        in
+                in
         let get_atom = function
           Atom (atm) -> atm
         | BinEval  (dst, var1, op, var2) -> dst
         | Fcall (fname, args,ret ) -> ret
         | Assgmt (dst, src) -> dst 
         | _ -> raise (Failure ("Unexpected value requested for"))
-        in
+                in
+        let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
+                         Mult,(get_atom(List.hd (List.rev exp))))]
+                in
 (*
 let dbg_get_var_name var = match var with 
             Lit(i) -> "\n" ^string_of_int i
@@ -194,19 +220,41 @@ let dbg_get_var_name var = match var with
 in
 *)
 let rec expr = function
-        Literal i -> gen_atom (Lit i)
-      | String s -> gen_atom (Sstr s)
-      | Id s -> gen_atom (get_var s)
+        Literal i -> (gen_binres_type Int) @ gen_atom (Lit i)
+      | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
+      char]*)
+      | ConstCh(ch) -> (gen_binres_type Char) @ gen_atom(Cchar(ch.[1]))
+      | Id s -> ( gen_binres_type(get_varname_type s)) @ gen_atom (get_var s)
       | Binop (e1, op, e2) -> let v1 = expr e1 
-                                and v2 = expr e2
-                                and v3 = (add_temp Int)
-                in (gen_atom v3) @  v1 @ v2 @
-                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, 
+                                and v2 = expr e2 in
+                let v1binres = get_binres_type v1
+                and v2binres = get_binres_type v2 in
+                let binres = get_dom_type v1binres v2binres in 
+                let v3 = (add_temp binres)
+                in 
+                (gen_binres_type binres) @ (gen_atom v3) @  v1 @ v2 @
+                if (List.hd binres) = Ptr then
+                        (if List.hd v1binres = Ptr then
+                                let tmp = (add_temp v2binres) in
+                (incr_by_ptrsz v2 (get_size_type (List.tl (get_binres_type v1)))
+                tmp)
+                @ [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
+                tmp)]
+                        else
+                                let tmp = (add_temp v1binres) in
+                (incr_by_ptrsz v1 (get_size_type (List.tl (get_binres_type v2)))
+                tmp)
+                @ [BinEval (v3 ,tmp, op,(get_atom (List.hd (List.rev v2))))]
+                        )
+                else
+                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
                 (get_atom(List.hd (List.rev v2))))]
       | Assign (s, e) ->
                       let v1 = (expr e)
-                      in (expr s) @ v1 @
-                [Assgmt ((get_atom(List.hd (expr s))),get_atom (List.hd v1))]
+                      and v2 = (expr s)
+                      in (get_binres_type v2) @ v1 @ v2 @
+                [Assgmt ((get_atom(List.hd (List.tl v2))),get_atom (List.hd
+                (List.tl v1)))]
       | Call (fname, actuals) ->  (try
                (StringMap.find fname env.function_index)
                 with Not_found -> raise (Failure ("undefined function " ^ fname)));
@@ -214,16 +262,14 @@ let rec expr = function
                 and ret = (add_temp (get_func_entry fname).ret_ty)
                 in (gen_atom ret ) @ List.concat param @
                 [Fcall (fname,List.rev 
-                (List.map (fun par -> get_atom (List.hd par)) param)
+                (List.map (fun par -> get_atom (List.hd(List.tl par))) param)
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
-      | Array(base,e) -> let v1 = expr e
-                        and v2 = add_temp Int
-                         in [BinEval (v2, (Lit (get_size_varname base)),
-                         Mult,(get_atom(List.hd (List.rev v2))))] @
+      | Array(base,e) -> let v1 = expr e in
+                         let v2 = add_temp (get_binres_type v1)
+                         in incr_by_ptrsz v1 (get_ptrsize_varname base) @
                          (get_atom (Pntr((get_varname_lvar base),v2)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
-      | ConstCh(ch) -> gen_atom(Cchar(ch.[1]))
       | Noexpr ->[]
 
     in 
