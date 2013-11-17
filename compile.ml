@@ -111,8 +111,11 @@ let translate env fdecl=
             (build_local_idx StringMap.empty env (fdecl.locals @
             fdecl.formals) curr_offset ) }
     in
-        let add_temp typlst =  in
-
+        let add_temp typlst =
+                curr_offset := calc_offset env.struct_index !curr_offset
+                typlst in
+                Lvar(!curr_offset,(get_size_type env.struct_index typlst))
+        in
         let get_func_entry name = (try
                         StringMap.find name env.function_index
         with Not_found -> raise (Failure("Function not found : " ^ name))) in
@@ -198,7 +201,7 @@ let rec expr = function
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd par)) param)
                 ,ret)]
-      | Ptr(v) ->  gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
+      | Pointer(e) -> let v1 = expr e in gen_atom (Pntr((get_var v),(get_varname_size ~bt:true v) ))
       | Arr(nm,ind) ->(try
                       gen_atom (get_var ~bty:true ~idx:(int_of_string ind) nm)
                       with _ ->gen_atom(Array(gen_atom(get_var nm),gen_atom(get_var
