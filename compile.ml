@@ -27,6 +27,14 @@ type envt = {
   }
 
 
+let dbg_str_typs typ = match typ with 
+                        Void -> "Void" 
+                        | Char -> "Char"
+                        | Int -> "Int"
+                        | Ptr -> "Ptr" 
+                        | Arr(sz) -> "Arr" 
+                        | Struct(sname) -> "Struct " ^ sname
+                        | _ -> raise (Failure ("Requesting size of wrong"))
 
 let rec get_size_type sindex = function 
                 |[] -> raise (Failure("List empty"))
@@ -191,7 +199,15 @@ let translate env fdecl=
                 | BinEval  (dst, var1, op, var2) -> dst
                 | Fcall (fname, args,ret ) -> ret
                 | Assgmt (dst, src) -> dst 
-                | _ -> raise (Failure ("Unexpected value requested for"))
+                | Label (a)-> raise (Failure ("Unexpected: Label-> " ^ a))
+                | Predicate (_, _, _)-> raise (Failure ("Unexpected: Predicate"))
+                | Branch _-> raise (Failure ("Unexpected: Branch"))
+                | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
+                | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
+                | Str (_, _)-> raise (Failure ("Unexpected: Str"))
+                | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ dbg_str_typs
+                (List.hd ty)))
+                |Rval _ -> raise (Failure ("Unexpected: Rval"))
                 in
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
@@ -208,17 +224,17 @@ let rec expr = function
       | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
       char]*)
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
-      | Id s -> ( gen_binres_type(get_type_varname s)) @ gen_atom
-                (get_lvar_varname s)
+      | Id s -> (gen_binres_type(get_type_varname s)) @
+                gen_atom(get_lvar_varname s)
       | MultiId(fstr,resolve,e) -> expr e
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
                 and v2binres = get_binres_type v2 in
                 let binres = get_dom_type v1binres v2binres in 
-                let v3 = (add_temp binres)
-                in 
-                (gen_binres_type binres) @ (gen_atom v3) @  v1 @ v2 @
+                let v3 = (add_temp binres) in
+                (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @ 
+                (List.tl v2) @
                 if (List.hd binres) = Ptr then
                         (if List.hd v1binres = Ptr then
                                 let tmp = (add_temp v2binres) in
@@ -242,14 +258,12 @@ let rec expr = function
                       in (gen_binres_type (get_binres_type v2)) @ v1 @ v2 @
                 [Assgmt ((get_atom(List.hd (List.tl v2))),get_atom (List.hd
                 (List.tl v1)))]
-      | Call (fname, actuals) ->  (try
-               (StringMap.find fname env.function_index)
-                with Not_found -> raise (Failure ("undefined function " ^ fname)));
+      | Call (fname, actuals) ->
                 let param = List.map expr (List.rev actuals)
                 and ret = (add_temp (get_func_entry fname).ret_ty)
-                in (gen_atom ret ) @ List.concat param @
-                [Fcall (fname,List.rev 
-                (List.map (fun par -> get_atom (List.hd(List.tl par))) param)
+                in (gen_atom ret) @ List.concat param @
+                [Fcall (fname,List.rev
+                (List.map (fun par -> get_atom (List.hd (List.tl par))) param)
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in gen_atom 
                 (Pntr( (get_atom (List.hd (List.tl v1))),
@@ -261,7 +275,8 @@ let rec expr = function
                          (incr_by_ptrsz v1 v4 v2) @
                          [BinEval (v3,Addr(get_lvar_varname base ),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
-      | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
+      | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom
+                        (List.hd(List.tl v1))))
       | Noexpr ->[]
     in
 let rec stmt = function
@@ -270,7 +285,8 @@ let rec stmt = function
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
-      | Return e     -> let v1 = expr e in v1 @ [Rval (get_atom (List.hd v1))]
+      | Return e     -> let v1 = expr e in v1 @ 
+                        [Rval (get_atom (List.hd (List.tl v1)))]
       | If (p, t, f) -> let v1 = expr p 
                         and v2 = stmt t 
                         and v3 = (stmt f) in

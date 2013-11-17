@@ -21,10 +21,6 @@ let execute_prog program =
         let p asm = "\t " ^ asm ^ "\n"
         and size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
         in
-(* lenv is of type byc_local_env *)
-let tmp_idx = ref 0 and tmp_fp = ref 0 in
-let f i = float_of_int i 
-in
 let dbg_print var = match var with
         Lvar(off,sz) -> "Offset: " ^ string_of_int off ^
                         "Size: " ^ (string_of_int sz)
@@ -67,6 +63,8 @@ let function_code_gen fname formals body stack_sz =
                         p ((pre psz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
+        | Sstr (s) -> "" (*TODO*)
+        | Debug (s) -> s
        in
        let load_code reg var = (* load variable var to register reg *)
                 gen_ldr_str_code "ldr" "=" reg var
@@ -141,6 +139,7 @@ let asm_code_gen = function
   | Branch label -> branch label
   | Label label -> gen_label label
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
+  | BinRes (_) -> ""
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 
                 Atom (atm ) -> false
@@ -182,4 +181,4 @@ in let rec print_program = function
              | Fstart (fname, formals, body, stack_sz) ->
                  function_code_gen fname formals body stack_sz)
                         ^ (print_program tl)
-in (print_program program)
+in print_string ("asdfasd" ^ (print_program program));(print_program program)

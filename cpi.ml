@@ -30,8 +30,8 @@ let save filename s =
 let compile in_channel out_file =
     let program =
         let lexbuf = Lexing.from_channel in_channel in
-        let program = Parser.program Scanner.token lexbuf in
-        Compile.translate program in
+        let prog = Parser.program Scanner.token lexbuf in
+        Compile.translate prog in
 
     let asm = (Execute.execute_prog program) in
         if !use_stdout then print_string asm
