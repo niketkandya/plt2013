@@ -20,25 +20,25 @@ type byc_env = {
 let execute_prog program = 
         let p asm = "\t " ^ asm ^ "\n"
         and size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
-        and align_size = 4 (*Alignment of the stack *)
         in
 (* lenv is of type byc_local_env *)
 let tmp_idx = ref 0 and tmp_fp = ref 0 in
 let f i = float_of_int i 
 in
 let dbg_print var = match var with
-        Lvar(i,s,c) -> "Index: " ^ string_of_int i ^
-                        "Size: " ^ string_of_int s ^
-                        "Count: " ^ string_of_int c
+        Lvar(off,sz) -> "Offset: " ^ string_of_int off ^
+                        "Size: " ^ (string_of_int sz)
         | Debug(s) -> "Debug" ^ s ^"\n"
         | _ -> "IMPLEMENT"
 in
         let size_of_lvar l = match l with
-                Lvar(i,s,c)-> s
+                Lvar(off,sz)-> sz
                    | Gvar(n,s)-> s
                    | _ -> raise (Failure("Cannot generate size"))
 in
-let function_code_gen env fname formals body temps =
+let idx_to_offset off = off + size_stmfd
+        in
+let function_code_gen fname formals body stack_sz =
         let branch lb = p ("b " ^ lb) in
         let gen_label lbl = lbl ^ ":" ^ "\n" in
         let exit_label = fname ^ "_exit" in
@@ -50,36 +50,23 @@ let function_code_gen env fname formals body temps =
                 match atm with
           Lit (i) -> p ( (pre 4)  ^ sym ^ string_of_int i)
         | Cchar (ch) -> p ((pre 1) ^ sym ^ string_of_int (int_of_char ch))
-        | Lvar (idx, sz, cnt) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
-                                 (idx_to_offset idx) ^"]"))
+        | Lvar (off, sz) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
+                                 (idx_to_offset off) ^"]"))
         | Gvar (vname, sz) -> "" (*TODO *)
         | Addr (vnm) -> (match vnm with
-                Lvar(idx,sz,cnt) -> (match sz with
+                Lvar(off,sz) -> (match sz with
                   0 -> ""
                 | _ -> 
                         p ("sub " ^reg^", fp,#" ^ 
-                        string_of_int (idx_to_offset idx) ))
+                        string_of_int (idx_to_offset off) ))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                    | _ -> raise(Failure ("Lvars only should be passed")))
-        | Pntr (vnm,bsz) -> (match vnm with
-                Lvar(idx,sz,cnt) ->( match sz with
-                        0 -> ""
-                        | _ ->
-                        (gen_ldr_str_code "ldr" "=" "r4" vnm) ^
-                        p ((pre bsz) ^ "[r4,#0]"))
+        | Pntr (dst,psz) -> (match dst with
+                Lvar(off,sz) ->( if sz=0 then ""
+                else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
+                        p ((pre psz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
-        | Array(arr,ind) -> (load_code reg ind) ^
-                            (load_code "r4" arr) ^
-                            p ("mla "^reg^","^reg^"#"^ (size_of_lvar arr
-                            )^",r4") ^
-
-
-                        
-                        (load_code "r0" Addr(arr))
-                                ^ (load_code "r1" ind)
-                                ^ p ("add r0,r0,r1")
-                                ^ p ((pre 
        in
        let load_code reg var = (* load variable var to register reg *)
                 gen_ldr_str_code "ldr" "=" reg var
@@ -167,7 +154,7 @@ let func_start_code =
                    p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
                   (* List.fold_left (fun s v->s ^ "\n" ^ (dbg_print v)) "" temps
                    ^*)
-                   p ("sub sp, sp,#" ^ string_of_int (env.local_data.mfp - size_stmfd)) ^ 
+                   p ("sub sp, sp,#" ^ string_of_int stack_sz ) ^ 
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
@@ -192,7 +179,7 @@ in let rec print_program = function
         | hd :: tl ->
            (match hd with
              Global (atmlst) -> "" (*TODO: Global functions code *)
-             | Fstart (fname, formals, body) ->
-                 function_code_gen fname formals body)
+             | Fstart (fname, formals, body, stack_sz) ->
+                 function_code_gen fname formals body stack_sz)
                         ^ (print_program tl)
 in print_string (print_program program)

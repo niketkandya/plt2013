@@ -36,7 +36,6 @@ let compile in_channel out_file =
     let asm = (Execute.execute_prog program) in
         if !use_stdout then print_string asm
         else save out_file asm
-        
 
 (* MAIN *)
 let main = 

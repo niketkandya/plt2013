@@ -138,6 +138,9 @@ let translate env fdecl=
                 Lvar(i,s,c) -> s
                 |Gvar(vn,s) -> s
                 in *)
+        let get_ptrsize_type typlst =
+                get_size_type env.struct_index (List.tl typlst)
+                in
         let get_ptrsize_varname varname =
                 get_size_type env.struct_index (List.tl (get_type_varname varname))
                 in
@@ -245,14 +248,16 @@ let rec expr = function
                 [Fcall (fname,List.rev 
                 (List.map (fun par -> get_atom (List.hd(List.tl par))) param)
                 ,ret)]
-      | Pointer(e) -> let v1 = expr e in gen_atom (Pntr( get_atom (List.hd
-                        (List.tl v1))))
+      | Pointer(e) -> let v1 = expr e in gen_atom 
+                (Pntr( (get_atom (List.hd (List.tl v1))),
+                (get_ptrsize_type (get_binres_type v1))))
       | Array(base,e) -> let v1 = expr e in
                          let v2 = add_temp (get_binres_type v1) in
-                         let v3 = add_temp (get_type_varname base)
-                         in (incr_by_ptrsz v1 (get_ptrsize_varname base) v2) @
+                         let v3 = add_temp (get_type_varname base) in
+                         let v4 = get_ptrsize_varname base in 
+                         (incr_by_ptrsz v1 v4 v2) @
                          [BinEval (v3,Addr(get_lvar_varname base ),Add,v2)] @
-                         (gen_atom (Pntr(v3)))
+                         (gen_atom (Pntr(v3,v4)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom(List.hd v1)))
       | Noexpr ->[]
     in
@@ -285,7 +290,8 @@ let rec stmt = function
 [Fstart (
             fdecl.fname,
             (conv2_byt_lvar fdecl.formals),
-            (stmt (Block fdecl.body))
+            (stmt (Block fdecl.body)),
+            !curr_offset
     )]
 
 in let env = { function_index = function_indexes;
