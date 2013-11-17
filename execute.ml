@@ -182,4 +182,4 @@ in let rec print_program = function
              | Fstart (fname, formals, body, stack_sz) ->
                  function_code_gen fname formals body stack_sz)
                         ^ (print_program tl)
-in print_string (print_program program)
+in (print_program program)

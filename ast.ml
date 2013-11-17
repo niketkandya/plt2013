@@ -49,8 +49,8 @@ type func_decl = {
 
 
 type program = {
-        gdecls : var_decl list;
         sdecls : struct_decl list;
+        gdecls : var_decl list;
         fdecls : func_decl list
 }
 

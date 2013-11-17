@@ -42,7 +42,7 @@ let rec get_size_type sindex = function
 type")));;
 
 
-let build_global_idx map = map;;
+let build_global_idx map = StringMap.empty;;
 
 let calc_offset sidx offset typlst = let align_size = 4 in
                 let offset = offset + get_size_type sidx typlst
@@ -63,7 +63,10 @@ let rec build_local_idx map sidx offset = (function
 (* Translate a program in AST form into a bytecode program.  Throw an
     exception if something is wrong, e.g., a reference to an unknown
     variable or function *)
-let translate structs globals functions =
+let translate prog =
+        let structs = prog.sdecls 
+        and globals = prog.gdecls
+        and functions = prog.fdecls in
 
         (* Allocate "addresses" for each global variable *)
   (* TODO Code generation for globals *)
