@@ -28,20 +28,21 @@ type envt = {
 
 
 
-let rec get_size_type sindex typlst = function 
+let rec get_size_type sindex = function 
                 |[] -> raise (Failure("List empty"))
                 | hd::tl -> (match hd with
                         Void -> 0
                         | Char -> 1
                         | Int
                         | Ptr -> 4
-                        | Arr(sz) -> sz * (get_size_type tl)
+                        | Arr(sz) -> sz * (get_size_type sindex tl)
                         | Struct(sname) -> (StringMap.find sname 
                                 sindex).size
-                        | _ -> raise (Failure ("Requesting size of wrong type")))
+                        | _ -> raise (Failure ("Requesting size of wrong
+type")));;
 
 
-let build_global_idx map = map
+let build_global_idx map = map;;
 
 let calc_offset sidx offset typlst = let align_size = 4 in
                 let offset = offset + get_size_type sidx typlst
@@ -49,14 +50,14 @@ let calc_offset sidx offset typlst = let align_size = 4 in
                 Char -> offset
                 | _ ->  align_size *
                         int_of_float(ceil ((float_of_int offset ) /.
-                        (float_of_int align_size)))
+                        (float_of_int align_size)));;
 
 
-let rec build_local_idx map sidx offset = function
+let rec build_local_idx map sidx offset = (function
        [] -> map
        | hd:: tl -> offset := (calc_offset sidx !offset hd.vtype);
                 build_local_idx (StringMap.add hd.vname
-                {offset = !offset; typ=hd.vtype} map) sidx offset
+                {offset = !offset; typ=hd.vtype} map) sidx offset tl);;
 
 
 (* Translate a program in AST form into a bytecode program.  Throw an
@@ -66,7 +67,7 @@ let translate structs globals functions =
 
         (* Allocate "addresses" for each global variable *)
   (* TODO Code generation for globals *)
-  let global_indexes = build_global_idx StringMap.empty (enum 1 0 globals) in
+  let global_indexes = build_global_idx globals in
   let struct_indexes = List.fold_left (fun map stct ->
                 let soffset = ref 0 in
                 let index = build_local_idx StringMap.empty 
@@ -78,17 +79,13 @@ let translate structs globals functions =
   (*TODO: Add the buil-in-function printf to the below list *)
 (* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
 let function_indexes = List.fold_left 
-        (fun map fdecl -> 
+        (fun map fdecl ->
            let rec var_to_lst ind = function
                   [] -> []
-                | hd:: tl -> (match hd with
-                  Var(id,ty,cn) -> 
-                      { index = ind;
-                        count = cn;
-                        typ = ty
-                      } 
-                      :: (var_to_lst (ind+1) tl)
-                | _ -> raise (Failure(" Unexpected var_to_lst"))
+                | hd:: tl -> (
+                        {offset =0 ;(*TODO Check correct values*)
+                        typ = hd.vtype
+                        } :: (var_to_lst (ind+1) tl)
                 ) in
           StringMap.add fdecl.fname 
                 {
@@ -105,44 +102,44 @@ let translate env fdecl=
         and count_loop = ref 0
         and count_ifelse = ref 0
                 in
-    let env = { env with local_index =
-            (build_local_idx StringMap.empty env 
-            (fdecl.locals @ fdecl.formals) curr_offset ) }
+        let env = { env with local_index =
+                (build_local_idx StringMap.empty env.struct_index
+                curr_offset (fdecl.locals @ fdecl.formals)) }
                 in
         let add_temp typlst =
-                curr_offset := calc_offset env.struct_index !curr_offset
-                typlst in
+                curr_offset := (calc_offset env.struct_index !curr_offset
+                typlst);
                 Lvar(!curr_offset,(get_size_type env.struct_index typlst))
                 in
         let get_func_entry name = (try
                         StringMap.find name env.function_index
-        with Not_found -> raise (Failure("Function not found : " ^ name))) 
-                in
-        let get_varname_lvar var = 
-                (try
-                        Lvar(StringMap.find var env.local_index,
-                        (get_varname_size var))
-                 with Not_found -> (try
-                         Gvar(StringMap.find var env.local_index,
-                        (get_varname_size var))
-                 with Not_found -> raise Failure(var ^": Not found")))
-                in 
-        let get_varname_size ?(bt = false) ?(ix = -1) varname = 
-                match (get_var ~bty:bt ~idx:ix varname) with
-                Lvar(i,s,c) -> s
-                |Gvar(vn,s) -> s
-                in 
-        let get_size_varname varname =
-                get_size_type (get_type_varname varname)
-                in
-        let get_ptrsize_varname varname =
-                get_size_type (List.tl (get_type_varname varname))
+                with Not_found -> raise (Failure("Function not found : " ^ name))) 
                 in
         let get_type_varname varname =
                 (try
                 (StringMap.find varname env.local_index).typ
-                with Not_found -> raise Failure("Varname not found")
-                )
+                with Not_found -> raise (Failure("Varname not found")
+                ))
+                in
+        let get_size_varname varname =
+                get_size_type env.struct_index (get_type_varname varname)
+                in
+        let get_lvar_varname var = 
+                (try
+                        Lvar( (StringMap.find var env.local_index).offset,
+                        (get_size_varname var))
+                 with Not_found -> (try
+                         Gvar(var,
+                        (get_size_varname var))
+                 with Not_found -> raise (Failure(var ^": Not found"))))
+                in 
+        (*let get_varname_size ?(bt = false) ?(ix = -1) varname = 
+                match (get_var ~bty:bt ~idx:ix varname) with
+                Lvar(i,s,c) -> s
+                |Gvar(vn,s) -> s
+                in *)
+        let get_ptrsize_varname varname =
+                get_size_type env.struct_index (List.tl (get_type_varname varname))
                 in
         let get_binres_type e = match List.hd e with
                 BinRes(typ) -> typ
@@ -151,11 +148,12 @@ let translate env fdecl=
         let gen_binres_type typ = 
                 [BinRes(typ)]
                 in
-        let get_dom_type typ1 typ1 =
+        let get_dom_type typ1 typ2 =
                 if  List.hd typ1 = Ptr then typ1
                 else( if List.hd typ2 = Ptr then typ2
                       else(
-                           if (get_size_type typ1) <= (get_size_type typ1) 
+                           if (get_size_type env.struct_index typ1) <= 
+                                   (get_size_type env.struct_index typ2) 
                            then typ2 
                            else typ1
                            )
@@ -284,20 +282,12 @@ let rec stmt = function
                         @ v2 @ [Predicate (v3,true,l0)]
       | _ -> []
       in 
-      let asdf =
-            (stmt (Block fdecl.body)) in
 [Fstart (
             fdecl.fname,
             (conv2_byt_lvar fdecl.locals),
             (conv2_byt_lvar fdecl.formals),
-            asdf,
+            (stmt (Block fdecl.body)),
             (!temp_list)
-        (*let rec conv2_byt_tmp tmp = 
-                get_var ~en:env.local_index (temp_prefix ^ string_of_int tmp) ::
-                (match tmp with
-                   1 -> []
-                   | _ -> conv2_byt_tmp ( tmp - 1) )
-        in ( conv2_byt_tmp !num_temp) *)
     )]
 
 in let env = { function_index = function_indexes;
