@@ -1,0 +1,17 @@
+int main()
+{
+	int i;
+	int a[10];
+	int sum;
+
+	sum =0;
+	i =0;
+
+	while(i < 10) {
+		a[i] = i;
+		sum = sum + a[i];
+		i = i + 1;
+	}
+	return sum;
+}
+
