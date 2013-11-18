@@ -20,6 +20,7 @@ type byc_env = {
 let execute_prog program = 
         let p asm = "\t " ^ asm ^ "\n"
         and size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
+        and align_size = 4
         in
 let dbg_print var = match var with
         Lvar(off,sz) -> "Offset: " ^ string_of_int off ^
@@ -179,6 +180,11 @@ in let rec print_program = function
            (match hd with
              Global (atmlst) -> "" (*TODO: Global functions code *)
              | Fstart (fname, formals, body, stack_sz) ->
-                 function_code_gen fname formals body stack_sz)
+                 function_code_gen fname formals body 
+                        (align_size *
+                        int_of_float(ceil ((float_of_int stack_sz ) /.
+                        (float_of_int align_size)))) )
+
+
                         ^ (print_program tl)
-in print_string (print_program program)
+in (print_program program)

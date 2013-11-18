@@ -3,9 +3,10 @@ int main()
 	char *a;
 	char b;
 	b = 'a';
-	*a = 12;
+	a = &b;
+	*a = 'b';
 
-    *a = *a + b - 59;
+    *a = *a + b - 'b';
 
 	return *a + b;
 }
