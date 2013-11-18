@@ -5,6 +5,6 @@ int main()
 {
 	char a;
 	a = 'b';
-	a = fun(a);
+	a = fun(a +1 );
 	return a;
 }

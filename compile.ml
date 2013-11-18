@@ -34,7 +34,64 @@ let dbg_str_typs typ = match typ with
                         | Ptr -> "Ptr" 
                         | Arr(sz) -> "Arr" 
                         | Struct(sname) -> "Struct " ^ sname
-                        | _ -> raise (Failure ("Requesting size of wrong"))
+                        | _ -> raise (Failure ("Requesting size of wrong"));;
+
+let rec dbg_str_Lvar lvar = match lvar with
+                        Lvar(off,sz) -> "Lvar Offset: " ^ string_of_int off ^
+                                " Size: " ^ string_of_int sz
+                        |  Lit (i) -> "Literal: " ^ string_of_int i
+                        | Cchar (ch) -> "Const char :" ^ String.make 1 ch
+                        | Sstr (str) -> "String: " ^ str
+                        | Gvar (_,_) -> "Globals: need implementaiton" (* Globacl var (name,size) *)
+                        | Pntr (atm, sz) -> "Pointer: \n" ^
+                                "value| " ^ (dbg_str_Lvar atm) ^
+                                "Size| " ^ (string_of_int sz)
+                        | Addr (atm)-> "Address: \n" ^
+                                "value| " ^ (dbg_str_Lvar atm) ^"\n"
+                        | Debug(str) -> str
+                        | _ -> raise (Failure ("Needs Implementation"));;
+
+let dbg_str_print str = raise (Failure ("Debug msg: \n" ^str));;
+let dbg_str_op o = match o with
+                Add  -> "Add"
+                | Sub -> "Sub"
+                | Mult -> "Mult"
+                | Div -> "Div"
+                | Equal -> "Equal"
+                | Neq -> "Neq"
+                | Less -> "Less"
+                | Leq -> "Leq"
+                | Greater -> "Greater"
+                | Geq -> "Geq";;
+
+let dbg_str_bstmt bstm = match bstm with
+                Atom (atm) -> "Atom: "^ dbg_str_Lvar atm
+                | BinEval  (dst, var1, op, var2) -> "BinEval -> \n" ^
+                                "Dst |" ^ (dbg_str_Lvar dst)^ "\n" ^
+                                "Var1 |" ^ (dbg_str_Lvar var1) ^ "\n" ^
+                                "Op |" ^ (dbg_str_op op)^ "\n" ^
+                                "Var2 |" ^ (dbg_str_Lvar var2)^ "\n"
+                | Fcall (fname, args,ret ) -> "Fcall" 
+                | Assgmt (dst, src) ->  
+                                "dst |" ^ (dbg_str_Lvar dst)^ "\n" ^
+                                "src |" ^ (dbg_str_Lvar src)^ "\n"
+                | Label (a)-> a                
+                | Predicate (pred, b,label )-> "Predicate: " ^ "\n" ^
+                                "Pred |" ^ (dbg_str_Lvar pred) ^"\n" ^
+                                "Label |" ^ label ^ "\n"
+                | Branch(b)-> "Branch: " ^ b ^ "\n"
+                | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
+                | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
+                | Str (_, _)-> raise (Failure ("Unexpected: Str"))
+                | BinRes(ty) -> " BinRes " ^ 
+                        (List.fold_left (fun s t -> s ^ (dbg_str_typs t)) "" ty)
+                |Rval (rval) -> " Rval" ^ "\n" ^
+                                "Rvalue | " ^ (dbg_str_Lvar rval) ^ "\n";;
+
+let dbg_str_bstmlist lst = List.fold_left 
+        (fun s bstm -> s^"\n" ^ (dbg_str_bstmt bstm)) "" lst;;
+
+
 
 let rec get_size_type sindex = function 
                 |[] -> raise (Failure("List empty"))
@@ -260,10 +317,13 @@ let rec expr = function
                 (List.tl v1)))]
       | Call (fname, actuals) ->
                 let param = List.map expr (List.rev actuals)
-                and ret = (add_temp (get_func_entry fname).ret_ty)
-                in (gen_atom ret) @ List.concat param @
+                and rettyp = (get_func_entry fname).ret_ty in
+                let ret = (add_temp rettyp ) 
+                in (gen_binres_type rettyp)@
+                (gen_atom ret) @ List.concat param @ 
                 [Fcall (fname,List.rev
-                (List.map (fun par -> get_atom (List.hd (List.tl par))) param)
+                (List.map (fun par -> get_atom (List.hd (List.tl
+                par))) param)
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in gen_atom 
                 (Pntr( (get_atom (List.hd (List.tl v1))),
@@ -273,7 +333,7 @@ let rec expr = function
                          let v3 = add_temp (get_type_varname base) in
                          let v4 = get_ptrsize_varname base in 
                          (incr_by_ptrsz v1 v4 v2) @
-                         [BinEval (v3,Addr(get_lvar_varname base ),Add,v2)] @
+                         [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
       | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom
                         (List.hd(List.tl v1))))
