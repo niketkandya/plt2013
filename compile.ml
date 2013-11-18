@@ -242,31 +242,35 @@ let rec expr = function
       | Assign (s, e) ->
                       let v1 = (expr e)
                       and v2 = (expr s)
-                      in (gen_binres_type (get_binres_type v2)) @ v1 @ v2 @
-                [Assgmt ((get_atom(List.hd (List.tl v2))),get_atom (List.hd
-                (List.tl v1)))]
+                      in (gen_binres_type (get_binres_type v2)) 
+                      @ v1 @ v2 @
+                [Assgmt ((get_atom(List.hd (List.rev v2))),get_atom (List.hd
+                (List.rev v1)))]
       | Call (fname, actuals) ->
                 let param = List.map expr (List.rev actuals)
                 and rettyp = (get_func_entry fname).ret_ty in
-                let ret = (add_temp rettyp ) 
-                in (gen_binres_type rettyp)@
+                let ret = (add_temp rettyp ) in 
+                (gen_binres_type rettyp)@
                 (gen_atom ret) @ List.concat param @ 
                 [Fcall (fname,List.rev
-                (List.map (fun par -> get_atom (List.hd (List.tl
+                (List.map (fun par -> get_atom (List.hd (List.rev
                 par))) param)
                 ,ret)]
-      | Pointer(e) -> let v1 = expr e in gen_atom 
-                (Pntr( (get_atom (List.hd (List.tl v1))),
-                (get_ptrsize_type (get_binres_type v1))))
+      | Pointer(e) -> let v1 = expr e in 
+                 let binresv1 = (get_binres_type v1) in
+                v1 @ gen_atom (Pntr( (get_atom (List.hd (List.rev v1))),
+                (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
                          let v2 = add_temp (get_binres_type v1) in
                          let v3 = add_temp (get_type_varname base) in
                          let v4 = get_ptrsize_varname base in 
+                         gen_binres_type(get_type_varname base) @
                          (incr_by_ptrsz v1 v4 v2) @
                          [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
-      | Addrof(v) -> let v1 = expr v in gen_atom (Addr(get_atom
-                        (List.hd(List.tl v1))))
+      | Addrof(v) -> let v1 = expr v in 
+                        gen_binres_type([Void]) @
+                        gen_atom (Addr(get_atom (List.hd(List.rev v1))))
       | Noexpr ->[]
     in
 let rec stmt = function
@@ -275,8 +279,9 @@ let rec stmt = function
                         (List.map stmt sl) )
                         (*stmt sl*)
       | Expr e       -> expr e
-      | Return e     -> let v1 = expr e in v1 @ 
-                        [Rval (get_atom (List.hd (List.tl v1)))]
+      | Return e     -> let v1 = expr e in 
+                        v1 @ 
+                        [Rval (get_atom (List.hd (List.rev v1)))]
       | If (p, t, f) -> let v1 = expr p 
                         and v2 = stmt t 
                         and v3 = (stmt f) in

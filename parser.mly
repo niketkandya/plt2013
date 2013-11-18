@@ -148,7 +148,7 @@ lvalue:
         |var  {$1}
 
 ptr:
-        TIMES expr { $2}
+        TIMES expr {Pointer($2)}
 
 var:
         ID      { Id($1) }

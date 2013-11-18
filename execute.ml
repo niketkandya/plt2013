@@ -42,7 +42,7 @@ let function_code_gen fname formals body stack_sz =
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
                 let pre sz = if sz != 0 then(  oper ^ (if sz = 1 then "b" else "")
-                        ^" "^reg ^", ") else "" in 
+                        ^" "^ reg ^", ") else "" in 
                 match atm with
           Lit (i) -> p ( (pre 4)  ^ sym ^ string_of_int i)
         | Cchar (ch) -> p ((pre 1) ^ sym ^ string_of_int (int_of_char ch))
@@ -58,7 +58,7 @@ let function_code_gen fname formals body stack_sz =
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
                    | _ -> raise(Failure ("Lvars only should be passed")))
         | Pntr (dst,psz) -> (match dst with
-                Lvar(off,sz) ->( if sz=0 then ""
+                Lvar(off,sz) -> (if sz=0 then ""
                 else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
                         p ((pre psz) ^ "[r4,#0]"))
                 |Gvar(vname,sz) -> "" (*TODO: Globals*)
@@ -181,4 +181,4 @@ in let rec print_program = function
              | Fstart (fname, formals, body, stack_sz) ->
                  function_code_gen fname formals body stack_sz)
                         ^ (print_program tl)
-in print_string ("asdfasd" ^ (print_program program));(print_program program)
+in print_string (print_program program)
