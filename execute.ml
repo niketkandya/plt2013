@@ -51,18 +51,17 @@ let function_code_gen fname formals body stack_sz =
                                  (idx_to_offset off) ^"]"))
         | Gvar (vname, sz) -> "" (*TODO *)
         | Addr (vnm) -> (match vnm with
-                Lvar(off,sz) -> (match sz with
-                  0 -> ""
-                | _ -> 
-                        p ("sub " ^reg^", fp,#" ^ 
-                        string_of_int (idx_to_offset off) ))
-                |Gvar(vname,sz) -> "" (*TODO: Globals*)
-                   | _ -> raise(Failure ("Lvars only should be passed")))
+                  Lvar(off,sz) -> (if sz=0 then "" else
+                        p ("sub " ^reg^", fp,#" ^
+                        string_of_int (idx_to_offset off)))
+                | Gvar(vname,sz) -> "" (*TODO: Globals*)
+                | Pntr(dst,psz) -> gen_ldr_str_code oper sym reg dst
+                | _ -> raise(Failure ("Lvars only should be passed")))
         | Pntr (dst,psz) -> (match dst with
-                Lvar(off,sz) -> (if sz=0 then ""
-                else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
+                  Lvar(off,sz) -> (if sz=0 then ""
+                        else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
                         p ((pre psz) ^ "[r4,#0]"))
-                |Gvar(vname,sz) -> "" (*TODO: Globals*)
+                | Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ -> raise(Failure ("Lvars only should be passed")))
         | Sstr (s) -> "" (*TODO*)
         | Debug (s) -> s
@@ -134,8 +133,7 @@ let asm_code_gen = function
   | Str (reg , atm ) ->  "Store"
   | Ldr (reg ,atm ) ->  "Load"
   | Mov (dst, src) ->  "Move"
-  | Fcall (fname, args,ret) ->  function_call fname args ret  (*Whenever a function
-          is called*) (*TODO do something for the ret value*)
+  | Fcall (fname, args,ret) ->  function_call fname args ret  
   | Rval var -> (load_code "r0" var) ^ (branch exit_label)
   | Branch label -> branch label
   | Label label -> gen_label label

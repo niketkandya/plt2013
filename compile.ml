@@ -270,7 +270,7 @@ let rec expr = function
                          [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
       | Addrof(v) -> let v1 = expr v in 
-                        gen_binres_type([Void]) @
+                        gen_binres_type([Ptr]) @ v1 @
                         gen_atom (Addr(get_atom (List.hd(List.rev v1))))
       | Noexpr ->[]
     in
