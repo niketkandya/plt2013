@@ -212,8 +212,11 @@ let rec expr = function
       | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
       char]*)
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
-      | Id s -> (gen_binres_type(get_type_varname s)) @
-                gen_atom(get_lvar_varname s)
+      | Id s -> let retyp = get_type_varname s in
+                        (* match List.hd retyp with
+                        Arr(_) -> let a = Addrof(Id(s)) in expr a
+                        | _ ->*) (gen_binres_type(retyp)) @
+                                gen_atom(get_lvar_varname s)
       | MultiId(fstr,resolve,e) -> expr e
       | Binop (e1, op, e2) -> let v1 = expr e1 
                                 and v2 = expr e2 in
