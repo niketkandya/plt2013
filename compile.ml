@@ -317,10 +317,12 @@ let rec stmt = function
                         @ v2 @ [Predicate (v3,true,l0)]
       | _ -> []
       in 
+      let stmtblock = (stmt (Block fdecl.body))
+      in
 [Fstart (
             fdecl.fname,
             (conv2_byt_lvar fdecl.formals),
-            (stmt (Block fdecl.body)),
+            stmtblock,
             !curr_offset
     )]
 
