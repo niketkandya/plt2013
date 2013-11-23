@@ -1,6 +1,7 @@
 open Ast
 open Bytecode
 open Debug
+open Printexc
 
 module StringMap = Map.Make(String)
 
@@ -31,7 +32,7 @@ type envt = {
 
 
 let rec get_size_type sindex = function 
-                |[] -> raise (Failure("List empty"))
+        |[] ->   raise Exit
                 | hd::tl -> (match hd with
                         Void -> 0
                         | Char -> 1
@@ -59,7 +60,7 @@ let calc_offset sidx offset typlst = let align_size = 4 in
 let rec build_local_idx map sidx offset = (function
        [] -> map
        | hd:: tl -> offset := (calc_offset sidx !offset hd.vtype);
-                build_local_idx (StringMap.add hd.vname
+                                build_local_idx (StringMap.add hd.vname
                 {offset = !offset; typ=hd.vtype} map) sidx offset tl);;
 
 
@@ -158,16 +159,16 @@ let translate env fdecl=
                 [BinRes(typ)]
                 in
         let get_dom_type typ1 typ2 =
-                if  List.hd typ1 = Ptr then typ1
-                else( if List.hd typ2 = Ptr then typ2
-                      else(
-                           if (get_size_type env.struct_index typ1) <= 
+                ( match List.hd typ1 with
+                Ptr | Arr(_) -> typ1 
+                | _ -> (match List.hd typ2 with
+                        Ptr | Arr(_) -> typ2
+                        | _ -> (if (get_size_type env.struct_index typ1) <= 
                                    (get_size_type env.struct_index typ2) 
-                           then typ2 
-                           else typ1
-                           )
-                      )
-                in
+                           then typ2 else typ1)
+                        )
+                )
+        in
         let rec conv2_byt_lvar = function
                 [] -> []
                 | hd::tl -> let entry = StringMap.find hd.vname
@@ -200,25 +201,36 @@ let translate env fdecl=
                 | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
                 | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
                 | Str (_, _)-> raise (Failure ("Unexpected: Str"))
-                | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ dbg_str_typs
-                (List.hd ty)))
+                | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^
+                  dbg_str_of_typs (List.hd ty)))
                 |Rval _ -> raise (Failure ("Unexpected: Rval"))
                 in
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
+                in
+                let gen_addr_lst v1 = gen_binres_type(get_binres_type v1) 
+                @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
                 in
 let rec expr = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
       char]*)
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
-      | Id s -> let retyp = get_type_varname s in
-                        (* match List.hd retyp with
-                        Arr(_) -> let a = Addrof(Id(s)) in expr a
-                        | _ ->*) (gen_binres_type(retyp)) @
+      | Id s -> 
+                if s="" then
+                        raise(Failure( (dbg_str_print (List.fold_left (fun st
+                                x -> st ^ 
+                                dbg_str_of_typs x) "" (get_type_varname s) )) ^
+                                " " ^ s ))
+                else
+                let retyp = get_type_varname s in
+                let v1 = (gen_binres_type(retyp)) @
                                 gen_atom(get_lvar_varname s)
+                in (match List.hd retyp with
+                        Arr(_) -> gen_addr_lst v1
+                        | _ -> v1)
       | MultiId(fstr,resolve,e) -> expr e
-      | Binop (e1, op, e2) -> let v1 = expr e1 
+      | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
                 and v2binres = get_binres_type v2 in
@@ -226,23 +238,25 @@ let rec expr = function
                 let v3 = (add_temp binres) in
                 (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @ 
                 (List.tl v2) @
-                if (List.hd binres) = Ptr then
-                        (if List.hd v1binres = Ptr then
-                                let tmp = (add_temp v2binres) in
-                (incr_by_ptrsz v2 (get_size_type env.struct_index 
-                (List.tl (get_binres_type v1)))
-                tmp) @ 
-                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)]
-                        else
-                                let tmp = (add_temp v1binres) in
-                (incr_by_ptrsz v1 (get_size_type env.struct_index 
-                (List.tl (get_binres_type v2)))
-                tmp) @ 
-                [BinEval (v3 ,tmp, op,(get_atom (List.hd (List.rev v2))))]
+                (match List.hd binres with
+                Ptr | Arr(_) -> 
+                        (match List.hd v1binres with 
+                        Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in 
+                        (incr_by_ptrsz v2 (get_size_type env.struct_index 
+                        (List.tl v1binres)) tmp) @ 
+                        [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
+                        | _ -> (match List.hd v2binres with
+                             Ptr | Arr(_) ->
+                             let tmp = ( (add_temp v1binres)) in
+                             (incr_by_ptrsz v1 (get_size_type env.struct_index 
+                             (List.tl v2binres)) tmp) @
+                             [BinEval (v3 ,tmp, op,(get_atom 
+                             (List.hd (List.rev v2))))]
+                             | _ -> raise(Failure("Cannot reach here"))
+                             )
                         )
-                else
-                [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
-                (get_atom(List.hd (List.rev v2))))]
+                | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
+                (get_atom(List.hd (List.rev v2))))])
       | Assign (s, e) ->
                       let v1 = (expr e)
                       and v2 = (expr s)
@@ -272,9 +286,7 @@ let rec expr = function
                          (incr_by_ptrsz v1 v4 v2) @
                          [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
-      | Addrof(v) -> let v1 = expr v in 
-                        gen_binres_type([Ptr]) @ v1 @
-                        gen_atom (Addr(get_atom (List.hd(List.rev v1))))
+      | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Noexpr ->[]
     in
 let rec stmt = function

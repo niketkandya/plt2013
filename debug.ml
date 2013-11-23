@@ -1,7 +1,7 @@
 open Ast
 open Bytecode
 
-let dbg_str_typs typ = match typ with 
+let dbg_str_of_typs typ = match typ with 
                         Void -> "Void" 
                         | Char -> "Char"
                         | Int -> "Int"
@@ -58,7 +58,7 @@ let dbg_str_bstmt bstm = match bstm with
                 | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
                 | Str (_, _)-> raise (Failure ("Unexpected: Str"))
                 | BinRes(ty) -> " BinRes " ^ 
-                        (List.fold_left (fun s t -> s ^ (dbg_str_typs t)) "" ty)
+                        (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty)
                 |Rval (rval) -> " Rval" ^ "\n" ^
                                 "Rvalue | " ^ (dbg_str_Lvar rval) ^ "\n";;
 

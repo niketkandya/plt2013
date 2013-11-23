@@ -25,7 +25,7 @@ TARFILES = Makefile testall.sh scanner.mll parser.mly \
 	$(TESTS:%=tests/test-%.out)
 
 cpi : $(OBJS)
-	ocamlc -o cpi $(OBJS)
+	ocamlc -g -o cpi $(OBJS)
 
 .PHONY : test
 test : cpi
@@ -44,10 +44,10 @@ parser.ml parser.mli : parser.mly
 	ocamlyacc parser.mly
 
 %.cmo : %.ml
-	ocamlc -c $<
+	ocamlc -g -c $<
 
 %.cmi : %.mli
-	ocamlc -c $<
+	ocamlc -g -c $<
 
 microc.tar.gz : $(TARFILES)
 	cd .. && tar czf microc/microc.tar.gz $(TARFILES:%=microc/%)
