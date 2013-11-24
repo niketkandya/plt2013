@@ -1,0 +1,14 @@
+//this is a comment
+
+char fun(char b) {
+    //this is a comment in a function
+	return b;
+}
+int main()
+{
+	char a; //more comments!
+	a = 'b';
+	a = fun(a +1 );
+    //comments galore!
+	return a;
+}
