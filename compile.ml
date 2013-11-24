@@ -28,9 +28,6 @@ type envt = {
     local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
   }
 
-
-
-
 let rec get_size_type sindex = function 
         |[] ->   raise Exit
                 | hd::tl -> (match hd with
@@ -208,7 +205,7 @@ let translate env fdecl=
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
                 in
-                let gen_addr_lst v1 = gen_binres_type(get_binres_type v1) 
+                let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
                 in
 let rec expr = function
@@ -282,7 +279,7 @@ let rec expr = function
                          let v2 = add_temp (get_binres_type v1) in
                          let v3 = add_temp (get_type_varname base) in
                          let v4 = get_ptrsize_varname base in 
-                         gen_binres_type(get_type_varname base) @
+                         gen_binres_type(List.tl (get_type_varname base)) @
                          (incr_by_ptrsz v1 v4 v2) @
                          [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
