@@ -105,6 +105,7 @@ for file in *.cpi; do
     if [[ "$error" != "" ]]; then
         let failed_tests++
         colorprint "    Failed: $basename. $error" "red"
+        colorprint "    gcc-return = $return_gcc, cpi-return = $return_cpi" 
         error=""
     else
         let passed_tests++

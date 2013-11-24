@@ -1,0 +1,20 @@
+/* block comment 
+ *
+ * fun
+ * fun
+ * not fun :(
+*/
+
+char fun(char b) {
+/*  return b + 1; */
+	return b;
+}
+/* T.T */int main()
+{
+	char a; /* :0  */
+	a = 'b';
+ /* a = 'c'; */
+	a = fun(a +1 );
+/* commenting some code */
+	return a;
+}
