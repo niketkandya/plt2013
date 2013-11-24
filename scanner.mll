@@ -3,6 +3,7 @@
 rule token = parse
   [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
 | "/*"     { comment lexbuf }           (* Comments *)
+| "//"     { line_comment lexbuf }
 | '('      { LPAREN }
 | ')'      { RPAREN }
 | '{'      { LBRACE }
@@ -45,3 +46,6 @@ and comment = parse
   "*/" { token lexbuf }
 | _    { comment lexbuf }
 
+and line_comment = parse
+  "\n"  { token lexbuf }
+| _     { line_comment lexbuf }
