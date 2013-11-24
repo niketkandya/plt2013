@@ -182,7 +182,5 @@ in let rec print_program = function
                         (align_size *
                         int_of_float(ceil ((float_of_int stack_sz ) /.
                         (float_of_int align_size)))) )
-
-
                         ^ (print_program tl)
 in (print_program program)
