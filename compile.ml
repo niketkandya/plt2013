@@ -119,24 +119,28 @@ let translate env fdecl=
                         StringMap.find name env.function_index
                 with Not_found -> raise (Failure("Function not found : " ^ name))) 
                 in
-        let get_type_varname varname =
+        let get_type_varname table varname =
                 (try
-                (StringMap.find varname env.local_index).typ
+                (StringMap.find varname table).typ
                 with Not_found -> raise (Failure("Varname not found")
                 ))
                 in
-        let get_size_varname varname =
-                get_size_type env.struct_index (get_type_varname varname)
+        let get_size_varname table varname =
+                get_size_type env.struct_index (get_type_varname table varname)
                 in
-        let get_lvar_varname var = 
+        let get_lvar_varname table strict var = 
                 (try
-                        Lvar( (StringMap.find var env.local_index).offset,
+                        Lvar( (StringMap.find var table).offset,
                         (get_size_varname var))
                  with Not_found -> (try
+                         if (strict = 0) then (
                          Gvar(var,
                         (get_size_varname var))
+                         )
+                         else
+                                 raise Not_found
                  with Not_found -> raise (Failure(var ^": Not found"))))
-                in 
+                in
         (*let get_varname_size ?(bt = false) ?(ix = -1) varname = 
                 match (get_var ~bty:bt ~idx:ix varname) with
                 Lvar(i,s,c) -> s
@@ -145,8 +149,8 @@ let translate env fdecl=
         let get_ptrsize_type typlst =
                 get_size_type env.struct_index (List.tl typlst)
                 in
-        let get_ptrsize_varname varname =
-                get_size_type env.struct_index (List.tl (get_type_varname varname))
+        let get_ptrsize_varname table varname =
+                get_size_type env.struct_index (List.tl (get_type_varname table varname))
                 in
         let get_binres_type e = match List.hd e with
                 BinRes(typ) -> typ
@@ -205,35 +209,40 @@ let translate env fdecl=
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
                 in
-                let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
+        let incr_by_offset lvar = lvar
+                in
+        let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
                 in
-let rec expr = function
+let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
       char]*)
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
       | Id s -> 
-                if s="" then
+                (*DEBUG: if s="" then
                         raise(Failure( (dbg_str_print (List.fold_left (fun st
                                 x -> st ^ 
                                 dbg_str_of_typs x) "" (get_type_varname s) )) ^
                                 " " ^ s ))
-                else
-                let retyp = get_type_varname s in
+                else*)
+                let retyp = get_type_varname table s in
                 let v1 = (gen_binres_type(retyp)) @
-                                gen_atom(get_lvar_varname s)
+                                gen_atom(get_lvar_varname table strict s)
                 in (match List.hd retyp with
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
-      | MultiId(fstr,resolve,e) -> expr e
+      | MultiId(fexpr,resolve,e) -> 
+                      let v1 = expr ~table:table ~strict:strict fexpr
+                      in
+
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
                 and v2binres = get_binres_type v2 in
                 let binres = get_dom_type v1binres v2binres in 
                 let v3 = (add_temp binres) in
-                (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @ 
+                (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @
                 (List.tl v2) @
                 (match List.hd binres with
                 Ptr | Arr(_) -> 
@@ -277,11 +286,11 @@ let rec expr = function
                 (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
                          let v2 = add_temp (get_binres_type v1) in
-                         let v3 = add_temp (get_type_varname base) in
-                         let v4 = get_ptrsize_varname base in 
-                         gen_binres_type(List.tl (get_type_varname base)) @
+                         let v3 = add_temp (get_type_varname table base) in
+                         let v4 = get_ptrsize_varname table base in 
+                         gen_binres_type(List.tl (get_type_varname table base)) @
                          (incr_by_ptrsz v1 v4 v2) @
-                         [BinEval (v3,Addr(get_lvar_varname base),Add,v2)] @
+                         [BinEval (v3,Addr(get_lvar_varname table strict base),Add,v2)] @
                          (gen_atom (Pntr(v3,v4)))
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Noexpr ->[]
