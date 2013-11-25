@@ -131,11 +131,11 @@ let translate env fdecl=
         let get_lvar_varname table strict var = 
                 (try
                         Lvar( (StringMap.find var table).offset,
-                        (get_size_varname var))
+                        (get_size_varname table var))
                  with Not_found -> (try
                          if (strict = 0) then (
                          Gvar(var,
-                        (get_size_varname var))
+                        (get_size_varname table var))
                          )
                          else
                                  raise Not_found
@@ -209,7 +209,15 @@ let translate env fdecl=
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
                 in
-        let incr_by_offset lvar = lvar
+        let get_smemb_table stct =(try
+                let stable = StringMap.find stct env.struct_index
+                with Not_found -> 
+                raise(Failure(" struct " ^ stct ^ " is not a type"))
+                in
+        let incr_by_offset atm off = match atm with
+                Lvar(o,s) ->
+                | Pntr(lvar,s) ->
+                | _ -> raise(Failure("Needs implementation"))
                 in
         let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
@@ -233,9 +241,20 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
       | MultiId(fexpr,resolve,e) -> 
-                      let v1 = expr ~table:table ~strict:strict fexpr
+                      let v1 = expr fexpr in
+                      let tab = (match List.hd (get_binres_type v1) with
+                        Struct(s) -> get_smemb_table s
+                        | _ -> raise(Failure("Must be a struct")))
                       in
-
+                      let v2 = expr ~table:tab ~strict:1 e in
+                      let offset = (match List.hd (List.rev v2) with
+                        Lvar(o,s) ->
+                        | Pntr(b,s) ->
+                        | _ -> raise(Failure("Unexpected type in MultiId")))
+                      in (match List.hd (List.rev v1) with
+                        Lvar(o,s) ->
+                        | Pntr(b,s) ->
+                        | _ -> raise(Failure("Unexpected type in MultiId")))
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
@@ -253,7 +272,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
                         | _ -> (match List.hd v2binres with
                              Ptr | Arr(_) ->
-                             let tmp = ( (add_temp v1binres)) in
+                             let tmp = ((add_temp v1binres)) in
                              (incr_by_ptrsz v1 (get_size_type env.struct_index 
                              (List.tl v2binres)) tmp) @
                              [BinEval (v3 ,tmp, op,(get_atom 

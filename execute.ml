@@ -62,7 +62,8 @@ let function_code_gen fname formals body stack_sz =
                         else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
                         p ((pre psz) ^ "[r4,#0]"))
                 | Gvar(vname,sz) -> "" (*TODO: Globals*)
-                | _ -> raise(Failure ("Lvars only should be passed")))
+                | _ -> raise(Failure ("Lvars only should be passed"))
+                )
         | Sstr (s) -> "" (*TODO*)
         | Debug (s) -> s
        in
