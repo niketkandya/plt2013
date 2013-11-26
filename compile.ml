@@ -316,6 +316,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in 
                  let binresv1 = (get_binres_type v1) in
+                 (gen_binres_type (List.tl binresv1)) @
                 v1 @ gen_atom (Pntr( (get_atom (List.hd (List.rev v1))),
                 (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
