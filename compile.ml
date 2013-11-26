@@ -208,17 +208,17 @@ let translate env fdecl=
         let incr_by_ptrsz exp incrsz tmp = [BinEval (tmp, (Lit incrsz),
                          Mult,(get_atom(List.hd (List.rev exp))))]
                 in
-        (*let get_struct_table stct =(try
-                StringMap.find stct env.struct_index
+        let get_struct_table stct =(try
+                (StringMap.find stct env.struct_index).memb_index
                 with Not_found ->
                 raise(Failure(" struct " ^ stct ^ " is not a type")))
-                in*)
+                in
         let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
                 in
         let add_base_offset btyp baddr off =
                 let v3 = add_temp btyp in
-                let v4 = get_ptrsize_type btyp
+                let v4 = get_ptrsize_type btyp in
                 [BinEval (v3,baddr,Add,off)] @ (gen_atom (Pntr(v3,v4)))
                 in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
@@ -233,20 +233,21 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd retyp with
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
-      (*| MultiId(fexpr,resolve,e) ->
+      | MultiId(fexpr,resolve,e) ->
                 let v1 = expr fexpr in
                 let tab = (match List.hd (get_binres_type v1) with
                   Struct(s) -> get_struct_table s
                   | _ -> raise(Failure("Must be a struct"))) in
                 let v2 = expr ~table:tab ~strict:1 e in
                 let offset = (match get_atom(List.hd (List.rev v2)) with
-                   Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @ [Lit o]
+                   Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @
+                   gen_atom (Lit o)
                    | Pntr(b,s) -> (*This will an array *)
                       (match (List.nth (List.rev v2) 2) with
                         BinEval(dst,op1,op,op2) -> 
                           (List.rev(List.tl(List.tl(List.rev v2)))) @
                           [BinEval(dst,(Lit (get_off_lvar op1)),Add,op2)]
-                          @ dst
+                          @ gen_atom dst
                         | _ -> raise(Failure("Array was expected: MultiId"))
                         )
                    | _ -> raise(Failure("Unexpected type in MultiId"))) in
@@ -255,7 +256,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         | Pntr(b,s) -> b
                         | _ -> raise(Failure("Unexpected type in MultiId"))) in
                  offset @ (add_base_offset (get_binres_type offset) baddr
-                           (List.hd (List.rev offset))) *)
+                           (get_atom (List.hd (List.rev offset))))
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
@@ -309,8 +310,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                          let v4 = get_ptrsize_type btyp in 
                          let baddr = Addr(get_lvar_varname table strict base) in
                          gen_binres_type(List.tl (get_type_varname table base)) @
-                         (incr_by_ptrsz v1 v4 off)(* @ 
-                         (add_base_offset btyp baddr off)*)
+                         (incr_by_ptrsz v1 v4 off) @ 
+                         (add_base_offset btyp baddr off)
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Noexpr ->[]
     in
