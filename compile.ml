@@ -54,11 +54,12 @@ let calc_offset sidx offset typlst = let align_size = 4 in
                         (float_of_int align_size)));;
 
 
-let rec build_local_idx map sidx offset = (function
+let rec build_local_idx map sidx offset ?(rev =0) = (function
        [] -> map
        | hd:: tl -> offset := (calc_offset sidx !offset hd.vtype);
-                                build_local_idx (StringMap.add hd.vname
-                {offset = !offset; typ=hd.vtype} map) sidx offset tl);;
+                     build_local_idx (StringMap.add hd.vname
+                {offset = !offset - ( if rev =0 then rev else (get_size_type
+                sidx hd.vtype)) ; typ=hd.vtype} map) sidx offset tl);;
 
 
 (* Translate a program in AST form into a bytecode program.  Throw an
@@ -130,7 +131,7 @@ let translate env fdecl=
                 in
         let get_lvar_varname table strict var = 
                 (try
-                        Lvar( (StringMap.find var table).offset,
+                        Lvar((StringMap.find var table).offset,
                         (get_size_varname table var))
                  with Not_found -> (try
                          if (strict = 0) then (
@@ -164,7 +165,17 @@ let translate env fdecl=
                            then typ2 else typ1)
                         )
                 )
-        in
+                in
+        let raise_error_atom a = match a with
+               Lit (i) -> raise(Failure("Literal " ^ string_of_int i))
+                | Cchar(ch) -> raise(Failure("Const Char"))
+                | Sstr (s) -> raise(Failure("StringConst "^s))
+                | Lvar (o,s) -> raise(Failure(" Lvar"))
+                | Gvar (_,_) -> raise(Failure("Gvar"))
+                | Pntr (_,_) -> raise(Failure("Pntr"))
+                | Addr (_) -> raise(Failure("Addr"))
+                | Debug (_)  -> raise(Failure("Debug"))
+                in
         let rec conv2_byt_lvar = function
                 [] -> []
                 | hd::tl -> let entry = StringMap.find hd.vname
@@ -186,9 +197,10 @@ let translate env fdecl=
                 in
         let gen_atom atm = [Atom (atm)]
                 in
-        let get_off_lvar lvar = match lvar with
-                Lvar(o,s) -> o
-                | _ -> raise(Failure("Needs implementation"))
+        let rec get_off_lvar lvar = match lvar with
+                Lvar(o,s) -> Lit o
+                |Addr(l) -> get_off_lvar l
+                | _ as a -> raise_error_atom a
                 in
         let get_atom = function
                 Atom (atm) -> atm
@@ -243,10 +255,10 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                    Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @
                    gen_atom (Lit o)
                    | Pntr(b,s) -> (*This will an array *)
-                      (match (List.nth (List.rev v2) 2) with
+                      (match (List.nth (List.rev v2) 1) with
                         BinEval(dst,op1,op,op2) -> 
                           (List.rev(List.tl(List.tl(List.rev v2)))) @
-                          [BinEval(dst,(Lit (get_off_lvar op1)),Add,op2)]
+                          [BinEval(dst,(get_off_lvar op1),Add,op2)]
                           @ gen_atom dst
                         | _ -> raise(Failure("Array was expected: MultiId"))
                         )
@@ -255,7 +267,9 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         Lvar(o,s) as l -> Addr(l)
                         | Pntr(b,s) -> b
                         | _ -> raise(Failure("Unexpected type in MultiId"))) in
-                 offset @ (add_base_offset (Ptr::(get_binres_type offset)) 
+                        List.rev(List.tl(List.rev offset))
+                        @ (add_base_offset ( List.hd (get_binres_type offset) 
+                        ::(get_binres_type offset)) 
                         baddr (get_atom (List.hd (List.rev offset))))
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
