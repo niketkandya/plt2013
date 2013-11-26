@@ -57,7 +57,7 @@ let calc_offset sidx offset typlst = let align_size = 4 in
 let rec build_local_idx map sidx offset ?(rev =0) = (function
        [] -> map
        | hd:: tl -> offset := (calc_offset sidx !offset hd.vtype);
-                     build_local_idx (StringMap.add hd.vname
+                     build_local_idx ~rev:rev (StringMap.add hd.vname
                 {offset = !offset - ( if rev =0 then rev else (get_size_type
                 sidx hd.vtype)) ; typ=hd.vtype} map) sidx offset tl);;
 
@@ -75,8 +75,8 @@ let translate prog =
   let global_indexes = build_global_idx globals in
   let struct_indexes = List.fold_left (fun map stct ->
                 let soffset = ref 0 in
-                let index = build_local_idx StringMap.empty 
-                map soffset stct.smembers in
+                let index = build_local_idx ~rev:1 StringMap.empty
+                map soffset (List.rev stct.smembers) in
                 (StringMap.add stct.sname
                 {size = !soffset; memb_index = index} map))
                 StringMap.empty structs

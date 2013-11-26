@@ -14,4 +14,5 @@ int main() {
     b.arr[2] = 3;
 
     return (b.arr[0] + b.arr[2] - b.a);
+    return b.a;
 }
