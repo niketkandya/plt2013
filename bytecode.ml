@@ -8,6 +8,7 @@ type atom =
   | Gvar of string * int (* Globacl var (name,size) *)
   | Pntr of atom * int (* Pntr(addr,size) *)
   | Addr of atom
+  | Neg  of atom
   | Debug of string
 
 type bstmt =

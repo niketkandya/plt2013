@@ -326,6 +326,9 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                          (incr_by_ptrsz v1 v4 off) @ 
                          (add_base_offset btyp baddr off)
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
+      | Negof(v)  -> let v1 = expr v in 
+                gen_binres_type( (get_binres_type v1))
+                @ v1 @ gen_atom (Neg(get_atom (List.hd(List.rev v1))))
       | Noexpr ->[]
     in
 let rec stmt = function
