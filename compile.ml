@@ -175,6 +175,7 @@ let translate env fdecl=
                 | Pntr (_,_) -> raise(Failure("Pntr"))
                 | Addr (_) -> raise(Failure("Addr"))
                 | Debug (_)  -> raise(Failure("Debug"))
+                | Neg (_) -> raise(Failure("Negative"))
                 in
         let rec conv2_byt_lvar = function
                 [] -> []

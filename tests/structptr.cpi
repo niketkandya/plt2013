@@ -6,6 +6,10 @@ struct S {
 int main()
 {
     struct S s;
+    int c;
+    int d;
+    s.a = &c;
+    s.b = &d;
     *(s.a) = 1;
     *(s.b) = 2;
     return *(s.a) + *(s.b);

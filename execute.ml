@@ -28,6 +28,18 @@ let dbg_print var = match var with
         | Debug(s) -> "Debug" ^ s ^"\n"
         | _ -> "IMPLEMENT"
 in
+let dbg_raise_error_atom str a = raise(Failure( str ^ 
+                (match a with
+               Lit (i) -> "Literal " ^ string_of_int i
+                | Cchar(ch) -> "Const Char"
+                | Sstr (s) -> "StringConst "^s
+                | Lvar (o,s) -> " Lvar"
+                | Gvar (_,_) -> "Gvar"
+                | Pntr (_,_) -> "Pntr"
+                | Addr (_) -> "Addr"
+                | Debug (_)  -> "Debug"
+                | Neg (_) -> "Negative")))
+        in
         let size_of_lvar l = match l with
                 Lvar(off,sz)-> sz
                    | Gvar(n,s)-> s
@@ -39,6 +51,7 @@ let function_code_gen fname formals body stack_sz =
         let branch lb = p ("b " ^ lb) in
         let gen_label lbl = lbl ^ ":" ^ "\n" in
         let exit_label = fname ^ "_exit" in
+        
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
@@ -57,13 +70,15 @@ let function_code_gen fname formals body stack_sz =
                         string_of_int (idx_to_offset off)))
                 | Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | Pntr(dst,psz) -> gen_ldr_str_code oper sym reg dst
-                | _ -> raise(Failure ("Lvars only should be passed")))
+                | _ as l -> dbg_raise_error_atom "Addr: " l)
         | Pntr (dst,psz) -> (match dst with
                   Lvar(off,sz) -> (if sz=0 then ""
                         else (gen_ldr_str_code "ldr" "=" "r4" dst) ^
                         p ((pre psz) ^ "[r4,#0]"))
+                | Pntr(_,_) -> (gen_ldr_str_code "ldr" "=" "r4" dst) ^
+                                p((pre psz) ^ "[r4,#0]")
                 | Gvar(vname,sz) -> "" (*TODO: Globals*)
-                | _ -> raise(Failure ("Lvars only should be passed"))
+                | _ as l -> dbg_raise_error_atom "Pntr: " l
                 )
         | Sstr (s) -> "" (*TODO*)
         | Debug (s) -> s
