@@ -125,7 +125,11 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
+  | MINUS LITERAL    { Literal(-$2) }
+  | PLUS LITERAL     { Literal($2) }
   | AMPERSAND lvalue { Addrof($2)  }
+  | MINUS lvalue     { Negof($2)  }
+  | PLUS lvalue      { $2 }
   | CONSTCHAR        { ConstCh($1) }
   | STRING           { String($1) }
   | lvalue           { $1 }

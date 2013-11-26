@@ -50,6 +50,7 @@ let function_code_gen fname formals body stack_sz =
         | Lvar (off, sz) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
                                  (idx_to_offset off) ^"]"))
         | Gvar (vname, sz) -> "" (*TODO *)
+        | Neg  (vnm) -> p ("rsb " ^reg^ ", " ^reg ^", #0")
         | Addr (vnm) -> (match vnm with
                   Lvar(off,sz) -> (if sz=0 then "" else
                         p ("sub " ^reg^", fp,#" ^

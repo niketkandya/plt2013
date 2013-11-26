@@ -20,6 +20,7 @@ type expr =
     Literal of int
   | String of string
   | Addrof of expr
+  | Negof of expr
   | ConstCh of string
   | Id of string
   | MultiId of expr * resolve * expr
