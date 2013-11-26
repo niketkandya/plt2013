@@ -255,8 +255,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         Lvar(o,s) as l -> Addr(l)
                         | Pntr(b,s) -> b
                         | _ -> raise(Failure("Unexpected type in MultiId"))) in
-                 offset @ (add_base_offset (get_binres_type offset) baddr
-                           (get_atom (List.hd (List.rev offset))))
+                 offset @ (add_base_offset (Ptr::(get_binres_type offset)) 
+                        baddr (get_atom (List.hd (List.rev offset))))
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
@@ -284,8 +284,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
                 (get_atom(List.hd (List.rev v2))))])
       | Assign (s, e) ->
-                      let v1 = (expr e)
-                      and v2 = (expr s)
+                      let v1 = (expr e) and v2 = (expr s)
                       in (gen_binres_type (get_binres_type v2)) 
                       @ v1 @ v2 @
                 [Assgmt ((get_atom(List.hd (List.rev v2))),get_atom (List.hd
