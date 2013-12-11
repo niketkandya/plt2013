@@ -1,0 +1,26 @@
+int gcd(int a, int b)
+{
+    while (a != b) {
+        if (a > b){
+          a = a - b;
+        }else{
+          b = b - a;
+        }
+    }
+    return a;
+}
+
+int main()
+{
+    int res1;
+    int res2;
+    int res3;
+    int res4;
+
+    res1 = gcd(4,5);
+    res2 = gcd(38,55482);
+    res3 = gcd(68,645284);
+    res4 = gcd(48, 8);
+
+    return res1 + res2 + res3 + res4;
+}

@@ -1,0 +1,11 @@
+int main(){
+    int a1;
+    int b2_;
+    int _a;
+    
+    a1 = 1;
+    _a = 2;
+    b2_ = 45;
+
+    return a1 + _a + b2_;
+} 
