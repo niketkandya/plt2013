@@ -1,0 +1,14 @@
+int main ()
+{
+  int *a;
+  int b;
+  int c;
+  int d;
+
+  *a = 59;
+  b = -*a + 26;
+  c = -38;
+  d = -1;   
+
+  return (*a + b * c) * d;
+}
