@@ -260,7 +260,7 @@ let translate env fdecl=
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> 
-                let lbl = incr count_mem; ".m" ^
+                let lbl = incr count_mem; ".LC" ^
                 (string_of_int !count_mem) in
                 (gen_binres_type [Char; Ptr]) @ gen_atom(Sstr(s, lbl))
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
@@ -384,7 +384,7 @@ in
 
 let stmtblock = (stmt (Block fdecl.body)) in
 
-[Global([Debug("Debug Message"); Debug("Yellow")])] @
+(*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
 [Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset)]  
 
 in let env = { function_index = function_indexes;

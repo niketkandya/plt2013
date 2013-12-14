@@ -86,7 +86,7 @@ let function_code_gen fname formals body stack_sz =
                 | Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ as l -> dbg_raise_error_atom "Pntr: " l
                 )
-        | Sstr (s, l) -> p ( "ldr r0, " ^ l)
+        | Sstr (s, l) -> p ( "ldr r0, =" ^ l)
         | Debug (s) -> s
        in
        let load_code reg var = (* load variable var to register reg *)
@@ -172,9 +172,11 @@ let mem_code_gen = function
   | _ -> ""
 in
 let func_start_code =
+        ".data\n" ^
         (List.fold_left 
                 (fun str lst -> str ^ (mem_code_gen lst)) 
                 "" body) ^ "\n" ^ 
+        ".text\n" ^
         (* Code generation for function *)
         ".global " ^ fname ^ "\n" ^
             fname ^ ":\n" ^

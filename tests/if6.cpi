@@ -1,0 +1,79 @@
+int second_if (){
+    int i;
+    int a;
+    int b;
+
+    i = 1;
+    a = 2234146;
+    b = 5678234;
+
+    if ( i < 1){
+        return a;
+    }else{
+        return b;
+    }
+}
+
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( 1 > 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 < 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 == 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 >= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 < 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 == 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 > 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a + second_if();
+}
