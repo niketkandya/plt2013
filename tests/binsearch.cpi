@@ -1,0 +1,51 @@
+int binary_search(int array[], int start, int end, int element) {
+    int mid;
+    int temp;
+    
+    if (start > end){
+        return -1;
+    } else {
+        mid = ((start + end)/2);
+        temp = array[mid];
+        if (temp == element) {
+            return mid;
+        } else if (temp > element) {
+            return binary_search(array, start, mid - 1, element);
+        } else {
+            return binary_search(array, mid + 1, end, element);
+        }
+    }
+}
+
+int bin_search(int array[], int size, int element) 
+{
+    return binary_search(array, 0, size - 1, element);
+}
+
+int main() 
+{
+  int arr[10];
+  int size;
+  int target;
+  int result;
+  
+  arr[0] = 1;
+  arr[1] = 2;
+  arr[2] = 4;
+  arr[3] = 8;
+  arr[4] = 16;
+  arr[5] = 32;
+  arr[6] = 64;
+  arr[7] = 128;
+  arr[8] = 256;
+  arr[9] = 512;
+  size = 10;
+  target = 32;
+
+  // target = scan();
+  // result = bin_search();
+  // print(“Binary search of “, target, “in arr returns”, bin_search(arr,size,target));
+  // return 0;
+
+  return bin_search(arr, size, target);
+}

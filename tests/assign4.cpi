@@ -1,5 +1,14 @@
 int main()
 {
-    int a = 5;
-    return a;
+    int c;
+    int *a;
+    int *d;
+
+    *d = 4;
+    *a = 5;
+    c = 10;
+
+    a = d;
+
+    return *a + c;
 }

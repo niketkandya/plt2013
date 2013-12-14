@@ -1,0 +1,18 @@
+int main()
+{
+	int i;
+	char array[1];
+	char sum;
+
+	sum = 0;
+	i = 0;
+    
+    array[i] = 2 * 8;
+    i = 1;
+    array[i] = 20 - 4;
+    
+    sum = array[1] + array[0];
+
+	return sum;
+}
+
