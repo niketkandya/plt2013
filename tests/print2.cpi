@@ -1,0 +1,7 @@
+#include <stdio.h>
+
+int main (){
+    printf("hello world %d, %c, %x", 77, 37, 15435);
+    printf("yo ha");
+    printf("yo ha");
+}

@@ -15,7 +15,8 @@ let rec dbg_str_Lvar lvar = match lvar with
                                 " Size: " ^ string_of_int sz
                         |  Lit (i) -> "Literal: " ^ string_of_int i
                         | Cchar (ch) -> "Const char :" ^ String.make 1 ch
-                        | Sstr (str) -> "String: " ^ str
+                        | Sstr (str, label) -> "String: " ^ str ^ "Label: " ^
+                                              label
                         | Gvar (_,_) -> "Globals: need implementaiton" (* Globacl var (name,size) *)
                         | Pntr (atm, sz) -> "Pointer: \n" ^
                                 "value| " ^ (dbg_str_Lvar atm) ^

@@ -90,9 +90,7 @@ let struct_indexes = List.fold_left
   StringMap.empty structs
 in
 
-(*TODO: Add the built-in-function printf to the below list *)
-(* let built_in_functions = StringMap.add "print" (-1) StringMap.empty in *)
-let function_indexes = List.fold_left 
+let f_index = List.fold_left 
   (fun map fdecl ->
     let rec var_to_lst ind = function
       [] -> []
@@ -108,10 +106,30 @@ let function_indexes = List.fold_left
   StringMap.empty functions
 in
 
+(* Add the built-in-function printf, scanf to the function indexes *)
+let f2_index = 
+  StringMap.add "printf" 
+  {
+    param = [];
+    ret_ty = [Void]
+  }
+  f_index
+in
+
+let function_indexes =
+  StringMap.add "scanf" 
+  {
+    param = [];
+    ret_ty = [Void]
+  }
+  f2_index
+in
+
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
   let curr_offset = ref 0 
   and count_loop = ref 0 
+  and count_mem = ref (-1) 
   and count_ifelse = ref 0 in
   
   let env = 
@@ -175,7 +193,7 @@ let translate env fdecl=
     match a with
       Lit (i) -> raise(Failure("Literal " ^ string_of_int i))
     | Cchar(ch) -> raise(Failure("Const Char"))
-    | Sstr (s) -> raise(Failure("StringConst "^s))
+    | Sstr (s, l) -> raise(Failure("StringConst "^s))
     | Lvar (o,s) -> raise(Failure(" Lvar"))
     | Gvar (_,_) -> raise(Failure("Gvar"))
     | Pntr (_,_) -> raise(Failure("Pntr"))
@@ -241,8 +259,10 @@ let translate env fdecl=
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
-      | String s -> gen_atom (Sstr s) (*TODO return (gen_binres_type [Arr()
-      char]*)
+      | String s -> 
+                let lbl = incr count_mem; ".m" ^
+                (string_of_int !count_mem) in
+                (gen_binres_type [Char; Ptr]) @ gen_atom(Sstr(s, lbl))
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
       | Id s ->
                 let retyp = get_type_varname table s in
@@ -361,10 +381,11 @@ let rec stmt = function
         (v3,true,l0)]
   | _ -> []
 in 
-  
+
 let stmtblock = (stmt (Block fdecl.body)) in
 
-[Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset )]
+[Global([Debug("Debug Message"); Debug("Yellow")])] @
+[Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset)]  
 
 in let env = { function_index = function_indexes;
 		           global_index   = global_indexes;
@@ -378,9 +399,9 @@ let entry_function = try
   (StringMap.find "main" function_indexes); []
   with Not_found -> raise (Failure ("no \"main\" function"))
 in 
-
 (* Compile the functions *)
-List.concat (entry_function :: List.map (translate env) functions)
+List.concat (entry_function :: List.map (translate env) functions);;
 (* TODO: Globals might need to be passed before at the point where
  * entry_function is present. Globals can be passed as a list, like that of
  * Fstart *)
+

@@ -4,17 +4,15 @@ type cpitypes = Void | Int | Char | Ptr | Arr of int | Struct of string
 
 type resolve = Dot | Ind
 
-
 type var_decl = {
-        vname: string;
-        vtype: cpitypes list;
+  vname: string;
+  vtype: cpitypes list;
 }
 
 type struct_decl = {
-        sname: string;
-        smembers: var_decl list
+  sname: string;
+  smembers: var_decl list
 }
-
 
 type expr =
     Literal of int
@@ -41,18 +39,17 @@ type stmt =
 
 
 type func_decl = {
-    fname : string;
-    formals : var_decl list;
-    locals : var_decl list;
-    body : stmt list;
-    ret : cpitypes list
-  }
-
+  fname : string;
+  formals : var_decl list;
+  locals : var_decl list;
+  body : stmt list;
+  ret : cpitypes list
+}
 
 type program = {
-        sdecls : struct_decl list;
-        gdecls : var_decl list;
-        fdecls : func_decl list
+  sdecls : struct_decl list;
+  gdecls : var_decl list;
+  fdecls : func_decl list
 }
 
 (*

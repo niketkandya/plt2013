@@ -4,6 +4,7 @@ rule token = parse
   [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
 | "/*"     { comment lexbuf }           (* Comments *)
 | "//"     { line_comment lexbuf }
+| "#include"  { includes  lexbuf }
 | '('      { LPAREN }
 | ')'      { RPAREN }
 | '{'      { LBRACE }
@@ -35,7 +36,7 @@ rule token = parse
 | "char"   { CHAR }
 | "struct" { STRUCT }
 | "void"   { VOID }
-| ''' ['a'-'z' 'A'-'Z'] as ch ''' { CONSTCHAR(ch) }
+| ''' [ ^'''] as ch ''' { CONSTCHAR(ch) }
 | '"' [^'"']* '"'  as lxm { STRING(lxm) }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
@@ -49,3 +50,7 @@ and comment = parse
 and line_comment = parse
   "\n"  { token lexbuf }
 | _     { line_comment lexbuf }
+
+and includes = parse
+  "\n"  { token lexbuf }
+| _     { includes lexbuf }

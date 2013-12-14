@@ -24,15 +24,16 @@ let execute_prog program =
         in
 let dbg_print var = match var with
         Lvar(off,sz) -> "Offset: " ^ string_of_int off ^
-                        "Size: " ^ (string_of_int sz)
-        | Debug(s) -> "Debug" ^ s ^"\n"
+                        "Size: " ^ (string_of_int sz) ^ "\n"
+        | Sstr(s, l) -> "String: " ^ s ^ "Label: " ^ l ^ "\n"
+        | Debug(s) -> "Debug: " ^ s ^"\n"
         | _ -> "IMPLEMENT"
-in
+        in
 let dbg_raise_error_atom str a = raise(Failure( str ^ 
                 (match a with
-               Lit (i) -> "Literal " ^ string_of_int i
+                  Lit (i) -> "Literal " ^ string_of_int i
                 | Cchar(ch) -> "Const Char"
-                | Sstr (s) -> "StringConst "^s
+                | Sstr (s, l) -> "StringConst "^s
                 | Lvar (o,s) -> " Lvar"
                 | Gvar (_,_) -> "Gvar"
                 | Pntr (_,_) -> "Pntr"
@@ -40,24 +41,29 @@ let dbg_raise_error_atom str a = raise(Failure( str ^
                 | Debug (_)  -> "Debug"
                 | Neg (_) -> "Negative")))
         in
-        let size_of_lvar l = match l with
+let size_of_lvar l = match l with
                 Lvar(off,sz)-> sz
                    | Gvar(n,s)-> s
                    | _ -> raise (Failure("Cannot generate size"))
-in
+        in
 let idx_to_offset off = off + size_stmfd
+        in
+let rec print_atom_lst  = function
+      [] -> ""
+    | hd :: tl -> 
+        dbg_print hd ^ (print_atom_lst tl) 
         in
 let function_code_gen fname formals body stack_sz =
         let branch lb = p ("b " ^ lb) in
         let gen_label lbl = lbl ^ ":" ^ "\n" in
         let exit_label = fname ^ "_exit" in
-        
+
         (* Note register r4 will be left as a temporary register 
          * so that anybody can use .eg in gen_ldr_str_code *)
         let rec gen_ldr_str_code oper sym reg atm = 
                 let pre sz = if sz != 0 then(  oper ^ (if sz = 1 then "b" else "")
                         ^" "^ reg ^", ") else "" in 
-                match atm with
+        match atm with
           Lit (i) -> p ( (pre 4)  ^ sym ^ string_of_int i)
         | Cchar (ch) -> p ((pre 1) ^ sym ^ string_of_int (int_of_char ch))
         | Lvar (off, sz) -> if sz = 0 then "" else ( p ( (pre sz) ^ "[fp,#-" ^ string_of_int
@@ -80,7 +86,7 @@ let function_code_gen fname formals body stack_sz =
                 | Gvar(vname,sz) -> "" (*TODO: Globals*)
                 | _ as l -> dbg_raise_error_atom "Pntr: " l
                 )
-        | Sstr (s) -> "" (*TODO*)
+        | Sstr (s, l) -> p ( "ldr r0, " ^ l)
         | Debug (s) -> s
        in
        let load_code reg var = (* load variable var to register reg *)
@@ -125,26 +131,22 @@ let bin_eval dst var1 op var2 =
                p "movlt r3,#0"^
                p "uxtb r3,r3"
         )
-in (load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
-in
+        in 
+(load_code "r0" var1) ^ (load_code "r1" var2) ^ oper ^ (store_code "r3" dst)
+        in
 let function_call fname args ret=
-              let rec fcall i = function
-                      []-> ""
-                |hd::tl -> (load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl)
-               in fcall 0 args ^ 
-               ("\n\t bl  " ^ fname ^ "\n" ) ^
-               (store_code "r0" ret)
-               (* TODO implement properly *)
-in
+  let rec fcall i = function
+    [] -> ""
+    | hd :: tl -> (load_code ("r" ^ string_of_int i) hd ) ^ (fcall (i+1) tl) in
+      fcall 0 args ^ ("\n\t bl  " ^ fname ^ "\n" ) ^ (store_code "r0" ret)
+    (* TODO implement properly *)
+        in
 let predicate cond jmpontrue label = 
-        let brn = if jmpontrue then "\t beq "
-                    else "\t bne "
-        in (load_code "r0" cond) ^
-                "\t cmp r0,#1\n" ^
-                brn ^ label ^ "\n"
+        let brn = if jmpontrue then "\t beq " else "\t bne " in 
+        (load_code "r0" cond) ^ "\t cmp r0,#1\n" ^ brn ^ label ^ "\n"
         in
 let asm_code_gen = function
-   Atom (atm) -> ""
+    Atom (atm) -> ""
   | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
   | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
   | Str (reg , atm ) ->  "Store"
@@ -161,8 +163,19 @@ let non_atom lst = (List.filter (fun ele -> match ele with
                 Atom (atm ) -> false
                 | _ -> true) lst)
 in
+let mem_code_gen = function
+    Atom (atm) -> 
+     ( match atm with
+         Sstr (s, l) ->  l ^ ":\n" ^
+                        p (".asciz   " ^  s)
+        | _ -> "" )
+  | _ -> ""
+in
 let func_start_code =
-            (* Code generation for function *)
+        (List.fold_left 
+                (fun str lst -> str ^ (mem_code_gen lst)) 
+                "" body) ^ "\n" ^ 
+        (* Code generation for function *)
         ".global " ^ fname ^ "\n" ^
             fname ^ ":\n" ^
                    (p "stmfd sp!, {fp, lr}") ^
@@ -174,7 +187,7 @@ let func_start_code =
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
                     in formals_push_code ((List.length formals) -1)
-                    (* TODO : ifjthe variable size is 1 byte, strb should be
+                    (* TODO : if the variable size is 1 byte, strb should be
                      * used instead and the var_size should be updated
                      * accordingly *)
         and func_end_code = (gen_label exit_label) ^
@@ -189,15 +202,18 @@ in
 let env = {
         global_index = StringMap.empty;
          }
-in let rec print_program = function 
+in let rec print_program = 
+        function 
         [] -> "" 
         | hd :: tl ->
            (match hd with
-             Global (atmlst) -> "" (*TODO: Global functions code *)
+               Global (atmlst) -> print_atom_lst atmlst (* dbg_print (List.hd atmlst) (*TODO: Global
+               functions code *)*)
              | Fstart (fname, formals, body, stack_sz) ->
-                 function_code_gen fname formals body 
-                        (align_size *
-                        int_of_float(ceil ((float_of_int stack_sz ) /.
-                        (float_of_int align_size)))) )
+               (function_code_gen fname formals body 
+                 (align_size * int_of_float(ceil ((float_of_int stack_sz ) /.
+                        (float_of_int align_size)))) 
+               )
+           )
                         ^ (print_program tl)
 in (print_program program)

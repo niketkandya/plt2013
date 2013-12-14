@@ -34,7 +34,7 @@ program:
 fdecl:
    retval formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
      { { fname = snd $1;
-	 formals = $2; 
+         formals = $2; 
          locals = List.rev $5;
          body = List.rev $6;
          ret = fst $1
@@ -69,7 +69,7 @@ vdecl:
    | tdecl SEMI { $1 }
 
 tdecl:
-        INT rdecl      {
+       INT rdecl      {
                         {
                         vname = $2.vname;
                         vtype = $2.vtype @ [Int]
@@ -171,5 +171,5 @@ actuals_opt:
   | actuals_list  { List.rev $1 }
 
 actuals_list:
-   expr                    { [$1] }
+    expr                    { [$1] }
   | actuals_list COMMA expr { $3 :: $1 }
