@@ -12,11 +12,11 @@ int question(int i){
         printf ("entered: %s\n",str);  
     }else if (i == 1){
         printf ("Enter a char: ");
-        scanf ("%c", &c );
+        scanf (" %c", &c );
         printf ("entered: %c\n", c);
     }else{
         printf ("Enter your age: \n");
-        scanf ("%d\n",&a);
+        scanf ("%d",&a);
         printf ("entered: %d\n",a);
     }
 
