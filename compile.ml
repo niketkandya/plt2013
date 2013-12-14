@@ -70,6 +70,11 @@ let translate prog =
   and globals = prog.gdecls
   and functions = prog.fdecls in
 
+  let curr_offset = ref 0 
+  and count_loop = ref 0 
+  and count_mem = ref (-1) 
+  and count_ifelse = ref 0 in
+  
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
 let global_indexes = build_global_idx globals in
@@ -127,11 +132,6 @@ in
 
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
-  let curr_offset = ref 0 
-  and count_loop = ref 0 
-  and count_mem = ref (-1) 
-  and count_ifelse = ref 0 in
-  
   let env = 
     {
       env with local_index = 
