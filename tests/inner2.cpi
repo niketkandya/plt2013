@@ -24,7 +24,7 @@ int main ( ){
    vector1 = &v1[0];
    vector2 = &v2[0];
 
-   while ( n ){
+   while ( n > 0 ){
         sum = sum + (*vector1 * *vector2);
         vector1 = vector1 + 1;
         vector2 = vector2 + 1;
