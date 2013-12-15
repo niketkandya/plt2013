@@ -155,13 +155,15 @@ ptr:
         TIMES expr {Pointer($2)}
 
 var:
-        bvar           { $1 }
-        | bvar DOT var { MultiId($1,Dot,$3) }
+        bvar DOT var { MultiId($1,Dot,$3) }
         | bvar INDIRECTION var { MultiId($1,Ind,$3) }
+        | bvar           { $1 }
 
 bvar:
         ID      { Id($1) }
         | arr   { Array( fst $1, snd $1) }
+
+        | LPAREN ptr RPAREN { $2 } /* Not good hack */
 
 arr:
         ID LSUBS expr RSUBS { $1,$3 }

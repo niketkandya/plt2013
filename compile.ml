@@ -271,7 +271,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd retyp with
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
-      | MultiId(fexpr,resolve,e) ->
+      | MultiId(fexpr,Ind, e) -> expr (MultiId(Pointer(fexpr), Dot, e))
+      | MultiId(fexpr,Dot,e) ->
                 let v1 = expr fexpr in
                 let tab = (match List.hd (get_binres_type v1) with
                   Struct(s) -> get_struct_table s
