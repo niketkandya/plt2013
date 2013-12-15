@@ -25,6 +25,6 @@ int main(){
     arr[3] = 1;
     arr[4] = 21;
 
-    SelectionSort(arr);
+    SelectionSort(arr, 5);
     return arr[0];
 }
