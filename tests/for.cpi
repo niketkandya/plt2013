@@ -1,0 +1,16 @@
+int fun(int a ,int b)
+{
+	return a + b;
+}
+
+int main()
+{
+	int a;
+	int b;
+	b = 0;
+    for (a = 5, a != 0; a = a - 1){
+		b = fun(a,b);
+	}
+	return b;
+}
+
