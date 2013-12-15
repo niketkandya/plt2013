@@ -373,6 +373,11 @@ let rec stmt = function
            [] -> v1 @ [Predicate (v4,false, l2)] @ v2  @ [Label l2]
           | _ -> v1 @ [Predicate (v4,false, l1)] @ v2  @ [Branch (l2)]
                     @ [Label l1] @ v3 @ [Label l2])
+  | For (asn, cmp, inc, b) -> 
+          stmt (Block (
+              [Expr (asn); While(cmp, Block([b;Expr(inc)]))]
+              ))
+
   | While (e, b) ->
     let v1 = stmt b and v2 = expr e and l0 = (get_loop_label 0) 
       and l1 = (get_loop_label 1) in
