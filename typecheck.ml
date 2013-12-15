@@ -1,8 +1,7 @@
-open Sast
 open Ast
-open Bytecode
+open Sast
 open Debug
-open Printexc
+
 
 module StringMap = Map.Make(String)
 
@@ -37,15 +36,10 @@ let rec get_size_type sindex = function
   | Char -> 1
   | Int
   | Ptr -> 4
-  | Arr(sz) -> (match sz with
-        Literal(i) -> i
-        | Id(id) -> get_size_type sindex [Ptr]
-        | _ -> raise(Failure("lit_to_num: unexpected"))) * (get_size_type sindex tl)
+  | Arr(sz) -> sz * (get_size_type sindex tl)
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> raise (Failure ("Requesting size of wrong type")));;
 
-
-let build_global_idx map = StringMap.empty;;
 
 let calc_offset sidx offset typlst = 
   let align_size = 4 in
@@ -53,20 +47,6 @@ let calc_offset sidx offset typlst =
     match (List.hd typlst) with
       Char -> offset
     | _ ->  align_size * int_of_float(ceil ((float_of_int offset ) /.(float_of_int align_size)));;
-
-let rec modify_formal_lst = function 
-    [] -> []
-    | hd :: tl -> ( (match List.hd (hd.vtype) with
-        Arr(_)-> { hd with vtype = Ptr :: List.tl hd.vtype }
-        |  _ -> hd ) :: (modify_formal_lst tl));;
-
-let rec modify_local_lst  = function 
-    [] -> []
-    | hd :: tl -> ( (match List.hd (hd.vtype) with
-        Arr(s)-> (match s with 
-              Id(id) -> { hd with vtype = Ptr :: List.tl hd.vtype }
-              | _ -> hd)
-        |  _ -> hd ) :: (modify_local_lst tl));;
 
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
@@ -81,21 +61,15 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
     )
     sidx offset tl);;
 
+let build_global_idx map = StringMap.empty;;
+
 (* Translate a program in AST form into a bytecode program.  Throw an
  *   exception if something is wrong, e.g., a reference to an unknown
  *   variable or function *)
-let translate sast =
-
-let getProg(a, b) = a in
-let prog = getProg(sast) in
-
-let structs = prog.sdecls 
+let type_check_prog prog =
+  let structs = prog.sdecls 
   and globals = prog.gdecls
   and functions = prog.fdecls in
-  let count_loop = ref 0 
-  and count_mem = ref (-1) 
-  and count_ifelse = ref 0 in
-  
 
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
@@ -153,18 +127,17 @@ let function_indexes =
 in
 
 (* Translate a function in AST form into a list of bytecode statements *)
-let translate env fdecl=
-  let curr_offset = ref 0 in
+let type_check_func env fdecl=
+ let curr_offset = ref 0 in
 
   let env = 
     {
       env with local_index = 
         (build_local_idx StringMap.empty env.struct_index curr_offset 
-        ( (modify_local_lst fdecl.locals) 
-        @ (modify_formal_lst fdecl.formals)))
+        (fdecl.locals @ fdecl.formals))
     }
     in
-  let add_temp typlst =
+(*  let add_temp typlst =
     curr_offset := (calc_offset env.struct_index !curr_offset typlst);
     Lvar(!curr_offset,(get_size_type env.struct_index typlst))
     in
@@ -174,7 +147,7 @@ let translate env fdecl=
     in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
-    with Not_found -> raise (Failure("Varname not found: "^varname))
+    with Not_found -> raise (Failure("Varname not found"))
     in
   let get_size_varname table varname =
     get_size_type env.struct_index (get_type_varname table varname)
@@ -193,14 +166,6 @@ let translate env fdecl=
     in
   let get_ptrsize_varname table varname =
     get_size_type env.struct_index (List.tl (get_type_varname table varname))
-    in
-  let get_binres_type e = 
-    match List.hd e with
-      BinRes(typ) -> typ
-    | _ -> raise (Failure("Unexpted type: Expected BinRes"))
-    in
-  let gen_binres_type typ = 
-    [BinRes(typ)]
     in
   let get_dom_type typ1 typ2 =
     ( match List.hd typ1 with
@@ -226,82 +191,14 @@ let translate env fdecl=
     | Debug (_)  -> raise(Failure("Debug"))
     | Neg (_) -> raise(Failure("Negative"))
     in
-  let rec conv2_byt_lvar = function
-      [] -> []
-    | hd::tl -> let entry = StringMap.find hd.vname env.local_index in
-      Lvar(entry.offset, (get_size_type env.struct_index entry.typ))
-                :: (conv2_byt_lvar tl) 
-    in
-  let get_loop_label num = "loop" ^ match num with
-      0 -> string_of_int (count_loop := !count_loop + 1; !count_loop) ^ "_start"
-    | 1 -> string_of_int !count_loop ^ "_end"
-    | _ -> ""
-    in
-  let get_ifelse_label num = 
-    match num with 
-      0 -> "else" ^ string_of_int (count_ifelse := !count_ifelse + 1; !count_ifelse)
-    | 1 -> "end" ^ string_of_int !count_ifelse
-    | _ -> ""
-    in
-  let gen_atom atm = 
-    [Atom (atm)]
-    in
-  let rec get_off_lvar lvar = 
-    match lvar with
-      Lvar(o,s) -> Lit o
-    | Addr(l) -> get_off_lvar l
-    | _ as a -> raise_error_atom a
-    in
-  let get_atom = function
-      Atom (atm) -> atm
-    | BinEval  (dst, var1, op, var2) -> dst
-    | Fcall (fname, args,ret ) -> ret
-    | Assgmt (dst, src) -> dst 
-    | Label (a)-> raise (Failure ("Unexpected: Label-> " ^ a))
-    | Predicate (_, _, _)-> raise (Failure ("Unexpected: Predicate"))
-    | Branch _-> raise (Failure ("Unexpected: Branch"))
-    | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
-    | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
-    | Str (_, _)-> raise (Failure ("Unexpected: Str"))
-    | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ 
-      dbg_str_of_typs (List.hd ty)))
-    |Rval _ -> raise (Failure ("Unexpected: Rval"))
-    | VarArr(_,_) -> raise (Failure ("Unexpected: VarArr"))
-    in
-  let incr_by_ptrsz exp incrsz tmp = 
-     [BinEval (tmp, (Lit incrsz), Mult, (get_atom(List.hd (List.rev exp))))]
-    in
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in
-  let gen_addr_lst v1 = v1 @
-    gen_atom (Addr(get_atom (List.hd(List.rev v1))))
-    in
-  let add_base_offset btyp baddr off =
-    let v3 = add_temp btyp in
-    let v4 = get_ptrsize_type btyp in
-    [BinEval (v3,baddr,Add,off)] @ (gen_atom (Pntr(v3,v4)))
-    in
-  let rec gen_vararr = function
-    [] -> []
-    | hd :: tl -> (match List.hd (hd.vtype) with
-        Arr(s)-> (match s with
-              Id(id) -> let tmp = 
-                add_temp (List.tl hd.vtype)
-                in
-               (incr_by_ptrsz 
-              (gen_atom (get_lvar_varname env.local_index 0 id))
-              (get_ptrsize_type hd.vtype) tmp) @
-                [VarArr((get_lvar_varname env.local_index 0 hd.vname),
-                     tmp)]
-              | _ -> [])
-        |  _ -> []) @ (gen_vararr tl)
-    in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> 
-                let lbl = incr count_mem; ".m" ^
+                let lbl = incr count_mem; ".LC" ^
                 (string_of_int !count_mem) in
                 (gen_binres_type [Char; Ptr]) @ gen_atom(Sstr(s, lbl))
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
@@ -312,8 +209,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd retyp with
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
-      | MultiId(fexpr,Ind, e) -> expr (MultiId(Pointer(fexpr), Dot, e))
-      | MultiId(fexpr,Dot,e) ->
+      | MultiId(fexpr,resolve,e) ->
                 let v1 = expr fexpr in
                 let tab = (match List.hd (get_binres_type v1) with
                   Struct(s) -> get_struct_table s
@@ -350,8 +246,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd binres with
                 Ptr | Arr(_) ->
                     (match List.hd v1binres with
-                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in
-                       (incr_by_ptrsz v2 (get_size_type env.struct_index
+                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in 
+                       (incr_by_ptrsz v2 (get_size_type env.struct_index 
                        (List.tl v1binres)) tmp) @ 
                        [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
                       | _ -> (match List.hd v2binres with
@@ -387,13 +283,12 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 v1 @ gen_atom (Pntr( (get_atom (List.hd (List.rev v1))),
                 (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
-                         let v2 = expr base in
                          let off = add_temp (get_binres_type v1) in
-                         let btyp = get_binres_type v2  in
-                         let ptrsz = get_ptrsize_type btyp in 
-                         let baddr = get_atom (List.hd (List.rev v2)) in
-                         gen_binres_type(List.tl btyp) @
-                         (incr_by_ptrsz v1 ptrsz off) @
+                         let btyp = (get_type_varname table base) in
+                         let v4 = get_ptrsize_type btyp in 
+                         let baddr = Addr(get_lvar_varname table strict base) in
+                         gen_binres_type(List.tl (get_type_varname table base)) @
+                         (incr_by_ptrsz v1 v4 off) @ 
                          (add_base_offset btyp baddr off)
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Negof(v)  -> let v1 = expr v in 
@@ -416,11 +311,6 @@ let rec stmt = function
            [] -> v1 @ [Predicate (v4,false, l2)] @ v2  @ [Label l2]
           | _ -> v1 @ [Predicate (v4,false, l1)] @ v2  @ [Branch (l2)]
                     @ [Label l1] @ v3 @ [Label l2])
-  | For (asn, cmp, inc, b) -> 
-          stmt (Block (
-              [Expr (asn); While(cmp, Block([b;Expr(inc)]))]
-              ))
-
   | While (e, b) ->
     let v1 = stmt b and v2 = expr e and l0 = (get_loop_label 0) 
       and l1 = (get_loop_label 1) in
@@ -430,26 +320,27 @@ let rec stmt = function
   | _ -> []
 in 
 
-let stmtblock = (gen_vararr fdecl.locals) @ (stmt (Block fdecl.body)) in
+let stmtblock = (stmt (Block fdecl.body)) in
+
+*)
 
 (*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
-[Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset)]  
+[Sast(fdecl.fname, [Var(Noexpr, Void)], [Expr(Var(Noexpr, Void))]) ]
+in
 
-in let env = { function_index = function_indexes;
+let env = { function_index = function_indexes;
 		           global_index   = global_indexes;
                struct_index   = struct_indexes;
 		           local_index    = StringMap.empty 
              }
 in
 
+
 (* Code executed to start the program *)
 let entry_function = try
   (StringMap.find "main" function_indexes); []
   with Not_found -> raise (Failure ("no \"main\" function"))
 in 
-(* Compile the functions *)
-List.concat (entry_function :: List.map (translate env) functions);;
-(* TODO: Globals might need to be passed before at the point where
- * entry_function is present. Globals can be passed as a list, like that of
- * Fstart *)
 
+(* Compile the functions *)
+(prog, List.concat (entry_function :: List.map (type_check_func env) functions));;

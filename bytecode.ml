@@ -5,7 +5,7 @@ type atom =
   | Cchar of char
   | Sstr of string * string (* Sstr(name, label) *)
   | Lvar of int * int(* Lvar(offset,size) *)
-  | Gvar of string * int (* Globacl var (name,size) *)
+  | Gvar of string * int (* Global var (name,size) *)
   | Pntr of atom * int (* Pntr(addr,size) *)
   | Addr of atom
   | Neg  of atom

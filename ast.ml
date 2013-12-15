@@ -2,6 +2,7 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
 type resolve = Dot | Ind
 
+type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string 
 
 type expr =
     Literal of int
@@ -17,8 +18,6 @@ type expr =
   | Assign of expr * expr
   | Call of string * expr list
   | Noexpr
-
-type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string 
 
 type var_decl = {
   vname: string;
@@ -37,6 +36,16 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
+
+type var_decl = {
+  vname: string;
+  vtype: cpitypes list;
+}
+
+type struct_decl = {
+  sname: string;
+  smembers: var_decl list
+}
 
 type func_decl = {
   fname : string;

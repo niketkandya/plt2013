@@ -33,9 +33,9 @@ let save filename s =
 let program in_channel =
     let lexbuf = Lexing.from_channel in_channel in
     let ast = Parser.program Scanner.token lexbuf in
-    (* let sast = Sast.check ast in *)
-    (* Compile.translate sast *)
-    Compile.translate ast
+    let sast = Typecheck.type_check_prog ast in 
+    Compile.translate sast
+    (* Compile.translate ast *)
 
 
 (* Compiles from an input channel (stdin or source file) *)
