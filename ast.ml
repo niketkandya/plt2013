@@ -4,16 +4,6 @@ type cpitypes = Void | Int | Char | Ptr | Arr of int | Struct of string
 
 type resolve = Dot | Ind
 
-type var_decl = {
-  vname: string;
-  vtype: cpitypes list;
-}
-
-type struct_decl = {
-  sname: string;
-  smembers: var_decl list
-}
-
 type expr =
     Literal of int
   | String of string
@@ -37,6 +27,16 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
+
+type var_decl = {
+  vname: string;
+  vtype: cpitypes list;
+}
+
+type struct_decl = {
+  sname: string;
+  smembers: var_decl list
+}
 
 type func_decl = {
   fname : string;

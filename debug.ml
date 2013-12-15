@@ -71,8 +71,9 @@ let dbg_str_bstmt bstm = match bstm with
                 |Rval (rval) -> " Rval" ^ "\n" ^
                                 "Rvalue | " ^ (dbg_str_Lvar rval) ^ "\n";;
 
-let dbg_str_bstmlist lst fname = fname ^ "\n" ^ (List.fold_left 
-        (fun s bstm -> s^"\n" ^ (dbg_str_bstmt bstm)) "" lst);;
+let dbg_str_bstmlist lst fname sz = fname ^ " stack size = " ^ (string_of_int
+sz) ^ "\n" ^ 
+      (List.fold_left (fun s bstm -> s^"\n" ^ (dbg_str_bstmt bstm)) "" lst);;
 
 
 let dbg_str_program prog = 
@@ -84,6 +85,6 @@ let dbg_str_program prog =
                      Global (atmlst) -> "" (* dbg_print (List.hd atmlst) (*TODO: Global
                      functions code *)*)
                    | Fstart (fname, formals, body, stack_sz) ->
-                     dbg_str_bstmlist body fname
+                     dbg_str_bstmlist body fname stack_sz
                  ) ^ (dbg_str_proglst tl)
       in dbg_str_proglst prog
