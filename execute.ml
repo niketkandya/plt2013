@@ -97,6 +97,9 @@ let function_code_gen fname formals body stack_sz =
                 gen_ldr_str_code "ldr" "=" reg var
        and store_code reg var =
                 gen_ldr_str_code "str" "#" reg var in
+let incr_stack sz =
+p ("sub sp, sp,#" ^ sz ) 
+  in
 let bin_eval dst var1 op var2 = 
         let oper = (match op with
         Add -> p "adds r3, r0, r1"
@@ -149,8 +152,19 @@ let predicate cond jmpontrue label =
         let brn = if jmpontrue then "\t beq " else "\t bne " in 
         (load_code "r0" cond) ^ "\t cmp r0,#1\n" ^ brn ^ label ^ "\n"
         in
-let var_array ptr sz = let al_sz = get_aligned_sz sz in
-        incr_stack al_sz
+let var_array ptr sz =
+  (* Code for alignment of sz *)
+        let align_bits = align_size / 2 in
+        (load_code "r0" sz) ^
+        p ("lsr r1,r0,"^ (string_of_int align_bits)) ^
+        p ("cmp r1,r0") ^
+        p ("movne r0," ^ (string_of_int align_size) ) ^
+        p ("moveq r0,#0" ) ^
+        p ("lsl r1,r1,"^ (string_of_int align_bits)) ^
+        p ("add r3,r0,r1") ^
+        (incr_stack "r3") ^
+        p ("mov r0,sp") ^
+        store_code "r0" ptr
         in
 let asm_code_gen = function
     Atom (atm) -> ""
@@ -179,9 +193,6 @@ let mem_code_gen = function
         | _ -> "" )
   | _ -> ""
 in
-let incr_stack sz =
-p ("sub sp, sp,#" ^ string_of_int sz ) 
-  in
 let func_start_code =
         ".data\n" ^
         (List.fold_left 
@@ -195,7 +206,7 @@ let func_start_code =
                    p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
                   (* List.fold_left (fun s v->s ^ "\n" ^ (dbg_print v)) "" temps
                    ^*)
-                   (incr_stack stack_sz)^
+                   (incr_stack (string_of_int stack_sz))^
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
