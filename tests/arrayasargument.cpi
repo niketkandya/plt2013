@@ -1,11 +1,15 @@
+#include <stdio.h>
+
 void fun(int a[]) {
-printf("%d \n",a[3]);
+    printf("%d \n",a[3]);
 
 }
 
 int main() {
-int b[5];
-b[3] = 5;
-fun(b);
+    int b[5];
+    b[3] = 5;
+    fun(b);
+
+    return b[3];
 }
 
