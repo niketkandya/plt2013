@@ -59,7 +59,17 @@ formals_opt:
 
 formal_list:
     tdecl                   { [$1] }
-  | formal_list COMMA tdecl { $3 :: $1 }
+  | formal_list COMMA tdecl {
+                  (match List.hd $3.vtype with
+                  Arr(s) -> if s = -2 then
+                  raise( Failure("Array declaration: "^
+                  "variable not allowed in" ^
+                  "funciton argument")) else
+                  $3
+                  | _ -> $3) :: $1
+
+    
+    }
 
 vdecl_list:
     /* nothing */    { [] }
