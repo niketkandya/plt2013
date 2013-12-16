@@ -66,7 +66,9 @@ vdecl_list:
   | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-   | tdecl SEMI { $1 }
+   | tdecl SEMI { if (List.length $1.vtype) <> 0 then
+                  raise( Failure("asdf")) else
+                  $1}
 
 tdecl:
        INT rdecl      {
@@ -166,7 +168,6 @@ var:
 bvar:
         ID      { Id($1) }
         | arr   { Array( fst $1, snd $1) }
-
         | LPAREN ptr RPAREN { $2 } /* Not good hack */
 
 arr:
