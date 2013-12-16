@@ -206,7 +206,7 @@ let func_start_code =
                    p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
                   (* List.fold_left (fun s v->s ^ "\n" ^ (dbg_print v)) "" temps
                    ^*)
-                   (incr_stack "#"^(string_of_int stack_sz))^
+                   (incr_stack ("#" ^ (string_of_int stack_sz)))^
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
