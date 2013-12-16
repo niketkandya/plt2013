@@ -158,6 +158,7 @@ let asm_code_gen = function
   | Label label -> gen_label label
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
   | BinRes (_) -> ""
+  | VarArr(a,b) -> ""
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 
                 Atom (atm ) -> false

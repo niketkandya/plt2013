@@ -59,7 +59,7 @@ let rec modify_formal_lst = function
         Arr(_)-> { hd with vtype = Ptr :: List.tl hd.vtype }
         |  _ -> hd ) :: (modify_formal_lst tl));;
 
-let rec modify_local_lst = function 
+let rec modify_local_lst  = function 
     [] -> []
     | hd :: tl -> ( (match List.hd (hd.vtype) with
         Arr(s)-> (match s with 
@@ -259,6 +259,7 @@ let translate env fdecl=
     | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ 
       dbg_str_of_typs (List.hd ty)))
     |Rval _ -> raise (Failure ("Unexpected: Rval"))
+    | VarArr(_,_) -> raise (Failure ("Unexpected: VarArr"))
     in
   let incr_by_ptrsz exp incrsz tmp = 
      [BinEval (tmp, (Lit incrsz), Mult, (get_atom(List.hd (List.rev exp))))]
@@ -275,8 +276,14 @@ let translate env fdecl=
     let v4 = get_ptrsize_type btyp in
     [BinEval (v3,baddr,Add,off)] @ (gen_atom (Pntr(v3,v4)))
     in
-  let gen_vararr = []
-
+  let rec gen_vararr = function
+    [] -> []
+    | hd :: tl -> (match List.hd (hd.vtype) with
+        Arr(s)-> (match s with
+              Id(id) -> [VarArr( (get_lvar_varname env.local_index 0 hd.vname),
+                      (get_lvar_varname env.local_index 0 id))]
+              | _ -> [])
+        |  _ -> []) @ (gen_vararr tl)
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
@@ -410,7 +417,7 @@ let rec stmt = function
   | _ -> []
 in 
 
-let stmtblock = gen_vararr @ (stmt (Block fdecl.body)) in
+let stmtblock = (gen_vararr fdecl.locals) @ (stmt (Block fdecl.body)) in
 
 (*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
 [Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset)]  

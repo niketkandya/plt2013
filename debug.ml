@@ -68,6 +68,7 @@ let dbg_str_bstmt bstm = match bstm with
                 | Str (_, _)-> raise (Failure ("Unexpected: Str"))
                 | BinRes(ty) -> "BinRes: " ^ 
                         (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty)
+                | VarArr(_,_) ->raise (Failure ("Unexpected: VarArr"))
                 |Rval (rval) -> " Rval" ^ "\n" ^
                                 "Rvalue | " ^ (dbg_str_Lvar rval) ^ "\n";;
 
