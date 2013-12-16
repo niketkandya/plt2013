@@ -5,14 +5,14 @@ let usage_msg =
     "Cπ - Simplified C compiler for ARM V6\n" ^
     "cpi FILE [-o OUTFILE]\n" ^
     "-b print out bytecode \n" ^
-    "-s print out stack for each function \n"
+    "-sast print out sast for program \n"
 
 (* Default argument values *)
 let out_file = ref "out"
 let use_stdin = ref false
 let use_stdout = ref false
 let debug_bytecode = ref false
-let debug_stack = ref false
+let debug_sast = ref false
 
 (* Command line args *)
 let speclist = 
@@ -20,23 +20,23 @@ let speclist =
         ("--stdin", Arg.Set use_stdin, "Read from stdin" );
         ("--stdout", Arg.Set use_stdout, "Output to stdout" );
         ("-b", Arg.Set debug_bytecode, "Print out bytecode" );
-        ("-s", Arg.Set debug_stack, "Print out variables stored on stack" );
+        ("-sast", Arg.Set debug_sast, "Print out sast" );
         ("-o", Arg.String (fun x -> out_file := x), "Set output file");
     ]
 
 
 let save filename s =
-     let channel = open_out filename in
-     output_string channel s;
-     close_out channel
+    let channel = open_out filename in
+    output_string channel s;
+    close_out channel
 
-let program in_channel =
+let sast in_channel = 
     let lexbuf = Lexing.from_channel in_channel in
     let ast = Parser.program Scanner.token lexbuf in
-    let sast = Typecheck.type_check_prog ast in 
-    Compile.translate sast
-    (* Compile.translate ast *)
+    Typecheck.type_check_prog ast  
 
+let program in_channel =
+    Compile.translate (sast in_channel)
 
 (* Compiles from an input channel (stdin or source file) *)
 (* If --stdout flag set, then print to stdout. else, save to out_file *)
@@ -49,6 +49,11 @@ let print_bytecode in_channel out_file =
     let bytecode = Debug.dbg_str_program (program in_channel)  in
         if !use_stdout then print_string bytecode 
         else save (out_file ^ ".bytecode") bytecode
+
+let print_sast in_channel out_file = 
+    let sast_str = Debug.dbg_str_sast (sast in_channel)  in
+        if !use_stdout then print_string sast_str
+        else save (out_file ^ ".sast") sast_str
 
 (* MAIN *)
 let main = 
@@ -65,3 +70,7 @@ let main =
         if !use_stdin && !debug_bytecode then (print_bytecode stdin !out_file)
         else if !debug_bytecode then
             List.iter (fun f -> print_bytecode (open_in f) !out_file ) !source_files;
+
+        if !use_stdin && !debug_sast then (print_sast stdin !out_file)
+        else if !debug_sast then
+            List.iter (fun f -> print_sast (open_in f) !out_file ) !source_files;

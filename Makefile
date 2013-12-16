@@ -65,8 +65,8 @@ sast.cmo: ast.cmo
 sast.cmx: ast.cmx
 bytecode.cmo: ast.cmo 
 bytecode.cmx: ast.cmx 
-debug.cmo: bytecode.cmo
-debug.cmx: bytecode.cmx
+debug.cmo: bytecode.cmo sast.cmo
+debug.cmx: bytecode.cmx sast.cmx
 typecheck.cmo: sast.cmo ast.cmo
 typecheck.cmx: sast.cmx ast.cmx
 compile.cmo: bytecode.cmo sast.cmo ast.cmo
