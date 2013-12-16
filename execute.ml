@@ -22,6 +22,10 @@ let execute_prog program =
         and size_stmfd = 4 (* Total size pushed using stmfd -4 *) 
         and align_size = 4
         in
+let get_aligned_sz sz =
+(align_size * int_of_float(ceil ((float_of_int sz ) /.
+                        (float_of_int align_size))))
+        in
 let dbg_print var = match var with
         Lvar(off,sz) -> "Offset: " ^ string_of_int off ^
                         "Size: " ^ (string_of_int sz) ^ "\n"
@@ -145,6 +149,9 @@ let predicate cond jmpontrue label =
         let brn = if jmpontrue then "\t beq " else "\t bne " in 
         (load_code "r0" cond) ^ "\t cmp r0,#1\n" ^ brn ^ label ^ "\n"
         in
+let var_array ptr sz = let al_sz = get_aligned_sz sz in
+        incr_stack al_sz
+        in
 let asm_code_gen = function
     Atom (atm) -> ""
   | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
@@ -158,7 +165,7 @@ let asm_code_gen = function
   | Label label -> gen_label label
   | Predicate (cond,jmpontrue,label) -> predicate cond jmpontrue label
   | BinRes (_) -> ""
-  | VarArr(a,b) -> ""
+  | VarArr(ptr,sz) -> var_array ptr sz
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 
                 Atom (atm ) -> false
@@ -172,6 +179,9 @@ let mem_code_gen = function
         | _ -> "" )
   | _ -> ""
 in
+let incr_stack sz =
+p ("sub sp, sp,#" ^ string_of_int sz ) 
+  in
 let func_start_code =
         ".data\n" ^
         (List.fold_left 
@@ -185,7 +195,7 @@ let func_start_code =
                    p ("add fp, sp,#"^ string_of_int size_stmfd)  ^
                   (* List.fold_left (fun s v->s ^ "\n" ^ (dbg_print v)) "" temps
                    ^*)
-                   p ("sub sp, sp,#" ^ string_of_int stack_sz ) ^ 
+                   (incr_stack stack_sz)^
                    let rec formals_push_code i = if i < 0 then "" else 
                             (formals_push_code (i-1)) ^ 
                             (store_code ("r" ^ string_of_int i) (List.nth formals i))
@@ -213,9 +223,8 @@ in let rec print_program =
                Global (atmlst) -> print_atom_lst atmlst (* dbg_print (List.hd atmlst) (*TODO: Global
                functions code *)*)
              | Fstart (fname, formals, body, stack_sz) ->
-               (function_code_gen fname formals body 
-                 (align_size * int_of_float(ceil ((float_of_int stack_sz ) /.
-                        (float_of_int align_size)))) 
+               (function_code_gen fname formals body
+                 (get_aligned_sz stack_sz)
                )
            )
                         ^ (print_program tl)

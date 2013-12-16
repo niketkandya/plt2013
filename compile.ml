@@ -280,8 +280,14 @@ let translate env fdecl=
     [] -> []
     | hd :: tl -> (match List.hd (hd.vtype) with
         Arr(s)-> (match s with
-              Id(id) -> [VarArr( (get_lvar_varname env.local_index 0 hd.vname),
-                      (get_lvar_varname env.local_index 0 id))]
+              Id(id) -> let tmp = 
+                add_temp (List.tl hd.vtype)
+                in
+               (incr_by_ptrsz 
+              (gen_atom (get_lvar_varname env.local_index 0 id))
+              (get_ptrsize_type hd.vtype) tmp) @
+                [VarArr((get_lvar_varname env.local_index 0 hd.vname),
+                     tmp)]
               | _ -> [])
         |  _ -> []) @ (gen_vararr tl)
     in
@@ -337,8 +343,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd binres with
                 Ptr | Arr(_) ->
                     (match List.hd v1binres with
-                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in 
-                       (incr_by_ptrsz v2 (get_size_type env.struct_index 
+                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in
+                       (incr_by_ptrsz v2 (get_size_type env.struct_index
                        (List.tl v1binres)) tmp) @ 
                        [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
                       | _ -> (match List.hd v2binres with
