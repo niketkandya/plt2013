@@ -6,29 +6,6 @@ open Printexc
 
 module StringMap = Map.Make(String)
 
-type var_entry = { 
-  offset:int;
-  typ: cpitypes list
-}
-
-type func_entry = {
-  param : var_entry list;
-  ret_ty : cpitypes list
-}
-
-type struct_entry = {
-  size: int;
-  memb_index: var_entry StringMap.t
-}
-
-(* Symbol table: Information about all the names in scope *)
-type envt = {
-  function_index : func_entry StringMap.t; (* Index for each function *)
-  struct_index   : struct_entry StringMap.t;
-  global_index   : var_entry StringMap.t; (* "Address" for global variables *)
-  local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
-}
-
 let rec get_size_type sindex = function 
 |[] ->   raise Exit
 | hd::tl -> 
