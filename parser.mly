@@ -61,11 +61,11 @@ formal_list:
     tdecl                   { [$1] }
   | formal_list COMMA tdecl {
                   (match List.hd $3.vtype with
-                  Arr(s) -> if s = -2 then
-                  raise( Failure("Array declaration: "^
-                  "variable not allowed in" ^
-                  "funciton argument")) else
-                  $3
+                  Arr(s) -> (match s with 
+                    Id(id) -> raise( Failure("Array declaration: "^
+                      "variable not allowed in" ^
+                      "funciton argument"))
+                    |_ -> $3)
                   | _ -> $3) :: $1
 
     
@@ -77,9 +77,9 @@ vdecl_list:
 
 vdecl:
    | tdecl SEMI { match List.hd $1.vtype with
-                  Arr(s) -> if s = -1 then
-                  raise( Failure("Array declaration: Size not specified")) else
-                  $1
+                  Arr(s) -> (match s with
+                    Noexpr -> raise( Failure("Array declaration: Size not specified"))
+                    |_ -> $1)
                   | _ -> $1
                 }
 
@@ -117,15 +117,15 @@ rdecl:
 arrdecl:
         ID LSUBS LITERAL RSUBS { {
           vname = $1;
-          vtype = [Arr($3)]
+          vtype = [Arr(Literal($3))]
            } }
         | ID LSUBS RSUBS { {
           vname = $1;
-          vtype = [Arr(-1)]
+          vtype = [Arr(Noexpr)]
            } }
         | ID LSUBS ID RSUBS { {
           vname = $1;
-          vtype = [Arr(-2)]
+          vtype = [Arr(Id($3))]
            } }
 
 stmt_list:

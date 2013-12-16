@@ -1,18 +1,7 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
 
-type cpitypes = Void | Int | Char | Ptr | Arr of int | Struct of string 
-
 type resolve = Dot | Ind
 
-type var_decl = {
-  vname: string;
-  vtype: cpitypes list;
-}
-
-type struct_decl = {
-  sname: string;
-  smembers: var_decl list
-}
 
 type expr =
     Literal of int
@@ -29,6 +18,17 @@ type expr =
   | Call of string * expr list
   | Noexpr
 
+type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string 
+
+type var_decl = {
+  vname: string;
+  vtype: cpitypes list;
+}
+
+type struct_decl = {
+  sname: string;
+  smembers: var_decl list
+}
 type stmt =
     Block of stmt list
   | Expr of expr

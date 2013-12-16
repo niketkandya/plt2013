@@ -36,9 +36,13 @@ let rec get_size_type sindex = function
   | Char -> 1
   | Int
   | Ptr -> 4
-  | Arr(sz) -> sz * (get_size_type sindex tl)
+  | Arr(sz) -> (match sz with
+        Literal(i) -> i
+        | Id(id) -> get_size_type sindex [Ptr]
+        | _ -> raise(Failure("lit_to_num: unexpected"))) * (get_size_type sindex tl)
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> raise (Failure ("Requesting size of wrong type")));;
+
 
 let build_global_idx map = StringMap.empty;;
 
