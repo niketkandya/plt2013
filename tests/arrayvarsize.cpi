@@ -1,0 +1,6 @@
+void fun(int n) {
+  int a[n];
+}
+int main() {
+  fun(5);
+}
