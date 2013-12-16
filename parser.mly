@@ -66,9 +66,12 @@ vdecl_list:
   | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
-   | tdecl SEMI { if (List.length $1.vtype) <> 0 then
-                  raise( Failure("asdf")) else
-                  $1}
+   | tdecl SEMI { match List.hd $1.vtype with
+                  Arr(s) -> if s = -1 then
+                  raise( Failure("Array declaration: Size not specified")) else
+                  $1
+                  | _ -> $1
+                }
 
 tdecl:
        INT rdecl      {
@@ -105,6 +108,14 @@ arrdecl:
         ID LSUBS LITERAL RSUBS { {
           vname = $1;
           vtype = [Arr($3)]
+           } }
+        | ID LSUBS RSUBS { {
+          vname = $1;
+          vtype = [Arr(-1)]
+           } }
+        | ID LSUBS ID RSUBS { {
+          vname = $1;
+          vtype = [Arr(-2)]
            } }
 
 stmt_list:
