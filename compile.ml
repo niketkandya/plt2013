@@ -49,6 +49,12 @@ let calc_offset sidx offset typlst =
       Char -> offset
     | _ ->  align_size * int_of_float(ceil ((float_of_int offset ) /.(float_of_int align_size)));;
 
+let rec modify_formal_lst = function 
+    [] -> []
+    | hd :: tl -> ( (match List.hd (hd.vtype) with
+        Arr(_)-> { hd with vtype = Ptr :: List.tl hd.vtype }
+        |  _ -> hd ) :: (modify_formal_lst tl));;
+
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
   | hd:: tl ->
@@ -136,7 +142,7 @@ let translate env fdecl=
     {
       env with local_index = 
         (build_local_idx StringMap.empty env.struct_index curr_offset 
-        (fdecl.locals @ fdecl.formals))
+        (fdecl.locals @ (modify_formal_lst fdecl.formals)))
     }
     in
   let add_temp typlst =
@@ -249,8 +255,8 @@ let translate env fdecl=
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in
-  let gen_addr_lst v1 = gen_binres_type( (get_binres_type v1))
-    @ v1 @ gen_atom (Addr(get_atom (List.hd(List.rev v1))))
+  let gen_addr_lst v1 = v1 @
+    gen_atom (Addr(get_atom (List.hd(List.rev v1))))
     in
   let add_base_offset btyp baddr off =
     let v3 = add_temp btyp in
