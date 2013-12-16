@@ -1,0 +1,32 @@
+void SelectionSort(int a[], int array_size)
+{
+     int i;
+     int j;
+     int min;
+     int temp;
+     for (i = 0; i < array_size - 1; i = i + 1)
+     {
+          min = i;
+          for (j = i+1; j < array_size; j = j + 1)
+          {
+               if (a[j] < a[min])
+                    min = j;
+          }
+
+          temp = a[i];
+          a[i] = a[min];
+          a[min] = temp;
+     }
+}
+
+int main(){
+    int arr[5];
+    arr[0] = 10;
+    arr[1] = 5;
+    arr[2] = 20;
+    arr[3] = 1;
+    arr[4] = 21;
+
+    SelectionSort(arr, 5);
+    return arr[0];
+}

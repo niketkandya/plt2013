@@ -277,7 +277,8 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (match List.hd retyp with
                         Arr(_) -> gen_addr_lst v1
                         | _ -> v1)
-      | MultiId(fexpr,resolve,e) ->
+      | MultiId(fexpr,Ind, e) -> expr (MultiId(Pointer(fexpr), Dot, e))
+      | MultiId(fexpr,Dot,e) ->
                 let v1 = expr fexpr in
                 let tab = (match List.hd (get_binres_type v1) with
                   Struct(s) -> get_struct_table s
@@ -379,6 +380,11 @@ let rec stmt = function
            [] -> v1 @ [Predicate (v4,false, l2)] @ v2  @ [Label l2]
           | _ -> v1 @ [Predicate (v4,false, l1)] @ v2  @ [Branch (l2)]
                     @ [Label l1] @ v3 @ [Label l2])
+  | For (asn, cmp, inc, b) -> 
+          stmt (Block (
+              [Expr (asn); While(cmp, Block([b;Expr(inc)]))]
+              ))
+
   | While (e, b) ->
     let v1 = stmt b and v2 = expr e and l0 = (get_loop_label 0) 
       and l1 = (get_loop_label 1) in
