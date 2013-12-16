@@ -13,6 +13,7 @@ type atom =
 
 type bstmt =
     Atom of atom
+  | VarArr of atom * atom
   | Rval of atom
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
   | BinRes of cpitypes list

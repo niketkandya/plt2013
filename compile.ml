@@ -59,6 +59,14 @@ let rec modify_formal_lst = function
         Arr(_)-> { hd with vtype = Ptr :: List.tl hd.vtype }
         |  _ -> hd ) :: (modify_formal_lst tl));;
 
+let rec modify_local_lst = function 
+    [] -> []
+    | hd :: tl -> ( (match List.hd (hd.vtype) with
+        Arr(s)-> (match s with 
+              Id(id) -> { hd with vtype = Ptr :: List.tl hd.vtype }
+              | _ -> hd)
+        |  _ -> hd ) :: (modify_local_lst tl));;
+
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
   | hd:: tl ->
@@ -145,7 +153,8 @@ let translate env fdecl=
     {
       env with local_index = 
         (build_local_idx StringMap.empty env.struct_index curr_offset 
-        (fdecl.locals @ (modify_formal_lst fdecl.formals)))
+        ( (modify_local_lst fdecl.locals) 
+        @ (modify_formal_lst fdecl.formals)))
     }
     in
   let add_temp typlst =
@@ -265,6 +274,9 @@ let translate env fdecl=
     let v3 = add_temp btyp in
     let v4 = get_ptrsize_type btyp in
     [BinEval (v3,baddr,Add,off)] @ (gen_atom (Pntr(v3,v4)))
+    in
+  let gen_vararr = []
+
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
@@ -398,7 +410,7 @@ let rec stmt = function
   | _ -> []
 in 
 
-let stmtblock = (stmt (Block fdecl.body)) in
+let stmtblock = gen_vararr @ (stmt (Block fdecl.body)) in
 
 (*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
 [Fstart(fdecl.fname, (conv2_byt_lvar fdecl.formals), stmtblock, !curr_offset)]  
