@@ -156,10 +156,10 @@ let var_array ptr sz =
   (* Code for alignment of sz *)
         let align_bits = align_size / 2 in
         (load_code "r0" sz) ^
-        p ("lsr r1,r0,"^ (string_of_int align_bits)) ^
-        p ("lsl r1,r1,"^ (string_of_int align_bits)) ^
+        p ("lsr r1,r0,#"^ (string_of_int align_bits)) ^
+        p ("lsl r1,r1,#"^ (string_of_int align_bits)) ^
         p ("cmp r1,r0") ^
-        p ("movne r0," ^ (string_of_int align_size) ) ^
+        p ("movne r0,#" ^ (string_of_int align_size) ) ^
         p ("moveq r0,#0" ) ^
         p ("add r3,r0,r1") ^
         (incr_stack "r3") ^
