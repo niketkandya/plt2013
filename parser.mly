@@ -104,6 +104,10 @@ arrdecl:
           vname = $1;
           vtype = [Arr($3)]
            } }
+      | ID LSUBS RSUBS { {
+          vname = $1;
+          vtype = [Arr(0)]
+           } }
 
 stmt_list:
     /* nothing */  { [] }
