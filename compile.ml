@@ -75,9 +75,7 @@ let translate prog =
   let structs = prog.sdecls 
   and globals = prog.gdecls
   and functions = prog.fdecls in
-
-  let curr_offset = ref 0 
-  and count_loop = ref 0 
+  let count_loop = ref 0 
   and count_mem = ref (-1) 
   and count_ifelse = ref 0 in
   
@@ -138,6 +136,7 @@ in
 
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
+  let curr_offset = ref 0 in
   let env = 
     {
       env with local_index = 
@@ -352,12 +351,13 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 v1 @ gen_atom (Pntr( (get_atom (List.hd (List.rev v1))),
                 (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
+                         let v2 = expr base in
                          let off = add_temp (get_binres_type v1) in
-                         let btyp = (get_type_varname table base) in
-                         let v4 = get_ptrsize_type btyp in 
-                         let baddr = Addr(get_lvar_varname table strict base) in
-                         gen_binres_type(List.tl (get_type_varname table base)) @
-                         (incr_by_ptrsz v1 v4 off) @ 
+                         let btyp = get_binres_type v2  in
+                         let ptrsz = get_ptrsize_type btyp in 
+                         let baddr = get_atom (List.hd (List.rev v2)) in
+                         gen_binres_type(List.tl btyp) @
+                         (incr_by_ptrsz v1 ptrsz off) @
                          (add_base_offset btyp baddr off)
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Negof(v)  -> let v1 = expr v in 

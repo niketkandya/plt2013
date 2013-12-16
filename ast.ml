@@ -23,7 +23,7 @@ type expr =
   | Id of string
   | MultiId of expr * resolve * expr
   | Pointer of expr
-  | Array of string * expr
+  | Array of expr * expr
   | Binop of expr * op * expr
   | Assign of expr * expr
   | Call of string * expr list

@@ -166,7 +166,7 @@ bvar:
         | LPAREN ptr RPAREN { $2 } /* Not good hack */
 
 arr:
-        ID LSUBS expr RSUBS { $1,$3 }
+        ID LSUBS expr RSUBS { Id($1),$3 }
 
 actuals_opt:
     /* nothing */ { [] }
