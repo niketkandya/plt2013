@@ -194,7 +194,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       let v1_type = get_type_lst_expr_t(v1) in
       let tab = (match (List.hd v1_type) with
         | Struct(s) -> get_struct_table s
-        | _ -> raise(Failure("Variable is not a Struct"))) in
+        | _ -> raise(Failure("Variable is "^ (dbg_typ v1_type) ^" and not a Struct"))) in
       let v2 = tc_expr ~table:tab ~strict:1 e in
       let v2_type = get_type_lst_expr_t(v2) in
       (match resolve with
@@ -209,7 +209,8 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
          (* Binop_t(lh, op, rh, [Err]) *)
           raise (Failure ("Binop mismatch: 
            Left side is " ^ (dbg_typ lh_type) ^ " Right
-           side is " ^ (dbg_typ rh_type) )) 
+           side is " ^ (dbg_typ rh_type) ^ 
+           " op is " ^ dbg_str_op op 0)) 
         else Binop_t(lh, op, rh, ty)
   | Assign (s, e) ->
     let lh = (tc_expr s) and rh = (tc_expr e) in

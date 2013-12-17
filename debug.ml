@@ -12,7 +12,6 @@ let dbg_str_of_typs typ = match typ with
                         | Arr(sz) -> "Arr" 
                         | Struct(sname) -> "Struct " ^ sname
                         | Err -> "Error"
-                        | _ -> raise (Failure ("Type does not exist"));;
 
 let dbg_typ ty = 
   (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty);;
@@ -35,7 +34,6 @@ let rec dbg_str_Lvar lvar tabs = match lvar with
                     "\n" ^ p (tabs+2) ^ "Negative: \n" ^
                     "\n" ^ p (tabs+2) ^ "Value | " ^ (dbg_str_Lvar atm (tabs+1))
                 | Debug(str) -> str
-                | _ -> raise (Failure ("Needs Implementation"));;
 
 let dbg_str_print str = raise (Failure ("Debug msg: \n" ^str));;
 
