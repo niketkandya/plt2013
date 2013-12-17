@@ -72,7 +72,6 @@ let structs = prog.sdecls
   let count_loop = ref 0 
   and count_mem = ref (-1) 
   and count_ifelse = ref 0 in
-  
 
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
@@ -278,7 +277,7 @@ let translate env fdecl=
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> 
-                let lbl = incr count_mem; ".m" ^
+                let lbl = incr count_mem; ".LC" ^
                 (string_of_int !count_mem) in
                 (gen_binres_type [Char; Ptr]) @ gen_atom(Sstr(s, lbl))
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
