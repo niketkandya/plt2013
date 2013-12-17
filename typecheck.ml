@@ -133,8 +133,51 @@ let type_check_func env fdecl=
         else raise Not_found
       with Not_found -> raise (Failure(var ^": Not found"))
     in
-*)  let get_ptrsize_type typlst =
+*)  
+  let get_ptrsize_type typlst =
     get_size_type env.struct_index (List.tl typlst)
+    in
+  let print_type ty = 
+      (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty)
+    in
+  let print_types ty1 ty2 =
+      "left hand is: " ^ (print_type ty1) ^ " right hand is: "
+         ^ (print_type ty2) ^ "\n" 
+    in
+  let rec lst_match list1 list2 = match list1, list2 with
+    | h1::t1, h2::t2 -> h1 = h2 && lst_match t1 t2
+    | [_], _ -> false
+    | _, [_] -> false
+    | _, _ -> true
+    in
+  let predicate_correct ty =
+    if lst_match ty [Int] then true 
+      else if lst_match ty [Char] then true
+      else false
+    in
+  let binop_result_type ty1 op ty2 =
+        match ty1, ty2, op with
+        | [Int],  [Int],  _ -> [Int]
+        | [Char], [Char], _ -> [Char]
+        | [Int],  [Char], _ -> [Int]
+        | [Char], [Int],  _ -> [Int]
+        | Ptr::tl, [Int], Add -> ty1
+        | Ptr::tl, [Char], Add -> ty1
+        | Ptr::tl, [Int], Sub -> ty1
+        | Ptr::tl, [Char], Sub -> ty1
+        | [Int], Ptr::tl, Add -> ty2
+        | [Char], Ptr::tl, Add -> ty2
+        | [Int], Ptr::tl, Sub -> ty2
+        | [Char], Ptr::tl, Sub -> ty2
+        | _ , _ , _ -> [Err]
+    in
+  let assign_result_type ty1 ty2 =
+    if lst_match ty1 ty2 then ty1
+    else
+       match ty1, ty2 with
+        | [Int],  [Char] -> [Int]
+        | [Char], [Int] -> [Int]
+        | _ , _  -> [Err]
     in
 (*  let get_ptrsize_varname table varname =
     get_size_type env.struct_index (List.tl (get_type_varname table varname))
@@ -169,7 +212,7 @@ let type_check_func env fdecl=
     in *)
 let rec expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Var(Literal(i), [Int])
-  | String s -> Var(String(s), [Char; Ptr])
+  | String s -> Var(String(s), [Ptr; Char])
   | ConstCh(ch) -> Var(ConstCh(ch), [Char])
   | Id s ->
       let typ = get_type_varname table s in
@@ -202,25 +245,25 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         baddr (get_atom (List.hd (List.rev offset))))
 *)
   | Binop (e1, op, e2) -> 
-    let v1 = expr e1 and v2 = expr e2 in
-      let v1_type = get_type_first_expr_t(v1)
-      and v2_type = get_type_first_expr_t(v2) in
-        (match (v1_type, v2_type) with
-          (Int, Int) -> Var(Binop(e1, op, e2), [Int])
-        | (Char, Char) -> Var(Binop(e1, op, e2), [Char])
-        | (Int, Char) -> Var(Binop(e1, op, e2), [Int])
-        | (Char, Int) -> Var(Binop(e1, op, e2), [Int])
-        | (_, _) -> raise (Failure ("Binop mismatch"))) 
+    let lh = expr e1 and rh = expr e2 in
+      let lh_type = get_type_lst_expr_t(lh)
+      and rh_type = get_type_lst_expr_t(rh) in
+      let ty = binop_result_type lh_type op rh_type in
+        if lst_match ty [Err] then raise 
+          (Failure ("Binop mismatch: 
+           Left side is " ^ (print_type lh_type) ^ " Right
+           side is " ^ (print_type rh_type) ))
+        else Var(Binop(e1, op, e2), ty)
   | Assign (s, e) ->
-    let v1 = (expr e) and v2 = (expr s) in
-      let v1_type = get_type_first_expr_t(v1)
-      and v2_type = get_type_first_expr_t(v2) in
-        (match (v1_type, v2_type) with
-          (Int, Int) -> Var(Assign(s, e), [Int])
-        | (Char, Char) -> Var(Assign(s, e), [Char])
-        | (Int, Char) -> Var(Assign(s, e), [Int])
-        | (Char, Int) -> Var(Assign(s, e), [Int])
-        | (_, _) -> raise (Failure ("Assignment mismatch"))) 
+    let lh = (expr s) and rh = (expr e) in
+      let lh_type = get_type_lst_expr_t(lh)
+      and rh_type = get_type_lst_expr_t(rh) in
+      let ty = assign_result_type lh_type rh_type in
+        if lst_match ty [Err] then raise 
+          (Failure ("Assign mismatch: 
+           Left side is " ^ (print_type lh_type) ^ " Right
+           side is " ^ (print_type rh_type) ))
+        else Var(Assign(s, e), [Int])
   | Call (fname, actuals) ->
     let param = List.map expr (List.rev actuals)
     and rettyp = (get_func_entry fname).ret_ty in
@@ -231,17 +274,18 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
     let v1_type = get_type_lst_expr_t(v1) in
       Var(Pointer(e), v1_type)
   | Array(base,e) -> let v1 = expr e in
-    let v1_type = get_type_first_expr_t(v1) in
+    let v1_type = get_type_lst_expr_t(v1) in
       let btyp = (get_type_varname table base) in
-        let v4 = get_ptrsize_type btyp in 
-    (* TODO check if expr index is int *)
-          Var(Array(base, e), btyp)
-  | Addrof(v) -> let v1 = expr v in 
+      if predicate_correct(v1_type) then
+          Var(Array(base, e), (List.tl btyp))
+      else raise (Failure ("Array index is type " ^ (print_type v1_type) 
+            ^ " and not type int"))
+  | Addrof(e) -> let v1 = expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
-      Var(Addrof(v), v1_type)
-  | Negof(v) -> let v1 = expr v in 
+      Var(Addrof(e), v1_type)
+  | Negof(e) -> let v1 = expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
-      Var(Negof(v), v1_type)
+      Var(Negof(e), v1_type)
   | Noexpr -> Noexpr_t 
   | _ -> Noexpr_t 
     in
