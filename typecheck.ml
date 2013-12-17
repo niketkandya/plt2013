@@ -212,44 +212,29 @@ let type_check_func env fdecl=
     | Debug (_)  -> raise(Failure("Debug"))
     | Neg (_) -> raise(Failure("Negative"))
     in
+    *)
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
-    in *)
+    in 
 let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Literal_t(i, [Int])
   | String s -> String_t(s, [Ptr; Char])
   | ConstCh(ch) -> ConstCh_t(ch, [Char])
   | Id s ->
-      let typ = get_type_varname table s in
+    let typ = get_type_varname table s in
         Id_t(s, typ)
-(*      | MultiId(fexpr,resolve,e) ->
-                let v1 = expr fexpr in
-                let tab = (match List.hd (get_binres_type v1) with
-                  Struct(s) -> get_struct_table s
-                  | _ -> raise(Failure("Must be a struct"))) in
-                let v2 = expr ~table:tab ~strict:1 e in
-                let offset = (match get_atom(List.hd (List.rev v2)) with
-                   Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @
-                   gen_atom (Lit o)
-                   | Pntr(b,s) -> (*This will an array *)
-                      (match (List.nth (List.rev v2) 1) with
-                        BinEval(dst,op1,op,op2) -> 
-                          (List.rev(List.tl(List.tl(List.rev v2)))) @
-                          [BinEval(dst,(get_off_lvar op1),Add,op2)]
-                          @ gen_atom dst
-                        | _ -> raise(Failure("Array was expected: MultiId"))
-                        )
-                   | _ -> raise(Failure("Unexpected type in MultiId"))) in
-                let baddr = (match get_atom( List.hd (List.rev v1)) with
-                        Lvar(o,s) as l -> Addr(l)
-                        | Pntr(b,s) -> b
-                        | _ -> raise(Failure("Unexpected type in MultiId"))) in
-                        List.rev(List.tl(List.rev offset))
-                        @ (add_base_offset ( List.hd (get_binres_type offset) 
-                        ::(get_binres_type offset)) 
-                        baddr (get_atom (List.hd (List.rev offset))))
-*)
+  | MultiId(fexpr,resolve,e) ->
+    let v1 = tc_expr fexpr in
+      let v1_type = get_type_lst_expr_t(v1) in
+      let tab = (match v1_type with
+        | [Struct(s)] -> get_struct_table s
+        | _ -> raise(Failure("Variable is not a Struct"))) in
+      let v2 = tc_expr ~table:tab ~strict:1 e in
+      let v2_type = get_type_lst_expr_t(v2) in
+      (match resolve with
+        | Dot -> MultiId_t(v1, Dot, v2, v2_type)
+        | Ind -> MultiId_t(v1, Ind, v2, [Ptr] @ v2_type))
   | Binop (e1, op, e2) -> 
     let lh = tc_expr e1 and rh = tc_expr e2 in
       let lh_type = get_type_lst_expr_t(lh)
@@ -298,11 +283,10 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       if is_int_or_char(v1_type) then
        (* raise (Failure ("Wrong type " ^ (print_type v1_type) 
             ^ " for unary minus")) *)
-       Negof_t(v1, [Err])
+      Negof_t(v1, [Err])
       else
       Negof_t(v1, v1_type)
   | Noexpr -> Noexpr_t 
-  | _ -> Noexpr_t 
     in
 let rec tc_stmt = function
     Block sl ->
