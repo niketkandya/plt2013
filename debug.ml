@@ -14,6 +14,9 @@ let dbg_str_of_typs typ = match typ with
                         | Err -> "Error"
                         | _ -> raise (Failure ("Type does not exist"));;
 
+let dbg_typ ty = 
+  (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty);;
+   
 let rec dbg_str_Lvar lvar tabs = match lvar with
                  Lvar(off,sz) -> "Lvar Offset: " ^ string_of_int off ^
                                 " Size: " ^ string_of_int sz 
@@ -35,17 +38,22 @@ let rec dbg_str_Lvar lvar tabs = match lvar with
                 | _ -> raise (Failure ("Needs Implementation"));;
 
 let dbg_str_print str = raise (Failure ("Debug msg: \n" ^str));;
-let dbg_str_op o = match o with
-                Add  -> "Add"
-                | Sub -> "Sub"
-                | Mult -> "Mult"
-                | Div -> "Div"
-                | Equal -> "Equal"
-                | Neq -> "Neq"
-                | Less -> "Less"
-                | Leq -> "Leq"
-                | Greater -> "Greater"
-                | Geq -> "Geq";;
+
+let dbg_str_resolve r tabs = match r with
+                | Dot  -> p (tabs) ^ "Dot"
+                | Ind -> p (tabs) ^ "Ind"
+
+let dbg_str_op o tabs = match o with
+                | Add  -> p (tabs) ^ "Add"
+                | Sub -> p (tabs) ^ "Sub"
+                | Mult -> p (tabs) ^ "Mult"
+                | Div -> p (tabs) ^ "Div"
+                | Equal -> p (tabs) ^ "Equal"
+                | Neq -> p (tabs) ^ "Neq"
+                | Less -> p (tabs) ^ "Less"
+                | Leq -> p (tabs) ^ "Leq"
+                | Greater -> p (tabs) ^ "Greater"
+                | Geq -> p (tabs) ^ "Geq";;
 
 let dbg_str_bstmt bstm tabs = match bstm with
                   Atom (atm) -> p tabs ^ "Atom -> \n" 
@@ -53,7 +61,7 @@ let dbg_str_bstmt bstm tabs = match bstm with
                 | BinEval  (dst, var1, op, var2) -> "BinEval -> \n" 
                     ^ p (tabs+1) ^ "Dst   |" ^ (dbg_str_Lvar dst (tabs+1))^ "\n" 
                     ^ p (tabs+1) ^ "Var1  |" ^ (dbg_str_Lvar var1 (tabs+1) ) ^ "\n" 
-                    ^ p (tabs+1) ^ "Op    |" ^ (dbg_str_op op)^ "\n" 
+                    ^ p (tabs+1) ^ "Op    |" ^ (dbg_str_op op 0)^ "\n" 
                     ^ p (tabs+1) ^ "Var2  |" ^ (dbg_str_Lvar var2 (tabs+1)) 
                 | Fcall (fname, args,ret ) -> "Fcall -> \n"   
                     ^ p (tabs+1) ^ "fname |" ^ fname ^ "\n"
@@ -100,16 +108,93 @@ let dbg_str_program prog =
                  ) ^ (dbg_str_proglst tl)
       in dbg_str_proglst prog;;
 
-let rec p tab_count = if (tab_count = 0 ) then "" else "\t" ^ p (tab_count-1);; 
-
-let dbg_str_sast_expr sast_expr tabs = match sast_expr with
-    Var(e, typlst) ->
-      p (tabs+1) ^ (List.fold_left 
-      (fun s t -> s ^(dbg_str_of_typs t)) "" typlst) 
-  | Noexpr_t -> 
-      p (tabs+1) ^ "No Expression";; 
-
-
+let rec dbg_str_sast_expr sast_expr tabs = match sast_expr with
+  | Literal_t(i, t) ->
+      dbg_typ t
+  | String_t(s, t) ->
+      dbg_typ t
+  | Addrof_t(e, t) ->
+      p (tabs) ^ dbg_typ t
+    ^ p (tabs+1) ^ "&"
+    ^ dbg_str_sast_expr e (tabs+1)   ^ "\n"
+  | Negof_t(e, t) ->
+      p (tabs) ^ "-("
+    ^ dbg_str_sast_expr e (tabs+1)  ^ ")\n" 
+  | ConstCh_t(s, t) ->
+       dbg_typ t
+  | Id_t(s, t) ->
+       dbg_typ t
+  | MultiId_t(e1, r, e2, t) -> 
+      p (tabs) ^ "MultiId" ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e1 (tabs+1) ^ "\n"
+    ^ p (tabs) ^ dbg_str_resolve r  (tabs +1) ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e2 (tabs+1)  ^ "\n" 
+  | Pointer_t(e, t) -> 
+      p (tabs) ^ dbg_typ t ^ "\n" 
+    ^ p (tabs+1) ^ "*"
+    ^ dbg_str_sast_expr e (tabs+1) ^ "\n" 
+  | Array_t(s, e, t) -> 
+      p (tabs) ^ dbg_typ t ^ "(" 
+    ^ s ^ "[" ^ dbg_str_sast_expr e (tabs+1) ^ "])" 
+  | Binop_t(e1, o, e2, t) -> 
+      p (tabs) ^ dbg_typ t ^ "\n" 
+    ^ p (tabs+1) ^ dbg_str_sast_expr e1 (0) ^ " " 
+    ^ dbg_str_op o (0)  ^ " "
+    ^ dbg_str_sast_expr e2 (0) ^ "\n" 
+  | Assign_t(e1, e2, t) -> 
+      p (tabs) ^ dbg_typ t ^ "\n" 
+    ^ p (tabs+1) ^ dbg_str_sast_expr e1 (0) ^ " = " 
+    ^ dbg_str_sast_expr e2 (0) ^ "\n"
+  | Call_t(s, e_l, t) ->
+      p (tabs) ^ dbg_typ t ^ "\n" 
+    ^ p (tabs+1) ^ s ^ "( " 
+    ^ (List.fold_left 
+      (fun s e -> s ^(dbg_str_sast_expr e (1))) "" e_l) ^ ")\n" 
+  | Noexpr_t ->
+      p (tabs) ^ "No Expression" ^ "\n";; 
+(*
+let rec dbg_str_sast_expr sast_expr tabs = match sast_expr with
+  | Literal_t(i, t) ->
+      p (tabs) ^ "Literal:" ^ string_of_int i 
+  | String_t(s, t) ->
+      p (tabs) ^ "String: " ^ s 
+  | Addrof_t(e, t) ->
+      p (tabs) ^ "Addrof:" ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e (tabs+1)   ^ "\n"
+  | Negof_t(e, t) ->
+      p (tabs) ^ "Neg:"
+    ^ p (tabs) ^ dbg_str_sast_expr e (tabs+1)  ^ "\n" 
+  | ConstCh_t(s, t) ->
+      p (tabs) ^ "Char: " ^ s
+  | Id_t(s, t) ->
+      p (tabs) ^ "Id: " ^ s
+  | MultiId_t(e1, r, e2, t) -> 
+      p (tabs) ^ "MultiId" ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e1 (tabs+1) ^ "\n"
+    ^ p (tabs) ^ dbg_str_resolve r  (tabs +1) ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e2 (tabs+1)  ^ "\n" 
+  | Pointer_t(e, t) -> 
+      p (tabs) ^ "Pointer:" ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e (tabs+1) ^ "\n" 
+  | Array_t(s, e, t) -> 
+      p (tabs) ^ "Array: " ^ s ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e (tabs+1) ^ "\n" 
+  | Binop_t(e1, o, e2, t) -> 
+      p (tabs) ^ "Binop:" ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e1 (tabs+1) ^ "\n"
+    ^ p (tabs) ^ dbg_str_op o (tabs+1) ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e2 (tabs+1) ^ "\n" 
+  | Assign_t(e1, e2, t) -> 
+      p (tabs) ^ "Assign: " ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e1 (tabs+1) ^ "\n" 
+    ^ p (tabs) ^ dbg_str_sast_expr e2 (tabs+1) ^ "\n"
+  | Call_t(s, e_l, t) ->
+      p (tabs) ^ "Call: " ^ "\n" 
+    ^ p (tabs) ^ (List.fold_left 
+      (fun s e -> s ^(dbg_str_sast_expr e (tabs+1))) "" e_l) ^ "\n" 
+  | Noexpr_t ->
+      p (tabs) ^ "No Expression" ^ "\n";; 
+*)
 let rec dbg_str_sast_stmt sast_stm tabs = match sast_stm with
     Block_t(stmlst) -> "Block -> " 
     ^ (List.fold_left (fun s sast_stm -> s^"\n" ^ (dbg_str_sast_stmt sast_stm
@@ -119,17 +204,17 @@ let rec dbg_str_sast_stmt sast_stm tabs = match sast_stm with
   | Return_t(e) -> "Return -> \n"
     ^ (dbg_str_sast_expr e (tabs+1))
   | If_t(e, t_s, f_s) -> "If -> \n"
-    ^ "Predicate Expr:    " ^ (dbg_str_sast_expr e (tabs+1))
-    ^ "True Stmt:         " ^ (dbg_str_sast_stmt t_s (tabs+1))
-    ^ "False Stmt:        " ^ (dbg_str_sast_stmt f_s (tabs+1))
+    ^ "Predicate Expr:\n" ^ (dbg_str_sast_expr e (tabs+1))
+    ^ "True Stmt:\n" ^ (dbg_str_sast_stmt t_s (tabs+1))
+    ^ "False Stmt:\n" ^ (dbg_str_sast_stmt f_s (tabs+1))
   | For_t(asn, cond, inc, s) -> "For -> \n"
-    ^ "Assingment Expr:   " ^ (dbg_str_sast_expr asn (tabs+1))
-    ^ "Conditional Expr:  " ^ (dbg_str_sast_expr cond (tabs+1))
-    ^ "Increment Expr:    " ^ (dbg_str_sast_expr inc (tabs+1))
-    ^ "For Stmt:          " ^ (dbg_str_sast_stmt s (tabs+1))
+    ^ "Assingment Expr:\n" ^ (dbg_str_sast_expr asn (tabs+1))
+    ^ "Conditional Expr:\n" ^ (dbg_str_sast_expr cond (tabs+1))
+    ^ "Increment Expr:\n" ^ (dbg_str_sast_expr inc (tabs+1))
+    ^ "For Stmt:\n" ^ (dbg_str_sast_stmt s (tabs+1))
   | While_t(e, s) -> "While -> \n"
-    ^ "While Expr:        " ^ (dbg_str_sast_expr e (tabs+1))
-    ^ "While Stmt:        " ^ (dbg_str_sast_stmt s (tabs+1))
+    ^ "While Expr:\n" ^ (dbg_str_sast_expr e (tabs+1))
+    ^ "While Stmt:\n" ^ (dbg_str_sast_stmt s (tabs+1))
 
 
 let dbg_str_sast_stmlist lst name tabs = name ^  
