@@ -11,7 +11,7 @@ type expr_t =
   | Id_t of string * cpitypes list
   | MultiId_t of expr_t * resolve * expr_t * cpitypes list
   | Pointer_t of expr_t * cpitypes list
-  | Array_t of string * expr_t * cpitypes list
+  | Array_t of expr_t * expr_t * cpitypes list
   | Binop_t of expr_t * op * expr_t * cpitypes list
   | Assign_t of expr_t * expr_t * cpitypes list
   | Call_t of string * expr_t list * cpitypes list

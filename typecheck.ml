@@ -13,7 +13,10 @@ let rec get_size_type sindex = function
   | Char -> 1
   | Int
   | Ptr -> 4
-  | Arr(sz) -> sz * (get_size_type sindex tl)
+  | Arr(sz) ->  (match sz with
+        Literal(i) -> i
+        | Id(id) -> get_size_type sindex [Ptr]
+        | _ -> raise(Failure("lit_to_num: unexpected"))) * (get_size_type sindex tl)
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> raise (Failure ("Requesting size of wrong type")));;
 
@@ -241,10 +244,10 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       and rh_type = get_type_lst_expr_t(rh) in
       let ty = binop_result_type lh_type op rh_type in
         if lst_match ty [Err] then
-          Binop_t(lh, op, rh, [Err])
-         (* raise (Failure ("Binop mismatch: 
-           Left side is " ^ (print_type lh_type) ^ " Right
-           side is " ^ (print_type rh_type) )) *)
+         (* Binop_t(lh, op, rh, [Err]) *)
+          raise (Failure ("Binop mismatch: 
+           Left side is " ^ (dbg_typ lh_type) ^ " Right
+           side is " ^ (dbg_typ rh_type) )) 
         else Binop_t(lh, op, rh, ty)
   | Assign (s, e) ->
     let lh = (tc_expr s) and rh = (tc_expr e) in
@@ -252,10 +255,10 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       and rh_type = get_type_lst_expr_t(rh) in
       let ty = assign_result_type lh_type rh_type in
         if lst_match ty [Err] then 
-          Assign_t(lh, rh, [Err])
-        (*  raise (Failure ("Assign mismatch: 
-           Left side is " ^ (print_type lh_type) ^ " Right
-           side is " ^ (print_type rh_type) ))*)
+         (* Assign_t(lh, rh, [Err])*)
+          raise (Failure ("Assign mismatch: 
+           Left side is " ^ (dbg_typ lh_type) ^ " Right
+           side is " ^ (dbg_typ rh_type) ))
         else Assign_t(lh, rh, [Int])
   | Call (fname, actuals) ->
     let param = List.map tc_expr (List.rev actuals)
@@ -267,23 +270,24 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     let v1_type = get_type_lst_expr_t(v1) in
       Pointer_t(v1, (List.tl v1_type))
   | Array(base,e) -> let v1 = tc_expr e in
+    let b = tc_expr base in
     let v1_type = get_type_lst_expr_t(v1) in
-      let btyp = (get_type_varname table base) in
-      if is_int_or_char(v1_type) then
-          Array_t(base, v1, (List.tl btyp))
-      else 
-       (* raise (Failure ("Array index is type " ^ (print_type v1_type) 
+      let btyp = get_type_lst_expr_t(b) in
+     (* if is_int_or_char(v1_type) then *)
+        Array_t(b, v1, (List.tl btyp))
+     (* else 
+        raise (Failure ("Array index is type " ^ (dbg_typ v1_type) 
             ^ " and not type int")) *)
-          Array_t(base, v1, [Err] @ btyp )
+       (*  Array_t(base, v1, [Err] @ btyp ) *)
   | Addrof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       Addrof_t(v1, [Ptr] @ v1_type)
   | Negof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       if is_int_or_char(v1_type) then
-       (* raise (Failure ("Wrong type " ^ (print_type v1_type) 
-            ^ " for unary minus")) *)
-      Negof_t(v1, [Err])
+        raise (Failure ("Wrong type " ^ (dbg_typ v1_type) 
+            ^ " for unary minus")) 
+      (* Negof_t(v1, [Err]) *)
       else
       Negof_t(v1, v1_type)
   | Noexpr -> Noexpr_t 

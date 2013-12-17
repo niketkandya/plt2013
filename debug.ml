@@ -82,12 +82,12 @@ let dbg_str_bstmt bstm tabs = match bstm with
                 | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
                 | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
                 | Str (_, _)-> raise (Failure ("Unexpected: Str"))
-                | BinRes(ty) -> "BinRes: -> \n" ^ 
+                | BinRes(ty) -> "BinRes: -> \n"  
                     ^ p (tabs+1) ^ (List.fold_left (fun s t -> s ^
                     (dbg_str_of_typs t)) "" ty) 
                 | VarArr(_,_) ->"VarArr: -> \n" (*raise (Failure ("Unexpected:
                   VarArr")) *)
-                |Rval (rval) -> " Rval" ^ "\n" ^
+                |Rval (rval) -> " Rval" ^ "\n" 
                     ^ p (tabs+1) ^ "Rvalue |" ^ (dbg_str_Lvar rval (tabs+1)) ;;
 
 let dbg_str_bstmlist lst fname sz = fname ^ " stack size = " ^ (string_of_int
@@ -133,9 +133,9 @@ let rec dbg_str_sast_expr sast_expr tabs = match sast_expr with
       p (tabs) ^ dbg_typ t ^ "\n" 
     ^ p (tabs+1) ^ "*"
     ^ dbg_str_sast_expr e (tabs+1) ^ "\n" 
-  | Array_t(s, e, t) -> 
+  | Array_t(e1, e2, t) -> 
       p (tabs) ^ dbg_typ t ^ "(" 
-    ^ s ^ "[" ^ dbg_str_sast_expr e (tabs+1) ^ "])" 
+    ^ dbg_str_sast_expr e1 (0) ^ "[" ^ dbg_str_sast_expr e2 (0) ^ "])" 
   | Binop_t(e1, o, e2, t) -> 
       p (tabs) ^ dbg_typ t ^ "\n" 
     ^ p (tabs+1) ^ dbg_str_sast_expr e1 (0) ^ " " 
