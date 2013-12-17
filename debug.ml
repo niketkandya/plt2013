@@ -11,7 +11,8 @@ let dbg_str_of_typs typ = match typ with
                         | Ptr -> "Ptr" 
                         | Arr(sz) -> "Arr" 
                         | Struct(sname) -> "Struct " ^ sname
-                        | _ -> raise (Failure ("Requesting size of wrong"));;
+                        | Err -> "Error"
+                        | _ -> raise (Failure ("Type does not exist"));;
 
 let rec dbg_str_Lvar lvar tabs = match lvar with
                  Lvar(off,sz) -> "Lvar Offset: " ^ string_of_int off ^

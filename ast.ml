@@ -1,8 +1,6 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
-
+type cpitypes = Void | Int | Char | Ptr | Arr of int | Struct of string | Err 
 type resolve = Dot | Ind
-
-type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string 
 
 type expr =
     Literal of int
