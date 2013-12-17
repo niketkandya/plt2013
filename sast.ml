@@ -3,7 +3,18 @@ open Ast
 module StringMap = Map.Make(String)
 
 type expr_t =
-    Var of expr  * cpitypes list
+  | Literal_t of int * cpitypes list
+  | String_t of string * cpitypes list
+  | Addrof_t of expr_t * cpitypes list
+  | Negof_t of expr_t * cpitypes list
+  | ConstCh_t of string * cpitypes list
+  | Id_t of string * cpitypes list
+  | MultiId_t of expr_t * resolve * expr_t * cpitypes list
+  | Pointer_t of expr_t * cpitypes list
+  | Array_t of string * expr_t * cpitypes list
+  | Binop_t of expr_t * op * expr_t * cpitypes list
+  | Assign_t of expr_t * expr_t * cpitypes list
+  | Call_t of string * expr_t list * cpitypes list
   | Noexpr_t
 
 type stmt_t =
