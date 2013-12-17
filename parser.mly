@@ -175,7 +175,7 @@ expr:
 lvalue:
         ptr   {$1}
         |var  {$1}
-        |LPAREN lvalue RPAREN {$2}
+        |LPAREN expr RPAREN {$2}
 
 ptr:
         TIMES expr {Pointer($2)}
