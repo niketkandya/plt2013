@@ -136,6 +136,11 @@ let type_check_func env fdecl=
     | Call_t(s, e_l, t) -> t
     | Noexpr_t -> [Err]
     in
+  let is_arr typ_lst = 
+    match (List.hd typ_lst) with 
+    | Arr(_) -> true
+    | _ -> false
+    in
   let rec lst_match list1 list2 = match list1, list2 with
     | h1::t1, h2::t2 -> h1 = h2 && lst_match t1 t2
     | [_], _ -> false
@@ -181,12 +186,14 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
   | ConstCh(ch) -> ConstCh_t(ch, [Char])
   | Id s ->
     let typ = get_type_varname table s in
-        Id_t(s, typ)
+    if is_arr typ then
+      Id_t (s, [Ptr] @ (List.tl typ))
+      else Id_t(s, typ)
   | MultiId(fexpr,resolve,e) ->
     let v1 = tc_expr fexpr in
       let v1_type = get_type_lst_expr_t(v1) in
-      let tab = (match v1_type with
-        | [Struct(s)] -> get_struct_table s
+      let tab = (match (List.hd v1_type) with
+        | Struct(s) -> get_struct_table s
         | _ -> raise(Failure("Variable is not a Struct"))) in
       let v2 = tc_expr ~table:tab ~strict:1 e in
       let v2_type = get_type_lst_expr_t(v2) in
