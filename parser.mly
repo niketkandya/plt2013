@@ -18,7 +18,6 @@
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%left INDIRECTION DOT
 
 %start program
 %type <Ast.program> program
@@ -156,6 +155,7 @@ expr:
   | PLUS lvalue      { $2 }
   | CONSTCHAR        { ConstCh($1) }
   | STRING           { String($1) }
+  | lvalue           { $1 }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
   | expr TIMES  expr { Binop($1, Mult,  $3) }
@@ -168,21 +168,24 @@ expr:
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
-  | expr DOT ID { MultiId($1,Dot,Id($3)) }
-  | expr INDIRECTION ID { MultiId($1,Ind,Id($3)) }
-  | lvalue           { $1 }
+  | LPAREN expr RPAREN { $2 }
 
 lvalue:
         ptr   {$1}
         |var  {$1}
-        |LPAREN expr RPAREN {$2}
 
 ptr:
         TIMES expr {Pointer($2)}
 
 var:
+        bvar DOT var { MultiId($1,Dot,$3) }
+        | bvar INDIRECTION var { MultiId($1,Ind,$3) }
+        | bvar           { $1 }
+
+bvar:
         ID      { Id($1) }
         | arr   { Array( fst $1, snd $1) }
+        | LPAREN ptr RPAREN { $2 } /* Not good hack */
 
 arr:
         ID LSUBS expr RSUBS { Id($1),$3 }
