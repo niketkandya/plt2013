@@ -111,11 +111,11 @@ let type_check_func env fdecl=
     in
   let get_func_entry name = 
     try StringMap.find name env.function_index
-    with Not_found -> raise (Failure("Function not found : " ^ name)) 
+    with Not_found -> raise (Failure("Function not found: " ^ name)) 
     in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
-    with Not_found -> raise (Failure("Varname not found"))
+    with Not_found -> raise (Failure("Varname not found: " ^ varname))
     in
   let rec conv2_expr_t = function
       [] -> []
@@ -140,6 +140,17 @@ let type_check_func env fdecl=
     match (List.hd typ_lst) with 
     | Arr(_) -> true
     | _ -> false
+    in
+  let get_struct_table stct =
+    (try (StringMap.find stct env.struct_index).memb_index
+     with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
+    in 
+  let get_struct_table typ_lst = 
+    match typ_lst with 
+    | [Struct(s)] -> (get_struct_table s)
+    | [Ptr; Struct(s)] -> (get_struct_table s)
+    | _ -> raise (Failure
+      ("Variable is " ^ (dbg_typ typ_lst) ^ " and not a Struct"))
     in
   let rec lst_match list1 list2 = match list1, list2 with
     | h1::t1, h2::t2 -> h1 = h2 && lst_match t1 t2
@@ -176,10 +187,6 @@ let type_check_func env fdecl=
         | [Char], [Int] -> [Int]
         | _ , _  -> [Err]
     in
-  let get_struct_table stct =
-    (try (StringMap.find stct env.struct_index).memb_index
-     with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
-    in 
 let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Literal_t(i, [Int])
   | String s -> String_t(s, [Ptr; Char])
@@ -192,9 +199,12 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
   | MultiId(fexpr,resolve,e) ->
     let v1 = tc_expr fexpr in
       let v1_type = get_type_lst_expr_t(v1) in
-      let tab = (match (List.hd v1_type) with
-        | Struct(s) -> get_struct_table s
-        | _ -> raise(Failure("Variable is "^ (dbg_typ v1_type) ^" and not a Struct"))) in
+      (*let tab = (match v1_type with
+        | [Struct(s)] -> get_struct_table s
+        | [Prt;Struct(s)] -> get_struct_table s
+        | _ -> raise(Failure("Variable is "^ (dbg_typ v1_type) ^" and not a
+        Struct"))) in *)
+      let tab = (get_struct_table v1_type) in 
       let v2 = tc_expr ~table:tab ~strict:1 e in
       let v2_type = get_type_lst_expr_t(v2) in
       (match resolve with
