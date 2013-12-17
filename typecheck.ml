@@ -188,34 +188,6 @@ let type_check_func env fdecl=
         | [Char], [Int] -> [Int]
         | _ , _  -> [Err]
     in
-(*  let get_ptrsize_varname table varname =
-    get_size_type env.struct_index (List.tl (get_type_varname table varname))
-    in
-  let get_dom_type typ1 typ2 =
-    ( match List.hd typ1 with
-      Ptr 
-    | Arr(_) -> typ1 
-    | _ -> (match List.hd typ2 with
-            Ptr | Arr(_) -> typ2
-            | _ -> (if (get_size_type env.struct_index typ1) <= 
-                       (get_size_type env.struct_index typ2) 
-                        then typ2 else typ1)
-           )
-    )
-    in
-  let raise_error_atom a = 
-    match a with
-      Lit (i) -> raise(Failure("Literal " ^ string_of_int i))
-    | Cchar(ch) -> raise(Failure("Const Char"))
-    | Sstr (s, l) -> raise(Failure("StringConst "^s))
-    | Lvar (o,s) -> raise(Failure(" Lvar"))
-    | Gvar (_,_) -> raise(Failure("Gvar"))
-    | Pntr (_,_) -> raise(Failure("Pntr"))
-    | Addr (_) -> raise(Failure("Addr"))
-    | Debug (_)  -> raise(Failure("Debug"))
-    | Neg (_) -> raise(Failure("Negative"))
-    in
-    *)
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
@@ -285,11 +257,11 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
   | Negof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       if is_int_or_char(v1_type) then
+      Negof_t(v1, v1_type)
+      else
         raise (Failure ("Wrong type " ^ (dbg_typ v1_type) 
             ^ " for unary minus")) 
       (* Negof_t(v1, [Err]) *)
-      else
-      Negof_t(v1, v1_type)
   | Noexpr -> Noexpr_t 
     in
 let rec tc_stmt = function
