@@ -102,7 +102,6 @@ in
 (* Translate a function in AST form into a list of bytecode statements *)
 let type_check_func env fdecl=
  let curr_offset = ref 0 in
-
   let env = 
     {
       env with local_index = 
@@ -118,6 +117,10 @@ let type_check_func env fdecl=
     try (StringMap.find varname table).typ
     with Not_found -> raise (Failure("Varname not found"))
     in
+  let rec conv2_expr_t = function
+      [] -> []
+    | hd::tl -> Id_t(hd.vname, hd.vtype) :: (conv2_expr_t tl)
+    in
   let get_type_lst_expr_t = function 
     | Literal_t(i, t) -> t
     | String_t(s, t) -> t
@@ -132,26 +135,6 @@ let type_check_func env fdecl=
     | Assign_t(e1, e2, t) -> t
     | Call_t(s, e_l, t) -> t
     | Noexpr_t -> [Err]
-    in
-(*  let get_size_varname table varname =
-    get_size_type env.struct_index (get_type_varname table varname)
-    in
-  let get_lvar_varname table strict var = 
-    try Lvar((StringMap.find var table).offset, (get_size_varname table var))
-    with Not_found -> 
-      try
-        if strict = 0 then 
-          Gvar(var,(get_size_varname table var)) 
-        else raise Not_found
-      with Not_found -> raise (Failure(var ^": Not found"))
-    in
-*)  
-  let get_ptrsize_type typlst =
-    get_size_type env.struct_index (List.tl typlst)
-    in
-  let print_types ty1 ty2 =
-      "left hand is: " ^ (dbg_typ ty1) ^ " right hand is: "
-         ^ (dbg_typ ty2) ^ "\n" 
     in
   let rec lst_match list1 list2 = match list1, list2 with
     | h1::t1, h2::t2 -> h1 = h2 && lst_match t1 t2
@@ -245,11 +228,11 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     let b = tc_expr base in
     let v1_type = get_type_lst_expr_t(v1) in
       let btyp = get_type_lst_expr_t(b) in
-     (* if is_int_or_char(v1_type) then *)
+      if is_int_or_char(v1_type) then 
         Array_t(b, v1, (List.tl btyp))
-     (* else 
+      else 
         raise (Failure ("Array index is type " ^ (dbg_typ v1_type) 
-            ^ " and not type int")) *)
+            ^ " and not type int")) 
        (*  Array_t(base, v1, [Err] @ btyp ) *)
   | Addrof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
@@ -289,15 +272,11 @@ let rec tc_stmt = function
     let asn_t = tc_expr asn and cmp_t = tc_expr cmp 
     and inc_t = tc_expr inc and stm_t = tc_stmt b in
     [For_t(asn_t, cmp_t, inc_t, Block_t(stm_t))]
-  | _ -> []
 in 
 
 let stmtblock = (tc_stmt (Block fdecl.body)) in
 
-
-(*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
-(*[Sast(fdecl.fname, [Var(Noexpr, [Void])], [Expr(Var(Noexpr, [Void]))]) ] *)
-[Sast(fdecl.fname, [Noexpr_t], stmtblock) ] 
+[Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
 in
 
 let env = { function_index = function_indexes;
