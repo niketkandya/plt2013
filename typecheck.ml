@@ -272,7 +272,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       Var(Call(fname, actuals), rettyp)
   | Pointer(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
-      Var(Pointer(e), v1_type)
+      Var(Pointer(e), (List.tl v1_type))
   | Array(base,e) -> let v1 = tc_expr e in
     let v1_type = get_type_lst_expr_t(v1) in
       let btyp = (get_type_varname table base) in
