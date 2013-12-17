@@ -116,10 +116,10 @@ let type_check_func env fdecl=
     with Not_found -> raise (Failure("Varname not found"))
     in
   let get_type_lst_expr_t = function 
-      Var(expr, typ) -> typ 
+      Var(e, typ) -> typ 
     in
   let get_type_first_expr_t = function 
-      Var(expr, typ) -> List.hd (typ) 
+      Var(e, typ) -> List.hd (typ) 
     in
 (*  let get_size_varname table varname =
     get_size_type env.struct_index (get_type_varname table varname)
@@ -210,7 +210,7 @@ let type_check_func env fdecl=
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in *)
-let rec expr ?(table = env.local_index) ?(strict=0) = function
+let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Var(Literal(i), [Int])
   | String s -> Var(String(s), [Ptr; Char])
   | ConstCh(ch) -> Var(ConstCh(ch), [Char])
@@ -245,7 +245,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         baddr (get_atom (List.hd (List.rev offset))))
 *)
   | Binop (e1, op, e2) -> 
-    let lh = expr e1 and rh = expr e2 in
+    let lh = tc_expr e1 and rh = tc_expr e2 in
       let lh_type = get_type_lst_expr_t(lh)
       and rh_type = get_type_lst_expr_t(rh) in
       let ty = binop_result_type lh_type op rh_type in
@@ -255,7 +255,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
            side is " ^ (print_type rh_type) ))
         else Var(Binop(e1, op, e2), ty)
   | Assign (s, e) ->
-    let lh = (expr s) and rh = (expr e) in
+    let lh = (tc_expr s) and rh = (tc_expr e) in
       let lh_type = get_type_lst_expr_t(lh)
       and rh_type = get_type_lst_expr_t(rh) in
       let ty = assign_result_type lh_type rh_type in
@@ -265,45 +265,57 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
            side is " ^ (print_type rh_type) ))
         else Var(Assign(s, e), [Int])
   | Call (fname, actuals) ->
-    let param = List.map expr (List.rev actuals)
+    let param = List.map tc_expr (List.rev actuals)
     and rettyp = (get_func_entry fname).ret_ty in
     (* TODO check function return parameters to make sure
      * they match *)
       Var(Call(fname, actuals), rettyp)
-  | Pointer(e) -> let v1 = expr e in 
+  | Pointer(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       Var(Pointer(e), v1_type)
-  | Array(base,e) -> let v1 = expr e in
+  | Array(base,e) -> let v1 = tc_expr e in
     let v1_type = get_type_lst_expr_t(v1) in
       let btyp = (get_type_varname table base) in
       if predicate_correct(v1_type) then
           Var(Array(base, e), (List.tl btyp))
       else raise (Failure ("Array index is type " ^ (print_type v1_type) 
             ^ " and not type int"))
-  | Addrof(e) -> let v1 = expr e in 
+  | Addrof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       Var(Addrof(e), v1_type)
-  | Negof(e) -> let v1 = expr e in 
+  | Negof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       Var(Negof(e), v1_type)
   | Noexpr -> Noexpr_t 
   | _ -> Noexpr_t 
     in
-let rec stmt = function
+let rec tc_stmt = function
     Block sl ->
-    (List.fold_left (fun str lst -> str @ lst) [] (List.map stmt sl) )
-  | Expr e -> [Expr_t (expr e)]
-  | Return e -> [Return_t(expr e)]
-(*  | If (p, t, f) -> 
-    let v1 = expr p and v2 = stmt t and v3 = stmt f in
-      [If_t(v1, v2, v3)]
+    (List.fold_left (fun str lst -> str @ lst) [] (List.map tc_stmt sl) )
+  | Expr e -> [Expr_t (tc_expr e)]
+  | Return e -> [Return_t(tc_expr e)]
+  | If (p, t, f) -> 
+    let v1 = tc_expr p and v2 = tc_stmt t and v3 = tc_stmt f in
+    let v1_type = get_type_lst_expr_t(v1) in
+      if predicate_correct(v1_type) then
+          [If_t(v1, Block_t(v2), Block_t(v3))]
+      else raise (Failure ("If condition is type " 
+      ^ (print_type v1_type) ^ " and not type int"))
   | While (e, b) ->
-    let v1 = expr e and v2 = stmt b  in
-       [While_t(v1, v2)]  *)
+    let v1 = tc_expr e and v2 = tc_stmt b  in
+    let v1_type = get_type_lst_expr_t(v1) in
+      if predicate_correct(v1_type) then
+         [While_t(v1, Block_t(v2))]  
+      else raise (Failure ("While condition is type " 
+      ^ (print_type v1_type) ^ " and not type int"))
+  | For (asn, cmp, inc, b) -> 
+    let asn_t = tc_expr asn and cmp_t = tc_expr cmp 
+    and inc_t = tc_expr inc and stm_t = tc_stmt b in
+    [For_t(asn_t, cmp_t, inc_t, Block_t(stm_t))]
   | _ -> []
 in 
 
-let stmtblock = (stmt (Block fdecl.body)) in
+let stmtblock = (tc_stmt (Block fdecl.body)) in
 
 
 (*[Global([Debug("Debug Message"); Debug("Yellow")])] @*)
