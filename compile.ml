@@ -167,7 +167,7 @@ let translate env fdecl=
     in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
-    with Not_found -> raise (Failure("Varname not found"))
+    with Not_found -> raise (Failure("Varname not found: "^varname))
     in
   let get_size_varname table varname =
     get_size_type env.struct_index (get_type_varname table varname)
