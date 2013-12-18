@@ -49,6 +49,7 @@ mkdir -p "out"
 rm -f "$RESULTS_FILE"
 
 
+failed_test_names=""
 # Does test for each assembly file
 for file in *.cpi; do
     error=""
@@ -107,6 +108,7 @@ for file in *.cpi; do
         colorprint "    Failed: $basename. $error" "red"
         colorprint "    gcc-return = $return_gcc, cpi-return = $return_cpi" 
         error=""
+        failed_test_names=$failed_test_names", $basename"
     else
         let passed_tests++
         colorprint "    Passed: $basename" "green"
@@ -117,3 +119,7 @@ done
 colorprint "\n\nTest results:"
 colorprint "Total Passed:$passed_tests" "green"
 colorprint "Total Failed:$failed_tests" "red"
+
+# Get rid of beginning comma
+failed_test_names = `echo $failed_test_names | tail -c +3`
+colorprint "\nFailed Tests: $failed_test_names" "red"
