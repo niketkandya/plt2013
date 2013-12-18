@@ -1,7 +1,7 @@
 /*This test should return an error since fun is missing an argument*/
 
 
-int fun(a , b)
+int fun(int a , int b)
 {
     return a + b;
 }
