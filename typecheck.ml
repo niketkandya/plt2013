@@ -109,17 +109,24 @@ let type_check_func env fdecl=
         (fdecl.locals @ fdecl.formals))
     }
     in
+  let rec conv2_expr_t = function
+      [] -> []
+    | hd::tl -> Id_t(hd.vname, hd.vtype) :: (conv2_expr_t tl)
+    in
   let get_func_entry name = 
     try StringMap.find name env.function_index
     with Not_found -> raise (Failure("Function not found: " ^ name)) 
     in
+  let get_func_decl_typs name = 
+    let param = (get_func_entry name).param in
+      let rec conv_param2_typ_lst = function
+        [] -> []
+      | hd::tl -> hd.typ :: (conv_param2_typ_lst tl) in
+      conv_param2_typ_lst param
+    in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
     with Not_found -> raise (Failure("Varname not found: " ^ varname))
-    in
-  let rec conv2_expr_t = function
-      [] -> []
-    | hd::tl -> Id_t(hd.vname, hd.vtype) :: (conv2_expr_t tl)
     in
   let get_type_lst_expr_t = function 
     | Literal_t(i, t) -> t
@@ -140,6 +147,12 @@ let type_check_func env fdecl=
     match (List.hd typ_lst) with 
     | Arr(_) -> true
     | _ -> false
+    in
+  let get_typs_from_expr_t_lst param =
+      let rec conv_el2_typ_lst = function
+        [] -> []
+      | hd::tl -> get_type_lst_expr_t hd :: (conv_el2_typ_lst tl) in
+      conv_el2_typ_lst param
     in
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
@@ -236,9 +249,14 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
   | Call (fname, actuals) ->
     let param = List.map tc_expr (List.rev actuals)
     and rettyp = (get_func_entry fname).ret_ty in
-    (* TODO check function return parameters to make sure
-     * they match *)
+    let decl_typs = get_func_decl_typs fname in
+    let param_typs = get_typs_from_expr_t_lst param in
+    if lst_match param_typs decl_typs then
       Call_t(fname, param, rettyp)
+    else
+      raise (Failure ("Function " ^ fname ^ " is using arguments of
+      type " ^ (dbg_typ_ll param_typs) ^ " but its declaration uses type " ^ 
+      (dbg_typ_ll decl_typs))) 
   | Pointer(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
       Pointer_t(v1, (List.tl v1_type))
@@ -269,7 +287,10 @@ let rec tc_stmt = function
     Block sl ->
     (List.fold_left (fun str lst -> str @ lst) [] (List.map tc_stmt sl) )
   | Expr e -> [Expr_t (tc_expr e)]
-  | Return e -> [Return_t(tc_expr e)]
+  | Return e -> 
+    (* TODO check return parameters to make sure
+     * they match *)
+      [Return_t(tc_expr e)]
   | If (p, t, f) -> 
     let v1 = tc_expr p and v2 = tc_stmt t and v3 = tc_stmt f in
     let v1_type = get_type_lst_expr_t(v1) in

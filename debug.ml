@@ -16,6 +16,9 @@ let dbg_str_of_typs typ = match typ with
 let dbg_typ ty = 
   (List.fold_left (fun s t -> s ^ (dbg_str_of_typs t)) "" ty);;
    
+let dbg_typ_ll ty = 
+  (List.fold_left (fun s t -> s ^ " " ^ (dbg_typ t)) "" ty);;
+
 let rec dbg_str_Lvar lvar tabs = match lvar with
                  Lvar(off,sz) -> "Lvar Offset: " ^ string_of_int off ^
                                 " Size: " ^ string_of_int sz 
