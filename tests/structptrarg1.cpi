@@ -1,0 +1,16 @@
+struct S {
+        int a;
+        int b;
+};
+
+void f(struct S *t)
+{
+        t->b=2;
+}
+
+int main()
+{
+        struct S *x;
+        f(x);
+        return x->b;
+}
