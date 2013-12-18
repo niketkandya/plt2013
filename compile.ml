@@ -1,32 +1,10 @@
+open Sast
 open Ast
 open Bytecode
 open Debug
 open Printexc
 
 module StringMap = Map.Make(String)
-
-type var_entry = { 
-  offset:int;
-  typ: cpitypes list
-}
-
-type func_entry = {
-  param : var_entry list;
-  ret_ty : cpitypes list
-}
-
-type struct_entry = {
-  size: int;
-  memb_index: var_entry StringMap.t
-}
-
-(* Symbol table: Information about all the names in scope *)
-type envt = {
-  function_index : func_entry StringMap.t; (* Index for each function *)
-  struct_index   : struct_entry StringMap.t;
-  global_index   : var_entry StringMap.t; (* "Address" for global variables *)
-  local_index    : var_entry StringMap.t; (* FP offset for args, locals *)
-}
 
 let rec get_size_type sindex = function 
 |[] ->   raise Exit
@@ -83,14 +61,18 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
 (* Translate a program in AST form into a bytecode program.  Throw an
  *   exception if something is wrong, e.g., a reference to an unknown
  *   variable or function *)
-let translate prog =
-  let structs = prog.sdecls 
+let translate sast =
+
+let getProg(a, b) = a in
+let prog = getProg(sast) in
+
+let structs = prog.sdecls 
   and globals = prog.gdecls
   and functions = prog.fdecls in
   let count_loop = ref 0 
   and count_mem = ref (-1) 
   and count_ifelse = ref 0 in
-  
+
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
 let global_indexes = build_global_idx globals in
@@ -149,6 +131,7 @@ in
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
   let curr_offset = ref 0 in
+
   let env = 
     {
       env with local_index = 

@@ -182,7 +182,8 @@ let asm_code_gen = function
   | VarArr(ptr,sz) -> var_array ptr sz
 in
 let non_atom lst = (List.filter (fun ele -> match ele with 
-                Atom (atm ) -> false
+                  Atom (atm ) -> false
+                | BinRes(_) -> false
                 | _ -> true) lst)
 in
 let mem_code_gen = function

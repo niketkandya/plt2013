@@ -64,7 +64,7 @@ formal_list:
                   Arr(s) -> (match s with
                     Id(id) -> raise( Failure("Array declaration: "^
                       "variable not allowed in" ^
-                      "funciton argument"))
+                      "function argument"))
                     |_ -> $3)
                   | _ -> $3) :: $1
 
