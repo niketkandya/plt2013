@@ -163,21 +163,23 @@ let type_check_func env fdecl=
       else if lst_match ty [Char] then true
       else false
     in
-  let binop_result_type ty1 op ty2 =
-        match ty1, ty2, op with
-        | [Int],  [Int],  _ -> [Int]
-        | [Char], [Char], _ -> [Char]
-        | [Int],  [Char], _ -> [Int]
-        | [Char], [Int],  _ -> [Int]
-        | Ptr::tl, [Int], Add -> ty1
-        | Ptr::tl, [Char], Add -> ty1
-        | Ptr::tl, [Int], Sub -> ty1
-        | Ptr::tl, [Char], Sub -> ty1
-        | [Int], Ptr::tl, Add -> ty2
-        | [Char], Ptr::tl, Add -> ty2
-        | [Int], Ptr::tl, Sub -> ty2
-        | [Char], Ptr::tl, Sub -> ty2
-        | _ , _ , _ -> [Err]
+  let rec binop_result_type ?(strict=false) ty1 op ty2 =
+        match ty1, ty2, op, strict with
+        | [Int],  [Int],  _, _ -> [Int]
+        | [Char], [Char], _, _ -> [Char]
+        | _, _, _, true -> [Err]
+        | [Int],  [Char], _, _ -> [Int]
+        | [Char], [Int],  _, _ -> [Int]
+        | Ptr::tl, [Int], Add, _ -> ty1
+        | Ptr::tl, [Char], Add, _ -> ty1
+        | Ptr::tl, [Int], Sub, _ -> ty1
+        | Ptr::tl, [Char], Sub, _ -> ty1
+        | [Int], Ptr::tl, Add, _ -> ty2
+        | [Char], Ptr::tl, Add, _ -> ty2
+        | [Int], Ptr::tl, Sub, _ -> ty2
+        | [Char], Ptr::tl, Sub, _ -> ty2
+        | Ptr::t1, Ptr::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
+        | _ , _ , _, _ -> [Err]
     in
   let assign_result_type ty1 ty2 =
     if lst_match ty1 ty2 then ty1
