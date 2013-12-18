@@ -1,0 +1,15 @@
+struct a {
+	int c;
+	int arr[3];
+};
+
+
+int main()
+{
+    int i = 0;
+	struct a x;
+
+    a.arr = i; // Assign array member of struct as int
+
+    return 0;
+}
