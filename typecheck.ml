@@ -2,7 +2,6 @@ open Ast
 open Sast
 open Debug
 
-
 module StringMap = Map.Make(String)
 
 let rec get_size_type sindex = function 
@@ -19,7 +18,6 @@ let rec get_size_type sindex = function
         | _ -> raise(Failure("lit_to_num: unexpected"))) * (get_size_type sindex tl)
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> raise (Failure ("Requesting size of wrong type")));;
-
 
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
