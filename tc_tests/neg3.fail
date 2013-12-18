@@ -1,0 +1,10 @@
+int main (){
+
+  int *a;
+  int *b;
+  char c;
+  char *d;
+
+  a = - &c - 1;
+
+}

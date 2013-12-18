@@ -11,7 +11,9 @@ char main()
   c[1] = 3;
   c[2] = 4;
 
-  b = a; //error assigning pointer to array address
+
+  c = c + b[2]; //error
+  b = b[1] + c; //error
 
 	return b[3];
 }

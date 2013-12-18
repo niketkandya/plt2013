@@ -184,7 +184,7 @@ let type_check_func env fdecl=
     else
        match ty1, ty2 with
         | [Int],  [Char] -> [Int]
-        | [Char], [Int] -> [Int]
+        | [Char], [Int] -> [Char]
         | _ , _  -> [Err]
     in
 let rec tc_expr ?(table = env.local_index) ?(strict=0) = function

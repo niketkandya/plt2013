@@ -151,8 +151,8 @@ expr:
   | MINUS LITERAL { Literal(-$2) }
   | PLUS LITERAL { Literal($2) }
   | AMPERSAND lvalue { Addrof($2) }
-  | MINUS lvalue { Negof($2) }
-  | PLUS lvalue { $2 }
+  | MINUS expr { Negof($2) }
+  | PLUS expr { $2 }
   | CONSTCHAR { ConstCh($1) }
   | STRING { String($1) }
   | lvalue { $1 }
