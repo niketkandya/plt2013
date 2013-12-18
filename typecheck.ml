@@ -115,7 +115,7 @@ let type_check_func env fdecl=
     try StringMap.find name env.function_index
     with Not_found -> raise (Failure("Function not found: " ^ name)) 
     in
-  let get_func_decl_typs name = 
+  let get_func_decl_typs name =
     let param = (get_func_entry name).param in
       let rec conv_param2_typ_lst = function
         [] -> []
@@ -206,13 +206,17 @@ let type_check_func env fdecl=
         | [Char], [Int] -> [Char]
         | _ , _  -> [Err]
     in
-  let rec cmp_param_typ list1 list2 = match list1, list2 with
-    | h1::t1, h2::t2 -> 
-      if (lst_match (assign_result_type h1 h2) [Err]) then
-      false else cmp_param_typ t1 t2
-    | [_], _ -> false
-    | _, [_] -> false
-    | _, _ -> true
+  let rec cmp_param_typ list1 list2 fname = 
+    (* Since printf and scanf are externally declared ignore them *) 
+    if (fname = "printf" || fname = "scanf") then true 
+    else
+      match list1, list2 with
+      | h1::t1, h2::t2 -> 
+        if (lst_match (assign_result_type h1 h2) [Err]) then
+        false else cmp_param_typ t1 t2 fname
+      | [_], _ -> false
+      | _, [_] -> false
+      | _, _ -> true
     in
 let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Literal_t(i, [Int])
@@ -265,7 +269,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     and rettyp = (get_func_entry fname).ret_ty in
     let decl_typs = get_func_decl_typs fname in
     let param_typs = get_typs_from_expr_t_lst param in
-    if cmp_param_typ param_typs decl_typs then
+    if cmp_param_typ param_typs decl_typs fname then
       Call_t(fname, param, rettyp)
     else
       raise (Failure ("Function " ^ fname ^ " is using arguments of
