@@ -115,7 +115,7 @@ let type_check_func env fdecl=
     try StringMap.find name env.function_index
     with Not_found -> raise (Failure("Function not found: " ^ name)) 
     in
-  let get_func_decl_typs name = 
+  let get_func_decl_typs name =
     let param = (get_func_entry name).param in
       let rec conv_param2_typ_lst = function
         [] -> []
@@ -163,11 +163,17 @@ let type_check_func env fdecl=
     | _ -> raise (Failure
       ("Variable is " ^ (dbg_typ typ_lst) ^ " and not a Struct"))
     in
-  let rec lst_match list1 list2 = match list1, list2 with
-    | h1::t1, h2::t2 -> h1 = h2 && lst_match t1 t2
-    | [_], _ -> false
-    | _, [_] -> false
-    | _, _ -> true
+  let rec lst_match list1 list2 = 
+    let typ_equal t1 t2 = 
+      if t1 = t2 then true else
+      match t1, t2 with
+      | Ptr, Arr(e) -> true
+      | _ , _  -> false in
+        match list1, list2 with
+        | h1::t1, h2::t2 -> typ_equal h1 h2 && lst_match t1 t2
+        | [_], _ -> false
+        | _, [_] -> false
+        | _, _ -> true
     in
   let is_int_or_char ty =
     if lst_match ty [Int] then true 
@@ -199,6 +205,18 @@ let type_check_func env fdecl=
         | [Int],  [Char] -> [Int]
         | [Char], [Int] -> [Char]
         | _ , _  -> [Err]
+    in
+  let rec cmp_param_typ list1 list2 fname = 
+    (* Since printf and scanf are externally declared ignore them *) 
+    if (fname = "printf" || fname = "scanf") then true 
+    else
+      match list1, list2 with
+      | h1::t1, h2::t2 -> 
+        if (lst_match (assign_result_type h1 h2) [Err]) then
+        false else cmp_param_typ t1 t2 fname
+      | [_], _ -> false
+      | _, [_] -> false
+      | _, _ -> true
     in
 let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     Literal i -> Literal_t(i, [Int])
@@ -247,11 +265,11 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
            side is " ^ (dbg_typ rh_type) ))
         else Assign_t(lh, rh, [Int])
   | Call (fname, actuals) ->
-    let param = List.map tc_expr (List.rev actuals)
+    let param = List.map tc_expr actuals
     and rettyp = (get_func_entry fname).ret_ty in
     let decl_typs = get_func_decl_typs fname in
     let param_typs = get_typs_from_expr_t_lst param in
-    if lst_match param_typs decl_typs then
+    if cmp_param_typ param_typs decl_typs fname then
       Call_t(fname, param, rettyp)
     else
       raise (Failure ("Function " ^ fname ^ " is using arguments of
@@ -267,8 +285,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       if is_int_or_char(v1_type) then 
         Array_t(b, v1, (List.tl btyp))
       else 
-        raise (Failure ("Array index is type " ^ (dbg_typ v1_type) 
-            ^ " and not type int")) 
+        raise (Failure ("Array index is type " ^ (dbg_typ v1_type) ^ " and not type int")) 
        (*  Array_t(base, v1, [Err] @ btyp ) *)
   | Addrof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in

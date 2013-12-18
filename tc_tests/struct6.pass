@@ -11,7 +11,6 @@ int main()
     s.a = 2;
     s.b = 3;
     sptr = &s;
-    sptr->b = 50;
 
     return s.b;
 }

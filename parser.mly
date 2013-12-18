@@ -139,6 +139,7 @@ stmt_list:
 stmt:
     expr SEMI { Expr($1) }
   | RETURN expr SEMI { Return($2) }
+  | RETURN SEMI { Return(Noexpr) }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
@@ -173,8 +174,8 @@ expr:
   | expr LAND   expr { Binop($1, Land,   $3) }
   | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
-  | expr DOT ID { MultiId($1,Dot,Id($3)) }
-  | expr INDIRECTION ID { MultiId($1,Ind,Id($3)) }
+  | expr DOT var { MultiId($1,Dot,$3) }
+  | expr INDIRECTION var { MultiId($1,Ind,$3) }
   | lvalue           { $1 }
 
 lvalue:
