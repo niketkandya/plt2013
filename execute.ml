@@ -149,8 +149,8 @@ let function_call fname args ret=
     (* TODO implement properly *)
         in
 let predicate cond jmpontrue label = 
-        let brn = if jmpontrue then "\t beq " else "\t bne " in 
-        (load_code "r0" cond) ^ "\t cmp r0,#1\n" ^ brn ^ label ^ "\n"
+        let brn = if jmpontrue then "\t bne " else "\t beq " in 
+        (load_code "r0" cond) ^ "\t cmp r0,#0\n" ^ brn ^ label ^ "\n"
         in
 let var_array ptr sz =
   (* Code for alignment of sz *)
