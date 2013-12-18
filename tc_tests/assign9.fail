@@ -1,0 +1,17 @@
+struct a {
+	int c;
+};
+
+struct b {
+	int d;
+};
+
+int main()
+{
+	struct a x;
+    struct b y;
+
+    x = y;
+
+    return 0;
+}
