@@ -1,0 +1,18 @@
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    s->b = 50;
+
+    return s.b;
+}
