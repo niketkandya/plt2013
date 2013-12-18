@@ -1,0 +1,18 @@
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+	struct a x;
+    struct b y;
+    
+    x = y;  //assign struct to another struct
+
+    return 0;
+}
