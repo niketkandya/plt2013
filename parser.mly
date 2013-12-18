@@ -172,8 +172,8 @@ expr:
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
-  | expr DOT ID { MultiId($1,Dot,Id($3)) }
-  | expr INDIRECTION ID { MultiId($1,Ind,Id($3)) }
+  | expr DOT var { MultiId($1,Dot,$3) }
+  | expr INDIRECTION var { MultiId($1,Ind,$3) }
   | lvalue           { $1 }
 
 lvalue:
