@@ -5,6 +5,7 @@
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
 %token AMPERSAND INDIRECTION DOT
+%token LOGICAND LOGICOR
 %token <string> CONSTCHAR
 %token <string> STRING
 %token <string> ID
