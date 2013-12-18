@@ -1,0 +1,7 @@
+int main()
+{
+    char a;
+    int *b;
+    a = b / 7; //fail pointer division
+    return a;
+}

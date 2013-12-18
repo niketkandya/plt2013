@@ -1,0 +1,11 @@
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+
+    b = b + 12;
+
+	return *a;
+}

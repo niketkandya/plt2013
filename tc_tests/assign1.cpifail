@@ -1,0 +1,10 @@
+int main()
+{
+    char a;
+    char *b;
+    
+    a = 1;
+    a = b * 1;
+
+    return a;
+}
