@@ -11,7 +11,7 @@ int main()
 	struct a x;
     struct b y;
 
-    x = y;
+    x = y; // Should still fail!
 
     return 0;
 }
