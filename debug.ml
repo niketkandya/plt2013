@@ -10,7 +10,7 @@ let dbg_str_of_typs typ = match typ with
                         | Int -> "Int"
                         | Ptr -> "Ptr" 
                         | Arr(sz) -> "Arr" 
-                        | Struct(sname) -> "Struct " ^ sname
+                        | Struct(sname) -> "Struct " 
                         | Err -> "Error"
 
 let dbg_typ ty = 
@@ -41,8 +41,8 @@ let rec dbg_str_Lvar lvar tabs = match lvar with
 let dbg_str_print str = raise (Failure ("Debug msg: \n" ^str));;
 
 let dbg_str_resolve r tabs = match r with
-                | Dot  -> p (tabs) ^ "Dot"
-                | Ind -> p (tabs) ^ "Ind"
+                | Dot  -> p (tabs) ^ "Dot(.)"
+                | Ind -> p (tabs) ^ "Ind(->)"
 
 let dbg_str_op o tabs = match o with
                 | Add  -> p (tabs) ^ "Add"

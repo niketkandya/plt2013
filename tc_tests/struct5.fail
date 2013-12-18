@@ -1,0 +1,33 @@
+struct a {
+	int c;
+	int b;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+  struct a *x;
+  struct a y;
+  int i;
+  int *j;
+  int k;
+
+  y.c = 10;
+  y.b = -12;
+  x = &y;
+
+  y->c = i; //error
+
+
+//  j = x.c; //error
+//  j = x.b; //error
+
+  k = x->c;
+  k = x->b;
+
+	return y.c + y.b;
+}
