@@ -1,4 +1,4 @@
-void fun(int *b) {
+void fun(char *b) { //error arg should be int and not char
 	*b = 50;
 }
 int main()
