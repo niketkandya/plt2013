@@ -1,0 +1,17 @@
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+    struct a *x;
+    struct a *y;
+
+    x = y;
+	return 0;
+}
