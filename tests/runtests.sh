@@ -121,5 +121,5 @@ colorprint "Total Passed:$passed_tests" "green"
 colorprint "Total Failed:$failed_tests" "red"
 
 # Get rid of beginning comma
-failed_test_names = `echo $failed_test_names | tail -c +3`
+failed_test_names=`echo $failed_test_names | tail -c +3`
 colorprint "\nFailed Tests: $failed_test_names" "red"
