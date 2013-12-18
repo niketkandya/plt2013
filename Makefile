@@ -9,6 +9,8 @@ TARFILES = Makefile testall.sh scanner.mll parser.mly \
 cpi : $(OBJS)
 	ocamlc -g -o cpi $(OBJS)
 
+all : clean cpi
+
 .PHONY : test
 test : cpi
 	cd tests && ./runtests.sh
