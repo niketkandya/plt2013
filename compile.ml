@@ -21,8 +21,24 @@ let rec get_size_type sindex = function
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> raise (Failure ("Requesting size of wrong type")));;
 
+let get_atom = function
+      Atom (atm) -> atm
+    | BinEval  (dst, var1, op, var2) -> dst
+    | Fcall (fname, args,ret ) -> ret
+    | Assgmt (dst, src) -> dst 
+    | Label (a)-> raise (Failure ("Unexpected: Label-> " ^ a))
+    | Predicate (_, _, _)-> raise (Failure ("Unexpected: Predicate"))
+    | Branch _-> raise (Failure ("Unexpected: Branch"))
+    | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
+    | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
+    | Str (_, _)-> raise (Failure ("Unexpected: Str"))
+    | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ 
+      dbg_str_of_typs (List.hd ty)))
+    |Rval _ -> raise (Failure ("Unexpected: Rval"))
+    | VarArr(_,_) -> raise (Failure ("Unexpected: VarArr"));;
 
 let build_global_idx map = StringMap.empty;;
+let gl_atm a = get_atom(List.hd ( List.rev a));;
 
 let calc_offset sidx offset typlst = 
   let align_size = 4 in
@@ -44,6 +60,8 @@ let rec modify_local_lst  = function
               Id(id) -> { hd with vtype = Ptr :: List.tl hd.vtype }
               | _ -> hd)
         |  _ -> hd ) :: (modify_local_lst tl));;
+
+let err str = raise(Failure(str))
 
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
@@ -219,6 +237,10 @@ let translate env fdecl=
     | 1 -> "end" ^ string_of_int !count_ifelse
     | _ -> ""
     in
+    let get_logic_label =
+      get_ifelse_label 0;
+      "l" ^(get_ifelse_label 1)
+      in
   let gen_atom atm = 
     [Atom (atm)]
     in
@@ -227,22 +249,6 @@ let translate env fdecl=
       Lvar(o,s) -> Lit o
     | Addr(l) -> get_off_lvar l
     | _ as a -> raise_error_atom a
-    in
-  let get_atom = function
-      Atom (atm) -> atm
-    | BinEval  (dst, var1, op, var2) -> dst
-    | Fcall (fname, args,ret ) -> ret
-    | Assgmt (dst, src) -> dst 
-    | Label (a)-> raise (Failure ("Unexpected: Label-> " ^ a))
-    | Predicate (_, _, _)-> raise (Failure ("Unexpected: Predicate"))
-    | Branch _-> raise (Failure ("Unexpected: Branch"))
-    | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
-    | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
-    | Str (_, _)-> raise (Failure ("Unexpected: Str"))
-    | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ 
-      dbg_str_of_typs (List.hd ty)))
-    |Rval _ -> raise (Failure ("Unexpected: Rval"))
-    | VarArr(_,_) -> raise (Failure ("Unexpected: VarArr"))
     in
   let incr_by_ptrsz exp incrsz tmp = 
      [BinEval (tmp, (Lit incrsz), Mult, (get_atom(List.hd (List.rev exp))))]
@@ -292,18 +298,30 @@ let translate env fdecl=
                           (List.tl v2binres)) tmp) @
                           [BinEval (v3 ,tmp, op,(get_atom 
                           (List.hd (List.rev v2))))]
-                         | _ -> raise(Failure("Cannot reach here")))
-                     )
+                         | _ -> err "Cannot reach here" )
+                      )
                 | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
                 (get_atom(List.hd (List.rev v2))))])
     in
-    let binop_logical  v1 v2 res op = [] in
+    (* Advantage of using bytecode: While implementing && and ||
+     * It was easier to define the login in a slightly higher level
+     * language than assembly *)
+    let binop_logical  v1 v2 res op = let opvalue = (match op with
+        Lor -> true
+        | Land -> false
+        | _ -> err "Logical only")in
+        let endlbl = get_logic_label in
+        [Assgmt (res,Lit(0))] @ v1 @ 
+        [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
+        [Predicate ((gl_atm v2), opvalue, endlbl)] @
+        [Assgmt (res,Lit(1))] @ [Label endlbl]
+    in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> 
                 let lbl = incr count_mem; ".LC" ^
                 (string_of_int !count_mem) in
-                (gen_binres_type [Char; Ptr]) @ gen_atom(Sstr(s, lbl))
+                (gen_binres_type [Ptr;Char]) @ gen_atom(Sstr(s, lbl))
       | ConstCh(ch) -> (gen_binres_type [Char]) @ gen_atom(Cchar(ch.[1]))
       | Id s ->
                 let retyp = get_type_varname table s in
@@ -319,7 +337,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                   Struct(s) -> get_struct_table s
                   | _ -> raise(Failure("Must be a struct"))) in
                 let v2 = expr ~table:tab ~strict:1 e in
-                let offset = (match get_atom(List.hd (List.rev v2)) with
+                let offset = (match gl_atm v2 with
                    Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @
                    gen_atom (Lit o)
                    | Pntr(b,s) -> (*This will an array *)
@@ -349,7 +367,6 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                   Lor |Land -> binop_logical v1 v2 res op
                   | _ ->  binop_rest v1 v2 v1binres v2binres binres res op
                       )
-                
       | Assign (s, e) ->
                       let v1 = (expr e) and v2 = (expr s)
                       in (gen_binres_type (get_binres_type v2)) 
