@@ -247,7 +247,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
            side is " ^ (dbg_typ rh_type) ))
         else Assign_t(lh, rh, [Int])
   | Call (fname, actuals) ->
-    let param = List.map tc_expr (List.rev actuals)
+    let param = List.map tc_expr actuals
     and rettyp = (get_func_entry fname).ret_ty in
     let decl_typs = get_func_decl_typs fname in
     let param_typs = get_typs_from_expr_t_lst param in
@@ -267,8 +267,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       if is_int_or_char(v1_type) then 
         Array_t(b, v1, (List.tl btyp))
       else 
-        raise (Failure ("Array index is type " ^ (dbg_typ v1_type) 
-            ^ " and not type int")) 
+        raise (Failure ("Array index is type " ^ (dbg_typ v1_type) ^ " and not type int")) 
        (*  Array_t(base, v1, [Err] @ btyp ) *)
   | Addrof(e) -> let v1 = tc_expr e in 
     let v1_type = get_type_lst_expr_t(v1) in
