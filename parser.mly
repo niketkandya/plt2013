@@ -14,11 +14,13 @@
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN
+%left LOGICOR
+%left LOGICAND
 %left EQ NEQ
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%left INDIRECTION DOT
+%left INDIRECTION DOT LPAREN RPAREN LSUBS RSUBS
 
 %start program
 %type <Ast.program> program
