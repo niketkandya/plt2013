@@ -5,9 +5,7 @@ int main()
     char c;
     char *d;
 
-    int res;
-    char res;
-
+    c = *a;  //Should fail since a is not a pointer
 
     return *a + c;
 }

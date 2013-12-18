@@ -1,12 +1,10 @@
-int main()
+int fun(char *b) {
+	*b = 'c' / b; //Error char and char point division
+}
+char main()
 {
-	char *a;
 	char b;
 	b = 'a';
-	a = &b;
-	*a = 'b';
-
-    *a = *a + b - 'b';
-
-	return *a + b;
+	fun(&b);
+	return b;
 }

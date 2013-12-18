@@ -2,7 +2,9 @@ char main()
 {
 	char *a;
 	char b;
-	b = 'a';
 	a = &b;
+	b = 'a' * b; //valid
+	b = 'a' * *a; //valid
+	b = 'a' * a; //invalid: multipliying char by pointer
 	return *a;
 }

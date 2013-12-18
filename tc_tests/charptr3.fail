@@ -5,7 +5,8 @@ char main()
 	b = 'a';
 	a = &b;
 
-    b = b + 12;
+  b = &b + 12; //valid
+  b = *&b + 5; //valid
 
 	return *a;
 }

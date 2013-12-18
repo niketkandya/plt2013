@@ -57,6 +57,7 @@ for file in *.fail; do
     else
         let failed_tests++
         colorprint "    Failed: $basename. $error" "red"
+        colorprint "    Test passed when error is present" "red"
     fi
 done
 
