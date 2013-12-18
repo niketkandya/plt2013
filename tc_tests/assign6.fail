@@ -1,0 +1,12 @@
+int main()
+{
+    int a;
+    int *b;
+    char c;
+    int *d;
+
+    d = b;  
+    d = &b;  //Should fail since a is not a pointer
+
+    return *a + c;
+}

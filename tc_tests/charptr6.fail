@@ -1,0 +1,11 @@
+
+int main()
+{
+	char *a;
+	char b;
+	char **c;
+  
+  &a = c + -2; //this is an error
+
+	return *a + b;
+}

@@ -1,0 +1,7 @@
+char main()
+{
+  char *a;
+  char b;
+	&b = a; //this should error
+	return b;
+}
