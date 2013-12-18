@@ -5,6 +5,7 @@
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
 %token AMPERSAND INDIRECTION DOT
+%token LOGICAND LOGICOR
 %token <string> CONSTCHAR
 %token <string> STRING
 %token <string> ID
@@ -14,11 +15,13 @@
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN
+%left LOGICOR
+%left LOGICAND
 %left EQ NEQ
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%left INDIRECTION DOT
+%left INDIRECTION DOT LPAREN RPAREN LSUBS RSUBS
 
 %start program
 %type <Ast.program> program
