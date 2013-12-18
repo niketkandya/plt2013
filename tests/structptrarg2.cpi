@@ -1,0 +1,18 @@
+struct S {
+        int a;
+        int b;
+};
+
+void f(struct S t)
+{
+        t.b=2;// valid but doesn't change anything
+}
+
+int main()
+{
+        struct S x;
+        x.b = 10;
+        f(x);
+
+        return x.b; // Should still be 10
+}
