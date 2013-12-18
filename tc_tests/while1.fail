@@ -1,0 +1,32 @@
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+
+    while ( b < c) { //error compare pointers
+	    a = a + 1;
+	} 
+
+
+    return a;
+
+}

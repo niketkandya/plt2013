@@ -1,0 +1,18 @@
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+  b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}

@@ -1,0 +1,23 @@
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+  c = &b; //warning assign int ptr to char ptr
+
+  //a = &5; //error
+  //a = *9; //error
+
+ // b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
