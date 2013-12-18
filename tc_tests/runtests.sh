@@ -29,17 +29,11 @@ colorprint () {
     fi
 
     echo -e "$prefix$1$default"
-
 }
 
 
-# Clean
-rm -rf "out"
-mkdir -p "out"
-
-
 # Does test for each assembly file
-for file in *.cpifail; do
+for file in *.fail; do
     error=""
     basename=${file%.*}
     
@@ -47,42 +41,7 @@ for file in *.cpifail; do
 
     # Corner case for bash glob suckiness
     if [[ "$basename" == "*" ]]; then
-        echo "No Assembly files found. Exiting"
-        exit
-    fi
-
-    # Compile
-    $CPI_COMPILER < "$file" > "$basename.s"
-    if [[ $? != 0 ]]; then
-        error="cpi compile error"
-    fi
-
-    # Assemble and link our asm files
-    #as -o out/$basename.o $basename.s
-    #if [[ $? != 0 ]]; then
-    #    error="Assembly error (as)"
-    #fi
-
-    if [[ "$error" != "" ]]; then
-        let passed_tests++
-        colorprint "    Passed: $basename" "green"
-    else
-        let failed_tests++
-        colorprint "    Failed: $basename. $error" "red"
-        error=""
-    fi
-done
-
-# Does test for each assembly file
-for file in *.cpipass; do
-    error=""
-    basename=${file%.*}
-    
-    colorprint "Testing: $basename"
-
-    # Corner case for bash glob suckiness
-    if [[ "$basename" == "*" ]]; then
-        echo "No Assembly files found. Exiting"
+        echo "No fail test files found. Exiting"
         exit
     fi
 
@@ -92,11 +51,33 @@ for file in *.cpipass; do
         error="CPI COMPILE ERROR"
     fi
 
-    # Assemble and link our asm files
-    #as -o out/$basename.o $basename.s
-    #if [[ $? != 0 ]]; then
-    #    error="Assembly error (as)"
-    #fi
+    if [[ "$error" != "" ]]; then
+        let passed_tests++
+        colorprint "    Passed: $basename" "green"
+    else
+        let failed_tests++
+        colorprint "    Failed: $basename. $error" "red"
+    fi
+done
+
+# Does test for each assembly file
+for file in *.pass; do
+    error=""
+    basename=${file%.*}
+    
+    colorprint "Testing: $basename"
+
+    # Corner case for bash glob suckiness
+    if [[ "$basename" == "*" ]]; then
+        echo "No pass test files found."
+        break
+    fi
+
+    # Compile
+    $CPI_COMPILER < "$file" > "$basename.s"
+    if [[ $? != 0 ]]; then
+        error="CPI COMPILE ERROR"
+    fi
 
     if [[ "$error" != "" ]]; then
         let failed_tests++
@@ -107,7 +88,6 @@ for file in *.cpipass; do
         colorprint "    Passed: $basename" "green"
     fi
 done
-
 
 colorprint "\n\nTest results:"
 colorprint "Total Passed:$passed_tests" "green"

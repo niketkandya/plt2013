@@ -1,8 +1,0 @@
-int main()
-{
-    char a[3];
-    int b;
-    b[1] = 5; // Fail b not array
-    a = 6 / b; 
-    return a;
-}

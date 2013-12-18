@@ -1,0 +1,9 @@
+int main()
+{
+    char a;
+    char *b;
+    
+    a = b;  //pointer to int assignment
+
+    return a + *b;
+}

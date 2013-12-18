@@ -1,0 +1,8 @@
+int main()
+{
+    char *a;
+    int b[8];
+    b[3] = 5;
+    a = b;
+    return a;
+}

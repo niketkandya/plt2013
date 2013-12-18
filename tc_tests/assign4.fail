@@ -1,0 +1,13 @@
+int main()
+{
+    int a;
+    int *b;
+    char c;
+    char *d;
+
+    int res;
+    char res;
+
+
+    return *a + c;
+}
