@@ -1,23 +1,5 @@
 OBJS = ast.cmo parser.cmo scanner.cmo debug.cmo bytecode.cmo typecheck.cmo compile.cmo execute.cmo cpi.cmo
 
-TESTS = \
-arith1 \
-arith2 \
-fib \
-for1 \
-func1 \
-func2 \
-func3 \
-gcd \
-global1 \
-hello \
-if1 \
-if2 \
-if3 \
-if4 \
-ops1 \
-var1 \
-while1
 
 TARFILES = Makefile testall.sh scanner.mll parser.mly \
 	ast.ml sast.ml bytecode.ml debug.ml typecheck.ml compile.ml execute.ml cpi.ml \
@@ -31,8 +13,14 @@ cpi : $(OBJS)
 test : cpi
 	cd tests && ./runtests.sh
 
+test_tc : cpi
+	cd tc_tests && ./runtests.sh
+
 test_edpi :
 	ssh edpi 'cd plt2013; make clean; git pull; make test'
+
+test_tc_edpi :
+	ssh edpi 'cd plt2013; make clean; git pull; make test_tc'
 
 test_qemupi :
 	ssh qemupi 'cd plt2013; make clean; git pull; make test'
