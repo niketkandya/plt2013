@@ -76,7 +76,7 @@ let structs = prog.sdecls
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
 let global_indexes = build_global_idx globals in
-
+(* Build structure specific symbol table*)
 let struct_indexes = List.fold_left
   (fun map stct ->
     let soffset = ref 0 in
@@ -274,6 +274,30 @@ let translate env fdecl=
               | _ -> [])
         |  _ -> []) @ (gen_vararr tl)
     in
+
+    let binop_rest v1 v2 v1binres v2binres binres v3 op= 
+      (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @
+                (List.tl v2) @
+                (match List.hd binres with
+                Ptr | Arr(_) ->
+                    (match List.hd v1binres with
+                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in
+                       (incr_by_ptrsz v2 (get_size_type env.struct_index
+                       (List.tl v1binres)) tmp) @ 
+                       [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
+                      | _ -> (match List.hd v2binres with
+                         Ptr | Arr(_) ->
+                          let tmp = ((add_temp v1binres)) in
+                          (incr_by_ptrsz v1 (get_size_type env.struct_index 
+                          (List.tl v2binres)) tmp) @
+                          [BinEval (v3 ,tmp, op,(get_atom 
+                          (List.hd (List.rev v2))))]
+                         | _ -> raise(Failure("Cannot reach here")))
+                     )
+                | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
+                (get_atom(List.hd (List.rev v2))))])
+    in
+    let binop_logical  v1 v2 res op = [] in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
       | String s -> 
@@ -320,27 +344,12 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 let v1binres = get_binres_type v1
                 and v2binres = get_binres_type v2 in
                 let binres = get_dom_type v1binres v2binres in 
-                let v3 = (add_temp binres) in
-                (gen_binres_type binres) @ (gen_atom v3) @ (List.tl v1) @
-                (List.tl v2) @
-                (match List.hd binres with
-                Ptr | Arr(_) ->
-                    (match List.hd v1binres with
-                      Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in
-                       (incr_by_ptrsz v2 (get_size_type env.struct_index
-                       (List.tl v1binres)) tmp) @ 
-                       [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
-                      | _ -> (match List.hd v2binres with
-                         Ptr | Arr(_) ->
-                          let tmp = ((add_temp v1binres)) in
-                          (incr_by_ptrsz v1 (get_size_type env.struct_index 
-                          (List.tl v2binres)) tmp) @
-                          [BinEval (v3 ,tmp, op,(get_atom 
-                          (List.hd (List.rev v2))))]
-                         | _ -> raise(Failure("Cannot reach here")))
-                     )
-                | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
-                (get_atom(List.hd (List.rev v2))))])
+                let res = (add_temp binres) in
+                (match op with
+                  Lor |Land -> binop_logical v1 v2 res op
+                  | _ ->  binop_rest v1 v2 v1binres v2binres binres res op
+                      )
+                
       | Assign (s, e) ->
                       let v1 = (expr e) and v2 = (expr s)
                       in (gen_binres_type (get_binres_type v2)) 
@@ -385,13 +394,13 @@ let rec stmt = function
     let v1 = expr e in 
       v1 @ [Rval (get_atom (List.hd (List.rev v1)))]
   | If (p, t, f) -> 
-    let v1 = expr p and v2 = stmt t and v3 = stmt f in
-      let v4 = (get_atom (List.hd(List.rev v1))) in
+    let pval = expr p and tval = stmt t and fval = stmt f in
+      let v4 = (get_atom (List.hd(List.rev pval))) in
         let l1 = (get_ifelse_label 0) and l2 = (get_ifelse_label 1) in 
-          (match v3 with
-           [] -> v1 @ [Predicate (v4,false, l2)] @ v2  @ [Label l2]
-          | _ -> v1 @ [Predicate (v4,false, l1)] @ v2  @ [Branch (l2)]
-                    @ [Label l1] @ v3 @ [Label l2])
+          (match fval with
+           [] -> pval @ [Predicate (v4,false, l2)] @ tval  @ [Label l2]
+          | _ -> pval @ [Predicate (v4,false, l1)] @ tval  @ [Branch (l2)]
+                    @ [Label l1] @ fval @ [Label l2])
   | For (asn, cmp, inc, b) -> 
           stmt (Block (
               [Expr (asn); While(cmp, Block([b;Expr(inc)]))]

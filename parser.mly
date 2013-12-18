@@ -5,7 +5,7 @@
 %token EQ NEQ LT LEQ GT GEQ
 %token RETURN IF ELSE FOR WHILE INT CHAR STRUCT VOID
 %token AMPERSAND INDIRECTION DOT
-%token LOGICAND LOGICOR
+%token LAND LOR
 %token <string> CONSTCHAR
 %token <string> STRING
 %token <string> ID
@@ -15,8 +15,8 @@
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN
-%left LOGICOR
-%left LOGICAND
+%left LOR
+%left LAND
 %left EQ NEQ
 %left LT GT LEQ GEQ
 %left PLUS MINUS
@@ -169,6 +169,8 @@ expr:
   | expr LEQ    expr { Binop($1, Leq,   $3) }
   | expr GT     expr { Binop($1, Greater,  $3) }
   | expr GEQ    expr { Binop($1, Geq,   $3) }
+  | expr LOR    expr { Binop($1, Lor,   $3) }
+  | expr LAND   expr { Binop($1, Land,   $3) }
   | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | expr DOT ID { MultiId($1,Dot,Id($3)) }

@@ -1,4 +1,5 @@
-type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq
+type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
+Lor | Land
 type resolve = Dot | Ind
 
 type expr =

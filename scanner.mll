@@ -27,8 +27,8 @@ rule token = parse
 | ">"      { GT }
 | ">="     { GEQ }
 | "->"     { INDIRECTION }
-| "&&"     { LOGICAND }
-| "||"     { LOGICOR }
+| "&&"     { LAND }
+| "||"     { LOR }
 | "if"     { IF }
 | "else"   { ELSE }
 | "for"    { FOR }
