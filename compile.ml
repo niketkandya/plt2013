@@ -401,7 +401,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
       | Negof(v)  -> let v1 = expr v in 
                 gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Neg(gl_atm v1))
-      | Noexpr ->[]
+      | Noexpr ->[Atom(Lit(0))]
     in
 let rec stmt = function
   Block sl ->
