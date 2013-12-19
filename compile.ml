@@ -314,7 +314,8 @@ let translate env fdecl=
         [Assgmt (res,Lit(0))] @ v1 @ 
         [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
         [Predicate ((gl_atm v2), opvalue, endlbl)] @
-        [Assgmt (res,Lit(1))] @ [Label endlbl]
+        [Assgmt (res,Lit(1))] @ [Label endlbl] @ 
+        gen_atom(res)
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
         Literal i -> (gen_binres_type [Int]) @ gen_atom (Lit i)
