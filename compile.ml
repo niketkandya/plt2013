@@ -89,7 +89,8 @@ let structs = prog.sdecls
   and functions = prog.fdecls in
   let count_loop = ref 0 
   and count_mem = ref (-1) 
-  and count_ifelse = ref 0 in
+  and count_ifelse = ref 0
+  and count_label = ref 0 in
 
 (* Allocate "addresses" for each global variable *)
 (* TODO Code generation for globals *)
@@ -237,10 +238,6 @@ let translate env fdecl=
     | 1 -> "end" ^ string_of_int !count_ifelse
     | _ -> ""
     in
-    let get_logic_label =
-      get_ifelse_label 0;
-      "l" ^(get_ifelse_label 1)
-      in
   let gen_atom atm = 
     [Atom (atm)]
     in
@@ -309,7 +306,10 @@ let translate env fdecl=
         Lor -> true
         | Land -> false
         | _ -> err "Logical only")in
-        let endlbl = get_logic_label in
+        let endlbl =
+      "lend" ^ string_of_int (
+        count_label := !count_label + 1;
+       !count_label) in
         [Assgmt (res,Lit(if opvalue then 1 else 0))] @ v1 @ 
         [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
         [Predicate ((gl_atm v2), false, endlbl)] @
