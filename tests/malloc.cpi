@@ -1,0 +1,17 @@
+ #include <stdlib.h>
+ 
+int main(){
+
+    int *a;
+    int b;
+
+    a = malloc(4);
+
+    *a = 5;
+
+    printf( "a = %d", *a);
+
+    free(a);
+
+}
+
