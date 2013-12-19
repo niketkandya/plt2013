@@ -238,9 +238,25 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
       let tab = (get_struct_table v1_type) in 
       let v2 = tc_expr ~table:tab ~strict:1 e in
       let v2_type = get_type_lst_expr_t(v2) in
-      (match resolve with
-        | Dot -> MultiId_t(v1, Dot, v2, v2_type)
-        | Ind -> MultiId_t(v1, Ind, v2, [Ptr] @ v2_type))
+        (*  raise (Failure ("Struct: 
+           First part is " ^ (dbg_typ v1_type) ^ " second part is " ^ (dbg_typ
+           v2_type
+           )) *)
+      (match v1_type, resolve with
+        | [Struct(s)], Dot -> MultiId_t(v1, Dot, v2, v2_type)
+        | [Ptr;Struct(s)], Dot ->
+          raise (Failure ("Struct Mismatch: 
+           Cannot use resolve operator " ^ (dbg_str_resolve resolve 0) ^ " with
+           Struct "^ s ^ " which has type " ^ (dbg_typ v1_type))) 
+        | [Struct(s)], Ind ->
+          raise (Failure ("Struct Mismatch: 
+           Cannot use resolve operator " ^ (dbg_str_resolve resolve 0) ^ " with
+           Struct "^ s ^ " which has type " ^ (dbg_typ v1_type))) 
+        | [Ptr;Struct(s)], Ind -> MultiId_t(v1, Ind, v2, v2_type) 
+        | _ , _ ->
+          raise (Failure ("Struct Error: 
+           Unknown struct with resolve operator " ^ (dbg_str_resolve resolve 0)
+           ^ " and type" ^ (dbg_typ v1_type)))) 
   | Binop (e1, op, e2) -> 
     let lh = tc_expr e1 and rh = tc_expr e2 in
       let lh_type = get_type_lst_expr_t(lh)

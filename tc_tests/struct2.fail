@@ -6,10 +6,11 @@ struct a {
 
 int main()
 {
-    int i = 0;
-	struct a x;
+    int i;
+  	struct a x;
 
-    a.arr = i; // Assign array member of struct as int
+    i = 0;
+    x.arr = i; // Assign array member of struct as int
 
     return 0;
 }
