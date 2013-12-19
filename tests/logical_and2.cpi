@@ -1,14 +1,14 @@
 #include <stdio.h>
 
 int main(){
-    int a = 5;
-    int b = 10;
+    int a;
+    int b;
+    
+    a = 5;
+    b = 10;
 
-    if (a < 4 && b < 11){
-        printf("no");
-    }
     if (a > 3 && b < 11 ){
         printf("yes");
     }
-    return a == 5 && b == 10;
+    return 0;
 }
