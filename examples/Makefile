@@ -1,3 +1,6 @@
+bf:
+	../cpi bf.cpi -o bf.out --binary
+
 tictactoe :
 	../cpi tictactoe.cpi -o tictactoe.out --binary
 

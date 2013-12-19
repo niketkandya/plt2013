@@ -1,0 +1,123 @@
+/* Special thanks to: https://github.com/mig-hub/yabi */
+
+
+int do_command(char dh[], char command, char source[], int* dh_index, int index)
+{
+    char c;
+    int pos;
+    char *p;
+    int tempbreak;
+    int loopc;
+
+    /* printf("index:%d\n, command:%c\n",index,command); */
+    /* printf("cell[0]: %d, cell[1]: %d\n",dh[0], dh[1]); */
+    /* printf("dh_index:%d\n",*dh_index); */
+
+    p = &dh[*dh_index];
+
+    if (command == '>'){
+        *dh_index = *dh_index + 1;
+        return index;
+    }
+    if (command == '<'){
+        *dh_index = *dh_index - 1;
+        return index;
+    }
+    if (command == '+'){
+        *p =  *p + 1;
+        return index;
+    }
+    if (command == '-'){
+        *p = *p - 1;
+        return index;
+    }
+    if (command == '.'){
+        printf("%c",*p);
+        return index;
+    }
+    if (command == ','){
+        scanf(" %c", p);
+        return index;
+    }
+    if (command == '['){
+        pos = index;
+        if ((*p) == 0) {
+            loopc = 0;
+            tempbreak = 0;
+            while(tempbreak == 0)
+            {
+                index = index + 1;
+                c = source[index];
+
+                if (loopc == 0){
+                    if (c == ']'){
+                        tempbreak = 1;
+                    }
+                }
+
+                if (tempbreak == 0){
+                    if (c == ']'){
+                        loopc = loopc - 1;
+                    }
+
+                    if (c == '['){
+                        loopc = loopc + 1;
+                    }
+                }
+            }
+        } else {
+            while((*p) != 0) {
+                index = pos;
+
+                index = index + 1;
+                c = source[index];
+
+                while( c!=']') {
+                    index = do_command(dh, c, source, dh_index, index);
+
+                    index = index + 1;
+                    c = source[index];
+                }
+
+            }
+        }
+
+    }
+    return index;
+}
+
+int main() {
+    char command;
+    int len;
+    char source[500];
+    char data_highway[100];
+    char *p;
+    int index;
+    int newindex;
+    int x;
+    int *dh_index;
+
+    x = 0;
+    dh_index = &x;
+
+    /* source = "+++++++++++++++++++++++++++++++++."; */
+    /* source="++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."; */
+
+    scanf("%d", &len);
+    scanf("%s", source);
+
+    printf("len: %d, source: %s\n", len, source);
+
+    index = 0;
+    p = &data_highway[0];
+    while(index < len) {
+        command = source[index];
+        /* printf("command is %c\n", command); */
+
+        newindex = do_command(data_highway, command, source, dh_index, index);
+        index = newindex + 1;
+    }
+    printf("\n");
+
+    return 0;
+}
