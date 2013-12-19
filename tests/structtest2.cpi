@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 struct S {
       int a;
       int b;
@@ -7,10 +9,19 @@ int main()
 {  
     struct S s;
     struct S *sptr;
+    int b;
 
     s.a = 2;
+    printf("s.a= %d\n", s.a); 
     s.b = 3;
+    printf("s.b= %d\n", s.b); 
     sptr = &s;
 
+    b = s.b + sptr->a + -(sptr->b);
+    printf("s.b= %d\n", s.b); 
+    printf("sptr->a= %d\n", sptr->a); 
+    printf("sptr->b= %d\n", sptr->b); 
+    printf("s.b + sptr->a + -(sptr->b) = %d\n", b);
+    printf("s.b + sptr->a + -(sptr->b) = %d\n", s.b + sptr->a + -(sptr->b));
     return s.b + sptr->a + -(sptr->b);
 }

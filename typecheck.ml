@@ -393,10 +393,11 @@ let rec has_return stmt_lst =
   | [] -> false
 in
 
-if not(fdecl.ret = [Void]) && not(has_return stmtblock) then 
+(* Check return stmt exists if return type was declared  *)
+(*if not(fdecl.ret = [Void]) && not(has_return stmtblock) then 
   raise (Failure ("Function " ^ fdecl.fname ^ ", has return type " ^ 
   (dbg_typ fdecl.ret) ^ " but no return statement found"))
-else
+else *)
   [Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
 in
 
