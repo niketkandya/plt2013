@@ -79,11 +79,11 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
 (* Translate a program in AST form into a bytecode program.  Throw an
  *   exception if something is wrong, e.g., a reference to an unknown
  *   variable or function *)
-let translate sast =
-
+let translate prog =
+(*
 let getProg(a, b) = a in
 let prog = getProg(sast) in
-
+*)
 let structs = prog.sdecls 
   and globals = prog.gdecls
   and functions = prog.fdecls in

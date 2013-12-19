@@ -36,7 +36,10 @@ let sast in_channel =
     Typecheck.type_check_prog ast  
 
 let program in_channel =
-    Compile.translate (sast in_channel)
+    let lexbuf = Lexing.from_channel in_channel in
+    let ast = Parser.program Scanner.token lexbuf in
+    Typecheck.type_check_prog ast;(*comment this line to disable type checking*)
+    Compile.translate ast 
 
 (* Compiles from an input channel (stdin or source file) *)
 (* If --stdout flag set, then print to stdout. else, save to out_file *)

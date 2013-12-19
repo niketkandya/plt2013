@@ -124,7 +124,7 @@ let type_check_func env fdecl=
     in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
-    with Not_found -> raise (Failure("Varname not found: " ^ varname))
+    with Not_found -> raise (Failure("Type Checking Varname not found: " ^ varname))
     in
   let get_type_lst_expr_t = function 
     | Literal_t(i, t) -> t
