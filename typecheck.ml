@@ -152,14 +152,14 @@ let type_check_func env fdecl=
       | hd::tl -> get_type_lst_expr_t hd :: (conv_el2_typ_lst tl) in
       conv_el2_typ_lst param
     in
-  let get_struct_table stct =
+  let get_struct_table2 stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in 
   let get_struct_table typ_lst = 
     match typ_lst with 
-    | [Struct(s)] -> (get_struct_table s)
-    | [Ptr; Struct(s)] -> (get_struct_table s)
+    | [Struct(s)] -> (get_struct_table2 s)
+    | [Ptr; Struct(s)] -> (get_struct_table2 s)
     | _ -> raise (Failure
       ("Variable is " ^ (dbg_typ typ_lst) ^ " and not a Struct"))
     in
