@@ -100,9 +100,6 @@ int main() {
     x = 0;
     dh_index = &x;
 
-    /* source = "+++++++++++++++++++++++++++++++++."; */
-    /* source="++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."; */
-
     scanf("%d", &len);
     scanf("%s", source);
 
@@ -112,7 +109,6 @@ int main() {
     p = &data_highway[0];
     while(index < len) {
         command = source[index];
-        /* printf("command is %c\n", command); */
 
         newindex = do_command(data_highway, command, source, dh_index, index);
         index = newindex + 1;
