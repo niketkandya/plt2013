@@ -1,11 +1,14 @@
 
 #include <stdio.h>
 
-void fun(int n) {
+int fun(int n) {
   int c;
   int a[n];
   char b[n];
+  int sum;
   c = 0;
+  sum =0;
+
 
   while(c < n) {
     a[c] = c;
@@ -18,12 +21,14 @@ void fun(int n) {
     printf("a[%d] = %d\t",c,a[c]);
     printf("b[%d] = %c\n",c,b[c]);
     c = c+ 1;
+    sum = sum + a[c];
   }
-
-
+  return sum;
 }
+
+
 int main() {
-  fun(10);
+  return fun(10);
 }
 
 
