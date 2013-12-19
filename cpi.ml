@@ -11,6 +11,7 @@ let usage_msg =
 let out_file = ref "out"
 let use_stdin = ref false
 let use_stdout = ref false
+let create_binary = ref false
 let debug_bytecode = ref false
 let debug_sast = ref false
 
@@ -21,6 +22,8 @@ let speclist =
         ("--stdout", Arg.Set use_stdout, "Output to stdout" );
         ("-b", Arg.Set debug_bytecode, "Print out bytecode" );
         ("-sast", Arg.Set debug_sast, "Print out sast" );
+        ("--binary", Arg.Set create_binary, "Create binary executable (only
+        if -o is set)" );
         ("-o", Arg.String (fun x -> out_file := x), "Set output file");
     ]
 
@@ -30,20 +33,36 @@ let save filename s =
     output_string channel s;
     close_out channel
 
+
+let create_binary_file filename =
+    let filename_asm = filename ^ ".s" in
+    let filename_obj = filename ^ ".o" in
+    Sys.command ("as -o " ^ filename_obj ^ " " ^ filename_asm);
+    Sys.command ("gcc -o " ^ filename ^ " " ^ filename_obj);
+    (* Now clean up *)
+    Sys.command ("rm -f " ^ filename_asm);
+    Sys.command ("rm -f " ^ filename_obj);
+    ()
+
+
 let sast in_channel = 
     let lexbuf = Lexing.from_channel in_channel in
     let ast = Parser.program Scanner.token lexbuf in
     Typecheck.type_check_prog ast  
 
+
 let program in_channel =
     Compile.translate (sast in_channel)
+
 
 (* Compiles from an input channel (stdin or source file) *)
 (* If --stdout flag set, then print to stdout. else, save to out_file *)
 let compile in_channel out_file =
     let asm = (Execute.execute_prog (program in_channel) ) in
         if !use_stdout then print_string asm
-        else save (out_file ^ ".s") asm
+        else 
+            save (out_file ^ ".s") asm;
+            if !create_binary then create_binary_file out_file
 
 let print_bytecode in_channel out_file = 
     let bytecode = Debug.dbg_str_program (program in_channel)  in
