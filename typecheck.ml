@@ -152,14 +152,14 @@ let type_check_func env fdecl=
       | hd::tl -> get_type_lst_expr_t hd :: (conv_el2_typ_lst tl) in
       conv_el2_typ_lst param
     in
-  let get_struct_table stct =
+  let get_struct_table2 stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in 
   let get_struct_table typ_lst = 
     match typ_lst with 
-    | [Struct(s)] -> (get_struct_table s)
-    | [Ptr; Struct(s)] -> (get_struct_table s)
+    | [Struct(s)] -> (get_struct_table2 s)
+    | [Ptr; Struct(s)] -> (get_struct_table2 s)
     | _ -> raise (Failure
       ("Variable is " ^ (dbg_typ typ_lst) ^ " and not a Struct"))
     in
@@ -167,7 +167,9 @@ let type_check_func env fdecl=
     let typ_equal t1 t2 = 
       if t1 = t2 then true else
       match t1, t2 with
-      | Ptr, Arr(e) -> true
+      | Ptr, Arr(_) -> true
+      | Arr(_), Ptr -> true 
+      | Arr(_), Arr(_) -> true 
       | _ , _  -> false in
         match list1, list2 with
         | h1::t1, h2::t2 -> typ_equal h1 h2 && lst_match t1 t2
@@ -195,8 +197,35 @@ let type_check_func env fdecl=
         | [Char], Ptr::tl, Add, _ -> ty2
         | [Int], Ptr::tl, Sub, _ -> ty2
         | [Char], Ptr::tl, Sub, _ -> ty2
+        | Arr(s)::tl, [Int], Add, _ -> ty1
+        | Arr(s)::tl, [Char], Add, _ -> ty1
+        | Arr(s)::tl, [Int], Sub, _ -> ty1
+        | Arr(s)::tl, [Char], Sub, _ -> ty1
+        | [Int], Arr(s)::tl, Add, _ -> ty2
+        | [Char], Arr(s)::tl, Add, _ -> ty2
+        | [Int], Arr(s)::tl, Sub, _ -> ty2
+        | [Char], Arr(s)::tl, Sub, _ -> ty2
         | Ptr::t1, Ptr::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
+        | Arr(s1)::t1, Arr(s2)::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
         | _ , _ , _, _ -> [Err]
+    in
+  let assign_expr_result_type lh ty1 rh ty2 =
+    let is_lh_arr t =
+      (match (List.hd t) with 
+      | Arr(_) -> raise(Failure("Assign Type Error: Left hand side cannot be an
+        array pointer"))
+      | _ -> false)  in 
+    let is_lh_addr lh =
+      (match lh with 
+      | Addrof_t(_,_) -> raise(Failure("Assign Type Error: Left hand side cannot be an
+       address expression"))
+      | _ -> false)  in 
+    if lst_match ty1 ty2 && not(is_lh_arr ty1) && not(is_lh_addr lh) then ty1
+    else
+       match ty1, ty2 with
+        | [Int],  [Char] -> [Int]
+        | [Char], [Int] -> [Char]
+        | _ , _  -> [Err]
     in
   let assign_result_type ty1 ty2 =
     if lst_match ty1 ty2 then ty1
@@ -224,9 +253,9 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
   | ConstCh(ch) -> ConstCh_t(ch, [Char])
   | Id s ->
     let typ = get_type_varname table s in
-    if is_arr typ then
+    (*if is_arr typ then
       Id_t (s, [Ptr] @ (List.tl typ))
-      else Id_t(s, typ)
+      else*) Id_t(s, typ)
   | MultiId(fexpr,resolve,e) ->
     let v1 = tc_expr fexpr in
       let v1_type = get_type_lst_expr_t(v1) in
@@ -273,7 +302,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
     let lh = (tc_expr s) and rh = (tc_expr e) in
       let lh_type = get_type_lst_expr_t(lh)
       and rh_type = get_type_lst_expr_t(rh) in
-      let ty = assign_result_type lh_type rh_type in
+      let ty = assign_expr_result_type lh lh_type rh rh_type in
         if lst_match ty [Err] then 
          (* Assign_t(lh, rh, [Err])*)
           raise (Failure ("Assign mismatch: 
