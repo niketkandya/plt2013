@@ -11,7 +11,7 @@ int f1(int a, int b, char c, char *d){
 void f2(char *b, char bb[]){
   b = &b[2];
 
-  return;
+  return; // this is an error
 }
 
 char f3(int b, char c ){
