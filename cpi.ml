@@ -22,8 +22,8 @@ let speclist =
         ("--stdout", Arg.Set use_stdout, "Output to stdout" );
         ("-b", Arg.Set debug_bytecode, "Print out bytecode" );
         ("-sast", Arg.Set debug_sast, "Print out sast" );
-        ("--binary", Arg.Set create_binary, "Create binary executable (only
-        if -o is set)" );
+        ("--binary", Arg.Set create_binary, 
+        "Create binary executable (only if -o is set)" );
         ("-o", Arg.String (fun x -> out_file := x), "Set output file");
     ]
 
@@ -34,6 +34,7 @@ let save filename s =
     close_out channel
 
 
+(* Create and save executable binary file from assembly file *)
 let create_binary_file filename =
     let filename_asm = filename ^ ".s" in
     let filename_obj = filename ^ ".o" in
