@@ -311,10 +311,10 @@ let translate env fdecl=
         | Land -> false
         | _ -> err "Logical only")in
         let endlbl = get_logic_label in
-        [Assgmt (res,Lit(0))] @ v1 @ 
+        [Assgmt (res,Lit(if opvalue then 1 else 0))] @ v1 @ 
         [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
-        [Predicate ((gl_atm v2), opvalue, endlbl)] @
-        [Assgmt (res,Lit(1))] @ [Label endlbl] @ 
+        [Predicate ((gl_atm v2), false, endlbl)] @
+        [Assgmt (res,Lit(if opvalue then 1 else 0))] @ [Label endlbl] @ 
         gen_atom(res)
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
