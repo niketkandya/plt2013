@@ -329,6 +329,7 @@ let translate env fdecl=
       "lend" ^ string_of_int (
         count_label := !count_label + 1;
        !count_label) in
+        (gen_binres_type [Int]) @
         [Assgmt (res,Lit(if opvalue then 1 else 0))] @ v1 @ 
         [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
         [Predicate ((gl_atm v2), false, endlbl)] @
