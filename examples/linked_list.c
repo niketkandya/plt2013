@@ -13,13 +13,14 @@ void insert_beginning(int value, struct node **head, struct node **last)
 {
      struct node *var;
      struct node *temp;
- //    var=(struct node *)malloc(24);
-	var=malloc(24);
+     struct node *temp2;
+     var=(struct node *)malloc(24);
+//	var=malloc(24);
  //    printf("size node = %d", sizeof(struct node)); //size is 24 bytes
      var->data = value;
      if(*head==0)
      {
-	 printf("head is 0");
+	 printf("head is 0\n");
          var->previous=0;
          var->next=0;
          *head = var;
@@ -27,15 +28,16 @@ void insert_beginning(int value, struct node **head, struct node **last)
  //        head->next=0;
          last = head;
      }
- /*    else
+     else
      {
- 	 printf("head is not 0");
+ 	 printf("head is not 0\n");
          temp = var;
          temp->previous=0;
-         temp->next = head;
-         head->previous = temp;
-         head = temp;
-     }*/
+         temp->next = *head;
+         temp2 = *head;
+	 temp2->previous = temp;
+         *head = temp;
+     }
 } 
 /*
 void insert_end(int value, struct node *head, struct node *tail)
