@@ -251,14 +251,14 @@ let translate env fdecl=
     | _ as a -> raise_error_atom a
     in
   let incr_by_ptrsz exp incrsz tmp = 
-     [BinEval (tmp, (Lit incrsz), Mult, (get_atom(List.hd (List.rev exp))))]
+     [BinEval (tmp, (Lit incrsz), Mult, (gl_atm exp))]
     in
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
      with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
     in
   let gen_addr_lst v1 = v1 @
-    gen_atom (Addr(get_atom (List.hd(List.rev v1))))
+    gen_atom (Addr(gl_atm v1))
     in
   let add_base_offset btyp baddr off =
     let v3 = add_temp btyp in
@@ -290,18 +290,17 @@ let translate env fdecl=
                       Ptr | Arr(_) -> (let tmp = (add_temp v2binres) in
                        (incr_by_ptrsz v2 (get_size_type env.struct_index
                        (List.tl v1binres)) tmp) @ 
-                       [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op, tmp)])
+                       [BinEval (v3 ,(gl_atm v1), op, tmp)])
                       | _ -> (match List.hd v2binres with
                          Ptr | Arr(_) ->
                           let tmp = ((add_temp v1binres)) in
                           (incr_by_ptrsz v1 (get_size_type env.struct_index 
                           (List.tl v2binres)) tmp) @
-                          [BinEval (v3 ,tmp, op,(get_atom 
-                          (List.hd (List.rev v2))))]
+                          [BinEval (v3 ,tmp, op,(gl_atm v2))]
                          | _ -> err "Cannot reach here" )
                       )
-                | _ -> [BinEval (v3 ,(get_atom (List.hd (List.rev v1))), op,
-                (get_atom(List.hd (List.rev v2))))])
+                | _ -> [BinEval (v3 ,(gl_atm v1), op,
+                (gl_atm v2))])
     in
     (* Advantage of using bytecode: While implementing && and ||
      * It was easier to define the login in a slightly higher level
@@ -350,14 +349,14 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                         | _ -> raise(Failure("Array was expected: MultiId"))
                         )
                    | _ -> raise(Failure("Unexpected type in MultiId"))) in
-                let baddr = (match get_atom( List.hd (List.rev v1)) with
+                let baddr = (match gl_atm v1 with
                         Lvar(o,s) as l -> Addr(l)
                         | Pntr(b,s) -> b
                         | _ -> raise(Failure("Unexpected type in MultiId"))) in
                         List.rev(List.tl(List.rev offset))
                         @ (add_base_offset ( List.hd (get_binres_type offset) 
                         ::(get_binres_type offset)) 
-                        baddr (get_atom (List.hd (List.rev offset))))
+                        baddr (gl_atm offset))
       | Binop (e1, op, e2) -> let v1 = expr e1
                                 and v2 = expr e2 in
                 let v1binres = get_binres_type v1
@@ -372,8 +371,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                       let v1 = (expr e) and v2 = (expr s)
                       in (gen_binres_type (get_binres_type v2)) 
                       @ v1 @ v2 @
-                [Assgmt ((get_atom(List.hd (List.rev v2))),get_atom (List.hd
-                (List.rev v1)))]
+                [Assgmt ((gl_atm v2),gl_atm v1)]
       | Call (fname, actuals) ->
                 let param = List.map expr (List.rev actuals)
                 and rettyp = (get_func_entry fname).ret_ty in
@@ -381,27 +379,26 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 (gen_binres_type rettyp)@
                 (gen_atom ret) @ List.concat param @ 
                 [Fcall (fname,List.rev
-                (List.map (fun par -> get_atom (List.hd (List.rev
-                par))) param)
+                (List.map (fun par -> gl_atm par) param)
                 ,ret)]
       | Pointer(e) -> let v1 = expr e in 
                  let binresv1 = (get_binres_type v1) in
                  (gen_binres_type (List.tl binresv1)) @
-                v1 @ gen_atom (Pntr( (get_atom (List.hd (List.rev v1))),
+                v1 @ gen_atom (Pntr( (gl_atm v1),
                 (get_ptrsize_type binresv1)))
       | Array(base,e) -> let v1 = expr e in
                          let v2 = expr base in
                          let off = add_temp (get_binres_type v1) in
                          let btyp = get_binres_type v2  in
                          let ptrsz = get_ptrsize_type btyp in 
-                         let baddr = get_atom (List.hd (List.rev v2)) in
+                         let baddr = gl_atm v2 in
                          gen_binres_type(List.tl btyp) @
                          (incr_by_ptrsz v1 ptrsz off) @
                          (add_base_offset btyp baddr off)
       | Addrof(v) -> let v1 = expr v in gen_addr_lst v1
       | Negof(v)  -> let v1 = expr v in 
                 gen_binres_type( (get_binres_type v1))
-                @ v1 @ gen_atom (Neg(get_atom (List.hd(List.rev v1))))
+                @ v1 @ gen_atom (Neg(gl_atm v1))
       | Noexpr ->[]
     in
 let rec stmt = function
@@ -410,10 +407,10 @@ let rec stmt = function
   | Expr e -> expr e
   | Return e -> 
     let v1 = expr e in 
-      v1 @ [Rval (get_atom (List.hd (List.rev v1)))]
+      v1 @ [Rval (gl_atm v1)]
   | If (p, t, f) -> 
     let pval = expr p and tval = stmt t and fval = stmt f in
-      let v4 = (get_atom (List.hd(List.rev pval))) in
+      let v4 = (gl_atm pval) in
         let l1 = (get_ifelse_label 0) and l2 = (get_ifelse_label 1) in 
           (match fval with
            [] -> pval @ [Predicate (v4,false, l2)] @ tval  @ [Label l2]
@@ -427,7 +424,7 @@ let rec stmt = function
   | While (e, b) ->
     let v1 = stmt b and v2 = expr e and l0 = (get_loop_label 0) 
       and l1 = (get_loop_label 1) in
-      let v3 = (get_atom (List.hd(List.rev v2))) in
+      let v3 = (gl_atm v2) in
         [Branch l1] @ [Label l0] @ v1 @ [Label l1] @ v2 @ [Predicate
         (v3,true,l0)]
   | _ -> []
