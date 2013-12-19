@@ -1,0 +1,63 @@
+#include <stdio.h>
+
+struct stack            /* Structure definition for stack */
+{
+	int stk[5];
+	int top;
+};
+
+
+void push1 (struct stack s[])
+{
+	int num;
+	if (s[0].top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		printf ("Enter the element to be pushed\n");
+		scanf ("%d", &num);
+		s[0].top = s[0].top + 1;
+	}
+	return;
+}
+
+void push2 (struct stack s[])
+{
+	int num;
+	if (s[1].top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		printf ("Enter the element to be pushed\n");
+		scanf ("%d", &num);
+		s[1].top = s[1].top + 1;
+	}
+	return;
+}
+
+/*Function to delete an element from the stack*/
+
+int main ()
+{
+	int choice;
+	int option;
+	struct stack s[2];
+  
+  push1(s);	
+  push2(s);	
+	
+  printf(" s[0].top = %d", 
+    s[0].top);
+
+
+  printf(" s[1].top = %d", 
+    s[1].top);
+
+  return 0;
+}

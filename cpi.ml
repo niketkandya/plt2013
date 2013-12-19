@@ -55,7 +55,8 @@ let sast in_channel =
 let program in_channel =
     let lexbuf = Lexing.from_channel in_channel in
     let ast = Parser.program Scanner.token lexbuf in
-    Typecheck.type_check_prog ast;(*comment this line to disable type checking*)
+    Typecheck.type_check_prog ast;(*comment this line to disable type
+    * checking*)
     Compile.translate ast 
 
 

@@ -1,0 +1,123 @@
+/* Write a C program to implement stack. Stack is a LIFO data strcuture    *
+ * LIFO - Last in First Out                                                *
+ * Perform PUSH(insert operation), POP(Delete operation) and Display stack 
+ * http://www.engineersgarage.com/c-language-programs/implement-stack-and-perform-push-and-pop-operations */
+
+#include <stdio.h>
+
+
+struct stack            /* Structure definition for stack */
+{
+	int stk[5];
+	int top;
+};
+
+/*Function to add an element to the stack*/
+void push (struct stack s[])
+{
+	int num;
+	if (s[0].top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		printf ("Enter the element to be pushed\n");
+		scanf ("%d", &num);
+		s[0].top = s[0].top + 1;
+		s[0].stk[s[0].top] = num;
+	}
+	return;
+}
+
+
+/*Function to delete an element from the stack*/
+int pop (struct stack s[])
+{
+	int num;
+	if (s[0].top == - 1)
+	{
+		printf ("Stack is Empty\n");
+		return (s[0].top);
+	}
+	else
+	{
+		num = s[0].stk[s[0].top];
+		printf ("popped element is = %d\n", s[0].stk[s[0].top]);
+		s[0].top = s[0].top - 1;
+	}
+	return(num);
+}
+
+/*Function to display the status of the stack*/
+void display (struct stack s[])
+{
+	int i;
+	if (s[0].top == -1)
+	{
+		printf ("Stack is empty\n");
+		return;
+	}
+	else
+	{
+		printf ("\nThe status of the stack is\n");
+		for (i = s[0].top; i >= 0; i = i-1)
+		{
+			printf ("%d\n", s[0].stk[i]);
+		}
+	}
+	printf ("\n");
+}
+
+void main ()
+{
+	int choice;
+	int option;
+	struct stack s[1];
+
+
+  option = 1;
+	s[0].top = -1;
+
+	printf ("STACK OPERATION\n");
+	while (option)
+	{
+		printf ("------------------------------------------\n");
+		printf ("  	1	-->	PUSH	           \n");
+		printf ("  	2	-->	POP	           \n");
+		printf ("  	3	-->	DISPLAY	           \n");
+		printf ("  	4	-->	EXIT		   \n");
+		printf ("------------------------------------------\n");
+
+		printf ("Enter your choice\n");
+		scanf	("%d", &choice);
+		
+		if (choice == 1){
+		         push(s);
+ 		} else {if (choice == 2){
+		       pop(s);
+		} else {if (choice == 3){
+ 		       display(s);
+		} else{
+		       return;
+		}
+ 		}}
+
+/*
+		switch (choice)
+		{
+			case 1: push(s);
+				break;
+			case 2:	pop(s);
+				break;
+			case 3:	display(s);
+				break;
+			case 4:	return;
+		}
+*/
+		printf ("Do you want to continue(Type 0 or 1)?\n");
+		scanf	("%d", &option);
+	}
+}
+
