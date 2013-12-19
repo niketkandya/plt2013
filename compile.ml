@@ -329,10 +329,11 @@ let translate env fdecl=
       "lend" ^ string_of_int (
         count_label := !count_label + 1;
        !count_label) in
+        (gen_binres_type [Int]) @
         [Assgmt (res,Lit(if opvalue then 1 else 0))] @ v1 @ 
         [Predicate ((gl_atm v1), opvalue, endlbl)] @ v2 @
         [Predicate ((gl_atm v2), false, endlbl)] @
-        [Assgmt (res,Lit(if opvalue then 1 else 0))] @ [Label endlbl] @ 
+        [Assgmt (res,Lit(if opvalue then 0 else 1))] @ [Label endlbl] @ 
         gen_atom(res)
     in
 let rec expr ?(table = env.local_index) ?(strict=0) = function
