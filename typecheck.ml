@@ -386,7 +386,18 @@ in
 
 let stmtblock = (tc_stmt (Block fdecl.body)) in
 
-[Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
+let rec has_return stmt_lst = 
+  match stmt_lst with
+  | Return_t( _ )::tl -> true 
+  | _ ::tl -> has_return tl 
+  | [] -> false
+in
+
+if not(fdecl.ret = [Void]) && not(has_return stmtblock) then 
+  raise (Failure ("Function " ^ fdecl.fname ^ ", has return type " ^ 
+  (dbg_typ fdecl.ret) ^ " but no return statement found"))
+else
+  [Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
 in
 
 let env = { function_index = function_indexes;
