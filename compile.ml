@@ -6,6 +6,8 @@ open Printexc
 
 module StringMap = Map.Make(String)
 
+let err str = raise(Failure("Compile: "^ str));;
+
 let rec get_size_type sindex = function 
 |[] ->   raise Exit
 | hd::tl -> 
@@ -17,25 +19,25 @@ let rec get_size_type sindex = function
   | Arr(sz) -> (match sz with
         Literal(i) -> i
         | Id(id) -> get_size_type sindex [Ptr]
-        | _ -> raise(Failure("lit_to_num: unexpected"))) * (get_size_type sindex tl)
+        | _ -> err "lit_to_num: unexpected") * (get_size_type sindex tl)
   | Struct(sname) -> (StringMap.find sname sindex).size
-  | _ -> raise (Failure ("Requesting size of wrong type")));;
+  | _ -> err "Requesting size of wrong type");;
 
 let get_atom = function
       Atom (atm) -> atm
     | BinEval  (dst, var1, op, var2) -> dst
     | Fcall (fname, args,ret ) -> ret
     | Assgmt (dst, src) -> dst 
-    | Label (a)-> raise (Failure ("Unexpected: Label-> " ^ a))
-    | Predicate (_, _, _)-> raise (Failure ("Unexpected: Predicate"))
-    | Branch _-> raise (Failure ("Unexpected: Branch"))
-    | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
-    | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
-    | Str (_, _)-> raise (Failure ("Unexpected: Str"))
-    | BinRes(ty) -> raise (Failure ("Unexpected: BinRes " ^ 
-      dbg_str_of_typs (List.hd ty)))
-    |Rval _ -> raise (Failure ("Unexpected: Rval"))
-    | VarArr(_,_) -> raise (Failure ("Unexpected: VarArr"));;
+    | Label (a)-> err ("Unexpected: Label-> " ^ a)
+    | Predicate (_, _, _)-> err "Unexpected: Predicate"
+    | Branch _-> err "Unexpected: Branch"
+    | Mov (_, _)-> err "Unexpected: Mov"
+    | Ldr (_, _)-> err "Unexpected: Ldr"
+    | Str (_, _)-> err "Unexpected: Str"
+    | BinRes(ty) -> err ("Unexpected: BinRes " ^ 
+      dbg_str_of_typs (List.hd ty))
+    |Rval _ -> err "Unexpected: Rval"
+    | VarArr(_,_) -> err "Unexpected: VarArr";;
 
 let build_global_idx map = StringMap.empty;;
 let gl_atm a = get_atom(List.hd ( List.rev a));;
@@ -61,7 +63,6 @@ let rec modify_local_lst  = function
               | _ -> hd)
         |  _ -> hd ) :: (modify_local_lst tl));;
 
-let err str = raise(Failure(str))
 
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
@@ -165,11 +166,12 @@ let translate env fdecl=
     in
   let get_func_entry name = 
     try StringMap.find name env.function_index
-    with Not_found -> raise (Failure("Function not found : " ^ name)) 
+    with Not_found -> err ("Function not found : " ^ name) 
     in
   let get_type_varname table varname = 
     try (StringMap.find varname table).typ
-    with Not_found -> raise (Failure("Varname not found: "^varname))
+    with Not_found -> err ("Varname not found: "^varname^(string_of_int
+    (StringMap.cardinal table)))
     in
   let get_size_varname table varname =
     get_size_type env.struct_index (get_type_varname table varname)
@@ -181,7 +183,7 @@ let translate env fdecl=
         if strict = 0 then 
           Gvar(var,(get_size_varname table var)) 
         else raise Not_found
-      with Not_found -> raise (Failure(var ^": Not found"))
+      with Not_found -> err (var ^": Not found")
     in
   let get_ptrsize_type typlst =
     get_size_type env.struct_index (List.tl typlst)
@@ -192,7 +194,7 @@ let translate env fdecl=
   let get_binres_type e = 
     match List.hd e with
       BinRes(typ) -> typ
-    | _ -> raise (Failure("Unexpted type: Expected BinRes"))
+    | _ -> err "Unexpted type: Expected BinRes"
     in
   let gen_binres_type typ = 
     [BinRes(typ)]
@@ -211,15 +213,15 @@ let translate env fdecl=
     in
   let raise_error_atom a = 
     match a with
-      Lit (i) -> raise(Failure("Literal " ^ string_of_int i))
-    | Cchar(ch) -> raise(Failure("Const Char"))
-    | Sstr (s, l) -> raise(Failure("StringConst "^s))
-    | Lvar (o,s) -> raise(Failure(" Lvar"))
-    | Gvar (_,_) -> raise(Failure("Gvar"))
-    | Pntr (_,_) -> raise(Failure("Pntr"))
-    | Addr (_) -> raise(Failure("Addr"))
-    | Debug (_)  -> raise(Failure("Debug"))
-    | Neg (_) -> raise(Failure("Negative"))
+      Lit (i) -> err ("Literal " ^ string_of_int i)
+    | Cchar(ch) -> err "Const Char"
+    | Sstr (s, l) -> err ("StringConst "^s)
+    | Lvar (o,s) -> err " Lvar"
+    | Gvar (_,_) -> err "Gvar"
+    | Pntr (_,_) -> err "Pntr"
+    | Addr (_) -> err "Addr"
+    | Debug (_)  -> err "Debug"
+    | Neg (_) -> err "Negative"
     in
   let rec conv2_byt_lvar = function
       [] -> []
@@ -252,7 +254,7 @@ let translate env fdecl=
     in
   let get_struct_table stct =
     (try (StringMap.find stct env.struct_index).memb_index
-     with Not_found -> raise(Failure(" struct " ^ stct ^ " is not a type")))
+     with Not_found -> err (" struct " ^ stct ^ " is not a type"))
     in
   let gen_addr_lst v1 = v1 @
     gen_atom (Addr(gl_atm v1))
@@ -335,7 +337,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 let v1 = expr fexpr in
                 let tab = (match List.hd (get_binres_type v1) with
                   Struct(s) -> get_struct_table s
-                  | _ -> raise(Failure("Must be a struct"))) in
+                  | _ -> err "Must be a struct") in
                 let v2 = expr ~table:tab ~strict:1 e in
                 let offset = (match gl_atm v2 with
                    Lvar(o,s) -> List.rev(List.tl(List.rev v2)) @
@@ -346,13 +348,13 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                           (List.rev(List.tl(List.tl(List.rev v2)))) @
                           [BinEval(dst,(get_off_lvar op1),Add,op2)]
                           @ gen_atom dst
-                        | _ -> raise(Failure("Array was expected: MultiId"))
-                        )
-                   | _ -> raise(Failure("Unexpected type in MultiId"))) in
+                        | _ -> err "Array was expected: MultiId")
+                        
+                   | _ -> err "Unexpected type in MultiId") in
                 let baddr = (match gl_atm v1 with
                         Lvar(o,s) as l -> Addr(l)
                         | Pntr(b,s) -> b
-                        | _ -> raise(Failure("Unexpected type in MultiId"))) in
+                        | _ -> err "Unexpected type in MultiId") in
                         List.rev(List.tl(List.rev offset))
                         @ (add_base_offset ( List.hd (get_binres_type offset) 
                         ::(get_binres_type offset)) 
@@ -445,7 +447,7 @@ in
 (* Code executed to start the program *)
 let entry_function = try
   (StringMap.find "main" function_indexes); []
-  with Not_found -> raise (Failure ("no \"main\" function"))
+  with Not_found ->err ("no \"main\" function")
 in 
 (* Compile the functions *)
 List.concat (entry_function :: List.map (translate env) functions);;

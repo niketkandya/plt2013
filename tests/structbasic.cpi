@@ -7,7 +7,7 @@ struct a {
 
 int main() {
 	struct a b;
-
+    int arr[3];
     b.c = 1;
     b.arr[0] = 1;
     b.arr[1] = 2;
