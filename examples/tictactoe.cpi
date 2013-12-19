@@ -1,0 +1,151 @@
+int printboard(char board[]){
+    printf("|%c|%c|%c|\n", board[0],board[1],board[2]);
+    printf("-------\n");
+    printf("|%c|%c|%c|\n", board[3],board[4],board[5]);
+    printf("-------\n");
+    printf("|%c|%c|%c|\n", board[6],board[7],board[8]);
+    return 0;
+}
+
+int checkrow(char board[], int row){
+    int x1;
+    int x2;
+    x1 = row + 1;
+    x2 = row + 2;
+    if (board[row] == board[x1]){
+        if (board[x1] == board[x2]){
+            if (board[row] != ' '){
+                printf("Row win!\n");
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+
+int checkcol(char board[], int col){
+    int x1;
+    int x2;
+    x1 = col + 3;
+    x2 = col + 6;
+    if (board[col] == board[x1]){
+        if (board[x1] == board[x2]){
+            if (board[col] != ' '){
+                printf("Column win!\n");
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int checkboard(char board[]){
+    int result;
+    int j;
+    result = 0;
+
+    for (j = 0; j < 3; j = j + 1){
+        result = result + checkrow(board, 3*j) + checkcol(board, j);
+    }
+
+    // Check diags
+    if (board[0] != ' '){
+        if (board[0] == board[4]){
+            if (board[4] == board[8]){
+                result = 1;
+            }
+        }
+    }
+    if (board[2] != ' '){
+        if (board[2] == board[4]){
+            if (board[4] == board[6]){
+                result = 1;
+            }
+        }
+    }
+
+    return result;
+}
+
+char getchar(int p){
+    if (p == 1){
+        return 'O';
+    }
+    return 'X';
+}
+    
+
+int main()
+{
+	int player;
+	int winner;
+	int choice;
+    int valid;
+    int i;
+    int count;
+    char board[9];
+    char tempc;
+
+    board[0] = ' ';
+    board[1] = ' ';
+    board[2] = ' ';
+    board[3] = ' ';
+    board[4] = ' ';
+    board[5] = ' ';
+    board[6] = ' ';
+    board[7] = ' ';
+    board[8] = ' ';
+    board[9] = ' ';
+
+    printf("Player 1: 'O'\nPlayer 2: 'X'\n\n");
+    printf("Valid inputs are 0-9\n\n");
+
+    count = 0;
+    winner = 0;
+    player = 1;
+
+    while (winner == 0){
+        printboard(board);
+
+        valid = 0;
+        while(valid == 0){
+            printf("Player %d, enter your move: ", player);
+            printf("\n");
+
+            scanf("%d", &choice);
+
+            valid = 1;
+            if (choice < 0){ valid = 0; }
+            if (choice > 9){ valid = 0; }
+            if (valid == 1){ 
+                if (board[choice] != ' '){
+                    valid = 0;
+                }
+            }
+        }
+
+        tempc = getchar(player);
+        board[choice] = tempc;
+        if (checkboard(board) > 0){
+            printboard(board);
+            printf("Winner is Player %d!\n", player);
+            winner = player;
+        }
+
+        if (player == 1){
+            player = 2;
+        } else{
+            player = 1;
+        }
+
+        count = count + 1;
+        if (count >= 9){
+            if (winner == 0){
+                printf("No one wins!\n");
+                winner = -1;
+            }
+        }
+    }
+	return 0;
+}
