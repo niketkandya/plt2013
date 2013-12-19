@@ -1,0 +1,117 @@
+#include<stdio.h>
+#include<stdlib.h> 
+
+
+struct node
+{
+     struct node *previous;
+     int data;
+     struct node *next;
+}; 
+
+void insert_beginning(int value, struct node **head, struct node **last)
+{
+     struct node *var;
+     struct node *temp;
+     struct node *temp2;
+ 	 var=malloc(24);
+     var->data = value;
+     if(*head==0)
+     {
+	    printf("Adding to Empty List\n");
+         var->previous=0;
+         var->next=0;
+         *head = var;
+         *last = *head;
+     }
+     else
+     {
+ 	 printf("Adding to List\n");
+         temp = var;
+         temp->previous=0;
+         temp->next = *head;
+    	 (*head)->previous =  temp;
+         *head = temp;
+     }
+} 
+
+int delete_from_end(struct node **head, struct node **last)
+{
+      struct node *temp;
+      temp=*head;
+      if(temp==0)
+      {
+         printf("Cannot Delete: ");
+         return 0;
+      }
+
+      temp = *last;
+
+      if(temp->previous == 0)
+      {
+           printf("\nData deleted from list is %d \n",(*last)->data);
+           free(temp);
+           *head=0;
+           *last=0;
+           return 0;
+      }
+
+      printf("\nData deleted from list is %d \n",(*last)->data);
+      *last = temp->previous;
+      (*last)->next=0;
+      free(temp);
+      return 0;
+} 
+
+void display(struct node **head, struct node **last)
+{
+     struct node *temp;
+     temp=*head;
+     if(temp==0)
+      {
+         printf("List is Empty!");
+      }
+     while(temp!=0)
+     {
+          printf("-> %d ",temp->data);
+          temp=temp->next;
+     }
+} 
+
+int main()
+{
+    int value;
+    int i; 
+    int loc;
+    struct node *head;
+    struct node *last;
+
+    head = 0;
+
+    printf("Select the choice of operation on link list");
+    printf("\n1.) insert at beginning\n");
+    printf("2.) delete from end\n");
+    printf("3.) display list\n"); 
+    printf("4.) Exit\n"); 
+    while(1)
+    {
+        printf("\n\nenter the choice of operation you want to do ");
+        scanf("%d",&i);
+
+        if (i == 1){
+            printf("enter the value you want to insert in node ");
+            scanf("%d",&value);
+            insert_beginning(value, &head, &last);
+            display(&head, &last);
+        } else {if (i == 2){
+            delete_from_end(&head, &last);
+            display(&head, &last); 
+        } else {if (i == 3){
+            display(&head, &last);
+        } else {if (i == 4){
+            return 0;
+        } else {
+            return 0;
+        }}}}
+    }
+}
