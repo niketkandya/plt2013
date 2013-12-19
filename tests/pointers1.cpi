@@ -1,0 +1,10 @@
+int main() 
+{
+	int *p;
+	int a [5];
+	int i;
+	i = 0;
+	p = &a[0];
+	a[0] = 4;
+	return *p;
+}

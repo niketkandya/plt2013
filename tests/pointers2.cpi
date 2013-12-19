@@ -1,0 +1,14 @@
+int main() 
+{
+	int *p;
+	int a [5];
+	int i;
+	i = 0;
+	p = &a[0];
+	while( i < 5) {
+		*(p + i) = i;
+		i = i + 1;
+	}
+	return a[0]+a[1]+a[2]+a[3]+a[4];
+}
+
