@@ -1,15 +1,29 @@
+
 #include <stdio.h>
 
 void fun(int n) {
   int c;
   int a[n];
   char b[n];
-  int diff;
-  printf("c: %x\n",&c);
-  printf("a: %x\n",&a);
-  printf("b: %x\n",&a[0]);
+  c = 0;
+
+  while(c < n) {
+    a[c] = c;
+    b[c] = 'a' + c;
+    c = c+ 1;
+  }
+
+  c = 0;
+  while(c < n) {
+    printf("a[%d] = %d\t",c,a[c]);
+    printf("b[%d] = %c\n",c,b[c]);
+    c = c+ 1;
+  }
+
+
 }
 int main() {
-  fun(5);
+  fun(10);
 }
+
 
