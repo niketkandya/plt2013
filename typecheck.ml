@@ -225,6 +225,8 @@ let type_check_func env fdecl=
         | [Char], Arr(s)::tl, Add, _ -> ty2
         | [Int], Arr(s)::tl, Sub, _ -> ty2
         | [Char], Arr(s)::tl, Sub, _ -> ty2
+        | Ptr::t1, [Int], Equal, _ -> ty1 
+        | Ptr::t1, [Char], Equal, _ -> ty1 
         | Ptr::t1, Ptr::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
         | Arr(s1)::t1, Arr(s2)::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
         | _ , _ , _, _ -> [Err]

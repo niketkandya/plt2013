@@ -14,6 +14,7 @@ let use_stdout = ref false
 let create_binary = ref false
 let debug_bytecode = ref false
 let debug_sast = ref false
+let no_sast = ref false
 
 (* Command line args *)
 let speclist = 
@@ -25,6 +26,7 @@ let speclist =
         ("--binary", Arg.Set create_binary, 
         "Create binary executable (only if -o is set)" );
         ("-o", Arg.String (fun x -> out_file := x), "Set output file");
+        ("-tc", Arg.Set no_sast, "Turn off typechecking");
     ]
 
 
@@ -55,15 +57,21 @@ let sast in_channel =
 let program in_channel =
     let lexbuf = Lexing.from_channel in_channel in
     let ast = Parser.program Scanner.token lexbuf in
-    Typecheck.type_check_prog ast;(*comment this line to disable type
-    * checking*)
-    Compile.translate ast 
+      Compile.translate ast 
+
+let program_tc in_channel =
+    let lexbuf = Lexing.from_channel in_channel in
+    let ast = Parser.program Scanner.token lexbuf in
+      Typecheck.type_check_prog ast;
+      Compile.translate ast 
 
 
 (* Compiles from an input channel (stdin or source file) *)
 (* If --stdout flag set, then print to stdout. else, save to out_file *)
 let compile in_channel out_file =
-    let asm = (Execute.execute_prog (program in_channel) ) in
+    let asm = 
+      if !no_sast then (Execute.execute_prog (program in_channel) )
+      else  (Execute.execute_prog (program_tc in_channel) ) in
         if !use_stdout then print_string asm
         else 
             save (out_file ^ ".s") asm;
