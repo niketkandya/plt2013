@@ -142,7 +142,7 @@ let type_check_func env fdecl=
     | Binop_t(e1, o, e2, t) -> t
     | Assign_t(e1, e2, t) -> t
     | Call_t(s, e_l, t) -> t
-    | Noexpr_t -> [Err]
+    | Noexpr_t(t) -> t
     in
   let is_arr typ_lst = 
     match (List.hd typ_lst) with 
@@ -346,15 +346,21 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
         raise (Failure ("Wrong type " ^ (dbg_typ v1_type) 
             ^ " for unary minus")) 
       (* Negof_t(v1, [Err]) *)
-  | Noexpr -> Noexpr_t 
+  | Noexpr -> Noexpr_t ([Void])
     in
 let rec tc_stmt = function
     Block sl ->
     (List.fold_left (fun str lst -> str @ lst) [] (List.map tc_stmt sl) )
   | Expr e -> [Expr_t (tc_expr e)]
-  | Return e -> 
-    (* TODO check return parameters to make sure
-     * they match *)
+  | Return e ->
+    let v1 = tc_expr e in
+    let v1_type = get_type_lst_expr_t(v1) in 
+    let typ =  assign_result_type v1_type fdecl.ret in 
+    if typ = [Err] then 
+      raise (Failure ("Return type of function " ^ fdecl.fname ^
+      " " ^ (dbg_typ fdecl.ret) ^ " does not match return type " ^
+      (dbg_typ v1_type)))
+    else 
       [Return_t(tc_expr e)]
   | If (p, t, f) -> 
     let v1 = tc_expr p and v2 = tc_stmt t and v3 = tc_stmt f in

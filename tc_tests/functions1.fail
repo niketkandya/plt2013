@@ -1,12 +1,15 @@
-int f1(int a, int b, char c, char d[]){ 
+//this should throw an error
+// can't use the same var name twice
+int f1(int a, int b, char c, char *b){ 
 
   return (a + b + c + *d);
+ // return d; //this is an error
 }
 
 void f2(char *b, char bb[]){
   b = &b[2];
 
-  return; 
+  return; // this is an error
 }
 
 char f3(int b, char c ){
@@ -37,10 +40,13 @@ int main(){
   
 
   a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
   f2(b, bb);
   a = a + f3(*b, c);
 
 
-
-  return a;    //valid
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
 }
