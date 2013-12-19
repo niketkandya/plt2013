@@ -22,7 +22,7 @@ struct S {
     int b;
 };
 
-int main(){
+void main(){
   int a;
   char *b;
   char c;
@@ -37,10 +37,10 @@ int main(){
   
 
   a = f1(a, *b, c, b);
-  f2(b, bb);
   a = a + f3(*b, c);
 
 
 
-  return a;    //valid
+  return c;    //valid
+
 }

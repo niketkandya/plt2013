@@ -24,7 +24,10 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
   | hd:: tl ->
       offset := 0;
       build_local_idx ~rev:rev 
-      ( StringMap.add hd.vname
+    (if StringMap.mem hd.vname map then 
+      raise (Failure("Double declaration of " ^ hd.vname ))
+     else
+      StringMap.add hd.vname
         {
           offset = 0;
           typ = hd.vtype
@@ -139,7 +142,7 @@ let type_check_func env fdecl=
     | Binop_t(e1, o, e2, t) -> t
     | Assign_t(e1, e2, t) -> t
     | Call_t(s, e_l, t) -> t
-    | Noexpr_t -> [Err]
+    | Noexpr_t(t) -> t
     in
   let is_arr typ_lst = 
     match (List.hd typ_lst) with 
@@ -343,15 +346,21 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
         raise (Failure ("Wrong type " ^ (dbg_typ v1_type) 
             ^ " for unary minus")) 
       (* Negof_t(v1, [Err]) *)
-  | Noexpr -> Noexpr_t 
+  | Noexpr -> Noexpr_t ([Void])
     in
 let rec tc_stmt = function
     Block sl ->
     (List.fold_left (fun str lst -> str @ lst) [] (List.map tc_stmt sl) )
   | Expr e -> [Expr_t (tc_expr e)]
-  | Return e -> 
-    (* TODO check return parameters to make sure
-     * they match *)
+  | Return e ->
+    let v1 = tc_expr e in
+    let v1_type = get_type_lst_expr_t(v1) in 
+    let typ =  assign_result_type v1_type fdecl.ret in 
+    if typ = [Err] then 
+      raise (Failure ("Return type of function " ^ fdecl.fname ^
+      " " ^ (dbg_typ fdecl.ret) ^ " does not match return type " ^
+      (dbg_typ v1_type)))
+    else 
       [Return_t(tc_expr e)]
   | If (p, t, f) -> 
     let v1 = tc_expr p and v2 = tc_stmt t and v3 = tc_stmt f in
@@ -377,7 +386,19 @@ in
 
 let stmtblock = (tc_stmt (Block fdecl.body)) in
 
-[Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
+let rec has_return stmt_lst = 
+  match stmt_lst with
+  | Return_t( _ )::tl -> true 
+  | _ ::tl -> has_return tl 
+  | [] -> false
+in
+
+(* Check return stmt exists if return type was declared  *)
+(*if not(fdecl.ret = [Void]) && not(has_return stmtblock) then 
+  raise (Failure ("Function " ^ fdecl.fname ^ ", has return type " ^ 
+  (dbg_typ fdecl.ret) ^ " but no return statement found"))
+else *)
+  [Sast(fdecl.fname, (conv2_expr_t fdecl.formals), stmtblock) ] 
 in
 
 let env = { function_index = function_indexes;

@@ -1,6 +1,9 @@
-int f1(int a, int b, char c, char d[]){ 
+//this should throw an error
+// wrong args
+int f1(int a, int *b, char *c, char *d){ 
 
   return (a + b + c + *d);
+
 }
 
 void f2(char *b, char bb[]){
@@ -37,10 +40,13 @@ int main(){
   
 
   a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
   f2(b, bb);
   a = a + f3(*b, c);
 
 
-
-  return a;    //valid
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
 }

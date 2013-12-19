@@ -37,10 +37,12 @@ int main(){
   
 
   a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
   f2(b, bb);
   a = a + f3(*b, c);
 
 
 
-  return a;    //valid
+return b;    //return type is not the same
+
 }

@@ -36,11 +36,14 @@ int main(){
   c = 19;
   
 
-  a = f1(a, *b, c, b);
+ // a = f1(a, *b, c, b);
+  a = f2(b, bb);  //Error assigning void pointer to a;
   f2(b, bb);
   a = a + f3(*b, c);
 
 
-
-  return a;    //valid
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
 }
