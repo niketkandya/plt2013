@@ -134,20 +134,37 @@ let f2_index =
   StringMap.add "printf" 
   {
     param = [];
-    ret_ty = [Void]
+    ret_ty = [Int]
   }
   f_index
 in
 
-let function_indexes =
+let f3_index =
   StringMap.add "scanf" 
   {
     param = [];
-    ret_ty = [Void]
+    ret_ty = [Int]
   }
   f2_index
 in
 
+let f4_index =
+  StringMap.add "malloc" 
+  {
+    param = [];
+    ret_ty = [Int]
+  }
+  f3_index
+in
+
+let function_indexes =
+  StringMap.add "free" 
+  {
+    param = [];
+    ret_ty = [Int]
+  }
+  f4_index
+in
 (* Translate a function in AST form into a list of bytecode statements *)
 let translate env fdecl=
   let curr_offset = ref 0 in

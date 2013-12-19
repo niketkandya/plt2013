@@ -11,6 +11,7 @@ let dbg_str_of_typs typ = match typ with
                         | Ptr -> "Ptr" 
                         | Arr(sz) -> "Arr" 
                         | Struct(sname) -> "Struct " 
+                        | Any -> "Any"
                         | Err -> "Error"
 
 let dbg_typ ty = 

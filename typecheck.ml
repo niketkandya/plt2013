@@ -81,23 +81,40 @@ let f_index = List.fold_left
   StringMap.empty functions
 in
 
-(* Add the built-in-function printf, scanf to the function indexes *)
 let f2_index = 
   StringMap.add "printf" 
   {
     param = [];
-    ret_ty = [Void]
+    ret_ty = [Int]
   }
   f_index
 in
 
-let function_indexes =
+let f3_index =
   StringMap.add "scanf" 
+  {
+    param = [];
+    ret_ty = [Int]
+  }
+  f2_index
+in
+
+let f4_index =
+  StringMap.add "malloc" 
+  {
+    param = [];
+    ret_ty = [Any]
+  }
+  f3_index
+in
+
+let function_indexes =
+  StringMap.add "free" 
   {
     param = [];
     ret_ty = [Void]
   }
-  f2_index
+  f4_index
 in
 
 (* Translate a function in AST form into a list of bytecode statements *)
@@ -228,6 +245,7 @@ let type_check_func env fdecl=
        match ty1, ty2 with
         | [Int],  [Char] -> [Int]
         | [Char], [Int] -> [Char]
+        | typ , [Any] -> typ
         | _ , _  -> [Err]
     in
   let assign_result_type ty1 ty2 =
@@ -240,7 +258,7 @@ let type_check_func env fdecl=
     in
   let rec cmp_param_typ list1 list2 fname = 
     (* Since printf and scanf are externally declared ignore them *) 
-    if (fname = "printf" || fname = "scanf") then true 
+    if (fname = "printf" || fname = "scanf" || fname="malloc" || fname="free") then true 
     else
       match list1, list2 with
       | h1::t1, h2::t2 -> 

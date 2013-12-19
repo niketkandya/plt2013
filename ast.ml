@@ -25,7 +25,7 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
-type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string | Err 
+type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string | Any |Err 
 
 type var_decl = {
   vname: string;
