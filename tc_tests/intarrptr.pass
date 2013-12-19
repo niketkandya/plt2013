@@ -6,8 +6,8 @@ char main()
 {
 	int *a;
   int* b[4];
-  int *(bb[4]); //b and bb are the same; an array of int ptrs
-  int (*c)[4];  //c is a ptr to an array of ints
+// int *(bb[4]); //b and bb are the same; an array of int ptrs
+//  int (*c)[4];  //c is a ptr to an array of ints
 
   int cc[4];
 
@@ -16,7 +16,7 @@ char main()
 
   num = 7;
   p = &num;
-
+/*
 	b[0] = p;
 	b[1] = p;
 	b[2] = &num;
@@ -26,9 +26,9 @@ char main()
 	bb[2] = &num;
 	bb[3] = &num;
   c = &cc;
+*/
 
 
-
-  fun(b[3]);
-	return *b[3];
+//  fun(b[3]);
+//	return *b[3];
 }

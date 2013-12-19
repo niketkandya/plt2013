@@ -24,7 +24,10 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
   | hd:: tl ->
       offset := 0;
       build_local_idx ~rev:rev 
-      ( StringMap.add hd.vname
+    (if StringMap.mem hd.vname map then 
+      raise (Failure("Double declaration of " ^ hd.vname ))
+     else
+      StringMap.add hd.vname
         {
           offset = 0;
           typ = hd.vtype

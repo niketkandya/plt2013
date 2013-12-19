@@ -5,6 +5,6 @@ int main (){
   char c;
   char *d;
 
-  a = - &c - 1;
+  a = -(&c) - 1;
 
 }
