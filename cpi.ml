@@ -3,9 +3,7 @@ type action = Ast | Interpret | Bytecode | Compile
 
 let usage_msg = 
     "Cπ - Simplified C compiler for ARM V6\n" ^
-    "cpi FILE [-o OUTFILE]\n" ^
-    "-b print out bytecode \n" ^
-    "-sast print out sast for program \n"
+    "cpi FILE [-o OUTFILE]\n"
 
 (* Default argument values *)
 let out_file = ref "out"
@@ -19,14 +17,14 @@ let no_sast = ref false
 (* Command line args *)
 let speclist = 
     [
-        ("--stdin", Arg.Set use_stdin, "Read from stdin" );
-        ("--stdout", Arg.Set use_stdout, "Output to stdout" );
-        ("-b", Arg.Set debug_bytecode, "Print out bytecode" );
-        ("-sast", Arg.Set debug_sast, "Print out sast" );
+        ("--stdin", Arg.Set use_stdin, "\tRead from stdin" );
+        ("--stdout", Arg.Set use_stdout, "\tOutput to stdout" );
+        ("-b", Arg.Set debug_bytecode, "\t\tPrint out bytecode" );
+        ("-sast", Arg.Set debug_sast, "\tPrint out sast" );
         ("--binary", Arg.Set create_binary, 
-        "Create binary executable (only if -o is set)" );
-        ("-o", Arg.String (fun x -> out_file := x), "Set output file");
-        ("-tc", Arg.Set no_sast, "Turn off typechecking");
+        "\tCreate binary executable (only if -o is set)" );
+        ("-o", Arg.String (fun x -> out_file := x), "\t\tSet output file");
+        ("-tc", Arg.Set no_sast, "\t\tTurn off typechecking");
     ]
 
 
