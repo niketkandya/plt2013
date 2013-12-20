@@ -80,9 +80,6 @@ let dbg_str_bstmt bstm tabs = match bstm with
                     ^ p (tabs+1) ^ "Label |" ^ label 
                 | Branch(b)-> "Branch -> \n"  
                     ^ p (tabs+1) ^ b 
-                | Mov (_, _)-> raise (Failure ("Unexpected: Mov"))
-                | Ldr (_, _)-> raise (Failure ("Unexpected: Ldr"))
-                | Str (_, _)-> raise (Failure ("Unexpected: Str"))
                 | BinRes(ty) -> "BinRes: -> \n"  
                     ^ p (tabs+1) ^ (List.fold_left (fun s t -> s ^
                     (dbg_str_of_typs t)) "" ty) 

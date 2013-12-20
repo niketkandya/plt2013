@@ -170,9 +170,6 @@ let asm_code_gen = function
     Atom (atm) -> ""
   | BinEval  (dst, var1, op, var2) -> bin_eval dst var1 op var2
   | Assgmt (dst, src) -> (load_code "r0" src) ^ (store_code "r0" dst)
-  | Str (reg , atm ) ->  "Store"
-  | Ldr (reg ,atm ) ->  "Load"
-  | Mov (dst, src) ->  "Move"
   | Fcall (fname, args,ret) ->  function_call fname args ret  
   | Rval var -> (load_code "r0" var) ^ (branch exit_label)
   | Branch label -> branch label

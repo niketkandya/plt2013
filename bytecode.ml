@@ -18,9 +18,6 @@ type bstmt =
   | BinEval of atom * atom * Ast.op * atom (*Binary evaluation *)
   | BinRes of cpitypes list
   | Assgmt of atom * atom
-  | Str of atom * int (*Store (Lvar,value) *)
-  | Ldr of atom * int (*Load (Lvar,value) *)
-  | Mov of atom * atom
   | Fcall of string * atom list * atom 
   | Branch of string
   | Predicate of atom * bool * string (* (var_to_check, jump_on_what? , label)*)

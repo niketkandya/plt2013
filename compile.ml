@@ -31,9 +31,6 @@ let get_atom = function
     | Label (a)-> err ("Unexpected: Label-> " ^ a)
     | Predicate (_, _, _)-> err "Unexpected: Predicate"
     | Branch _-> err "Unexpected: Branch"
-    | Mov (_, _)-> err "Unexpected: Mov"
-    | Ldr (_, _)-> err "Unexpected: Ldr"
-    | Str (_, _)-> err "Unexpected: Str"
     | BinRes(ty) -> err ("Unexpected: BinRes " ^ 
       dbg_str_of_typs (List.hd ty))
     |Rval _ -> err "Unexpected: Rval"
@@ -42,6 +39,9 @@ let get_atom = function
 let build_global_idx map = StringMap.empty;;
 let gl_atm a = get_atom(List.hd ( List.rev a));;
 
+(* Calucates the offset for a variable type based on alignment rules
+ * i.e char does not require any alignment. All other current datatypes require
+ * alignment *)
 let calc_offset sidx offset typlst = 
   let align_size = 4 in
   let offset = offset + get_size_type sidx typlst in
@@ -49,12 +49,19 @@ let calc_offset sidx offset typlst =
       Char -> offset
     | _ ->  align_size * int_of_float(ceil ((float_of_int offset ) /.(float_of_int align_size)));;
 
+
+(* This is to change the type of a input array to Ptr type if its in the formal
+ * list. i.e for void foo(int a[]), a will be considered as a Pointer which will
+ * point to the array in the caller function *)
 let rec modify_formal_lst = function 
     [] -> []
     | hd :: tl -> ( (match List.hd (hd.vtype) with
         Arr(_)-> { hd with vtype = Ptr :: List.tl hd.vtype }
         |  _ -> hd ) :: (modify_formal_lst tl));;
 
+
+(* If its a local variable sized array declaration, then it should 
+ * considered as a Pointer type and memory allocated accordingly.*)
 let rec modify_local_lst  = function 
     [] -> []
     | hd :: tl -> ( (match List.hd (hd.vtype) with
@@ -80,14 +87,11 @@ let rec build_local_idx map sidx offset ?(rev =0) = (function
     )
     sidx offset tl);;
 
+
 (* Translate a program in AST form into a bytecode program.  Throw an
  *   exception if something is wrong, e.g., a reference to an unknown
  *   variable or function *)
 let translate prog =
-(*
-let getProg(a, b) = a in
-let prog = getProg(sast) in
-*)
 let structs = prog.sdecls 
   and globals = prog.gdecls
   and functions = prog.fdecls in
