@@ -10,6 +10,7 @@
 %token <string> STRING
 %token <string> ID
 %token <int> LITERAL
+%token NULL
 %token EOF
 
 %nonassoc NOELSE
@@ -153,6 +154,7 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
+  | NULL             { Null }
   | MINUS LITERAL    { Literal(-$2) }
   | PLUS LITERAL     { Literal($2) }
   | AMPERSAND lvalue { Addrof($2)  }

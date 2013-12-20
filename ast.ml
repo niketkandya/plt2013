@@ -15,6 +15,7 @@ type expr =
   | Binop of expr * op * expr
   | Assign of expr * expr
   | Call of string * expr list
+  | Null
   | Noexpr
 
 type stmt =
@@ -25,7 +26,7 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
 
-type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string | Any |Err 
+type cpitypes = Void | Int | Char | Ptr | Arr of expr | Struct of string | Err 
 
 type var_decl = {
   vname: string;

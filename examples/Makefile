@@ -9,7 +9,7 @@ tictactoe :
 	../cpi tictactoe.cpi -o tictactoe.out --binary
 
 ll:
-	../cpi linked_list.cpi -o linked_list.out --binary -tc
+	../cpi linked_list.cpi -o linked_list.out --binary 
 
 .PHONY : clean
 clean :

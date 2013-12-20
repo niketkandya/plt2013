@@ -37,6 +37,7 @@ rule token = parse
 | "int"    { INT }
 | "char"   { CHAR }
 | "struct" { STRUCT }
+| "NULL"   { NULL }
 | "void"   { VOID }
 | ''' [ ^'''] as ch ''' { CONSTCHAR(ch) }
 | '"' [^'"']* '"'  as lxm { STRING(lxm) }

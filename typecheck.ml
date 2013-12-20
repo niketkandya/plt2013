@@ -103,7 +103,7 @@ let f4_index =
   StringMap.add "malloc" 
   {
     param = [];
-    ret_ty = [Any]
+    ret_ty = [Ptr;Void]
   }
   f3_index
 in
@@ -160,6 +160,7 @@ let type_check_func env fdecl=
     | Assign_t(e1, e2, t) -> t
     | Call_t(s, e_l, t) -> t
     | Noexpr_t(t) -> t
+    | Null_t(t) -> t
     in
   let is_arr typ_lst = 
     match (List.hd typ_lst) with 
@@ -225,10 +226,14 @@ let type_check_func env fdecl=
         | [Char], Arr(s)::tl, Add, _ -> ty2
         | [Int], Arr(s)::tl, Sub, _ -> ty2
         | [Char], Arr(s)::tl, Sub, _ -> ty2
-        | Ptr::t1, [Int], Equal, _ -> ty1 
-        | Ptr::t1, [Char], Equal, _ -> ty1 
+(*        | Ptr::t1, [Int], Equal, _ -> ty1 
+        | Ptr::t1, [Char], Equal, _ -> ty1 *)
+        | Ptr::t1, [Ptr;Void], Equal, _ -> [Int]
+        | Ptr::t1, [Ptr;Void], Neq, _ -> [Int]
         | Ptr::t1, Ptr::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
+        | Ptr::t1, Ptr::t2, Neq, _ -> binop_result_type ~strict:true t1 op t2
         | Arr(s1)::t1, Arr(s2)::t2, Equal, _ -> binop_result_type ~strict:true t1 op t2
+        | Arr(s1)::t1, Arr(s2)::t2, Neq, _ -> binop_result_type ~strict:true t1 op t2
         | _ , _ , _, _ -> [Err]
     in
   let assign_expr_result_type lh ty1 rh ty2 =
@@ -247,7 +252,7 @@ let type_check_func env fdecl=
        match ty1, ty2 with
         | [Int],  [Char] -> [Int]
         | [Char], [Int] -> [Char]
-        | typ , [Any] -> typ
+        | Ptr::t1, [Ptr;Void] -> ty1 
         | _ , _  -> [Err]
     in
   let assign_result_type ty1 ty2 =
@@ -367,6 +372,7 @@ let rec tc_expr ?(table = env.local_index) ?(strict=0) = function
             ^ " for unary minus")) 
       (* Negof_t(v1, [Err]) *)
   | Noexpr -> Noexpr_t ([Void])
+  | Null -> Null_t ([Ptr;Void])
     in
 let rec tc_stmt = function
     Block sl ->

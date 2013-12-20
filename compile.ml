@@ -420,6 +420,7 @@ let rec expr ?(table = env.local_index) ?(strict=0) = function
                 gen_binres_type( (get_binres_type v1))
                 @ v1 @ gen_atom (Neg(gl_atm v1))
       | Noexpr ->[Atom(Lit(0))]
+      | Null ->  (gen_binres_type [Int]) @ gen_atom (Lit 0)
     in
 let rec stmt = function
   Block sl ->

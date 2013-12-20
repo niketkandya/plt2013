@@ -16,6 +16,7 @@ type expr_t =
   | Assign_t of expr_t * expr_t * cpitypes list
   | Call_t of string * expr_t list * cpitypes list
   | Noexpr_t of cpitypes list
+  | Null_t of cpitypes list
 
 type stmt_t =
     Block_t of stmt_t list

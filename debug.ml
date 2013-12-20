@@ -11,7 +11,6 @@ let dbg_str_of_typs typ = match typ with
                         | Ptr -> "Ptr" 
                         | Arr(sz) -> "Arr" 
                         | Struct(sname) -> "Struct " 
-                        | Any -> "Any"
                         | Err -> "Error"
 
 let dbg_typ ty = 
@@ -153,7 +152,9 @@ let rec dbg_str_sast_expr sast_expr tabs = match sast_expr with
     ^ (List.fold_left 
       (fun s e -> s ^(dbg_str_sast_expr e (1))) "" e_l) ^ ")\n" 
   | Noexpr_t(t) ->
-      p (tabs) ^ "No Expression" ^ "\n";; 
+      p (tabs) ^ "No Expression" ^ "\n" 
+  | Null_t(t) ->
+      p (tabs) ^(dbg_typ t) ^ "\n";; 
 (*
 let rec dbg_str_sast_expr sast_expr tabs = match sast_expr with
   | Literal_t(i, t) ->
