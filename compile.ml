@@ -17,9 +17,9 @@ let rec get_size_type sindex = function
   | Int
   | Ptr -> 4
   | Arr(sz) -> (match sz with
-        Literal(i) -> i
+        Literal(i) -> i * (get_size_type sindex tl)
         | Id(id) -> get_size_type sindex [Ptr]
-        | _ -> err "lit_to_num: unexpected") * (get_size_type sindex tl)
+        | _ -> err "lit_to_num: unexpected")
   | Struct(sname) -> (StringMap.find sname sindex).size
   | _ -> err "Requesting size of wrong type");;
 
@@ -63,7 +63,10 @@ let rec modify_local_lst  = function
               | _ -> hd)
         |  _ -> hd ) :: (modify_local_lst tl));;
 
-
+(* The optional parameter rev is to signify if the index should be build top
+ * down or bottom up based on if it is a struct index or local index.
+ * For struct_index, rev=1
+ *)
 let rec build_local_idx map sidx offset ?(rev =0) = (function
     [] -> map
   | hd:: tl ->
