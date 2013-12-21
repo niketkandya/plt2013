@@ -1,0 +1,1801 @@
+
+
+-----------------
+** assign1.fail **
+------------------
+int main()
+{
+    char a;
+    char *b;
+    
+    a = b;  //pointer to int assignment
+
+    return a + *b;
+}
+
+
+-----------------
+** assign2.fail **
+------------------
+int main()
+{
+    char a;
+    char b[10];
+    a = b;  //arr to int assignment
+    return a;
+}
+
+
+-----------------
+** assign3.fail **
+------------------
+int main()
+{
+    char *a;
+    int b[8];
+    b[3] = 5;
+    a = b;
+    return a;
+}
+
+
+-----------------
+** assign4.fail **
+------------------
+int main()
+{
+    int a;
+    int *b;
+    char c;
+    char *d;
+
+    c = *a;  //Should fail since a is not a pointer
+
+    return *a + c;
+}
+
+
+-----------------
+** assign5.fail **
+------------------
+int main(){
+    int hello_int;
+    char hello_int; //double declaration of hello_int
+    hello_int = -5;
+
+    return hello_int;
+}
+
+
+-----------------
+** assign6.fail **
+------------------
+int main()
+{
+    int a;
+    int *b;
+    char c;
+    int *d;
+
+    d = b;  
+    d = &b;  //Should fail since a is not a pointer
+
+    return *a + c;
+}
+
+
+-----------------
+** charptr1.fail **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+	a = 'c';
+	return b;
+}
+
+
+-----------------
+** charptr2.fail **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	a = &b;
+	b = 'a' * b; //valid
+	b = 'a' * *a; //valid
+	b = 'a' * a; //invalid: multipliying char by pointer
+	return *a;
+}
+
+
+-----------------
+** charptr3.fail **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+
+  b = &b + 12; //valid
+  b = *&b + 5; //valid
+
+	return *a;
+}
+
+
+-----------------
+** charptr4.fail **
+------------------
+int fun(char *b) {
+	*b = 'c' / b; //Error char and char point division
+}
+char main()
+{
+	char b;
+	b = 'a';
+	fun(&b);
+	return b;
+}
+
+
+-----------------
+** charptr5.fail **
+------------------
+char main()
+{
+  char *a;
+  char b;
+	&b = a; //this should error
+	return b;
+}
+
+
+-----------------
+** charptr6.fail **
+------------------
+
+int main()
+{
+	char *a;
+	char b;
+	char **c;
+  
+  &a = c + -2; //this is an error
+
+	return *a + b;
+}
+
+
+-----------------
+** charptr7.fail **
+------------------
+int main()
+{
+	char *a;
+	char b;
+	char *c;
+  
+  a = &b + 3;
+  c = &a - -2; //Error assigning **char to *char
+
+	return *a + b;
+}
+
+
+-----------------
+** func1.fail **
+------------------
+/*This test should return an error since fun is missing an argument*/
+
+
+int fun(int a , int b)
+{
+    return a + b;
+}
+
+int main()
+{
+    int a;
+    int b;
+    int c;
+    a = 10;
+    b = 14;
+    c = fun( a*4 );
+    return c;
+}
+
+
+
+-----------------
+** functions1.fail **
+------------------
+//this should throw an error
+// can't use the same var name twice
+int f1(int a, int b, char c, char *b){ 
+
+  return (a + b + c + *d);
+ // return d; //this is an error
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; // this is an error
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
+}
+
+
+-----------------
+** functions2.fail **
+------------------
+int f1(int a, int b, char c, char *d){ 
+
+
+   return d; //this is an error wrong ret type
+}
+
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+  a = a + f3(*b, c);
+
+
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
+}
+
+
+-----------------
+** functions3.fail **
+------------------
+//this should throw an error
+// wrong args
+int f1(int a, int *b, char *c, char *d){ 
+
+  return (a + b + c + *d);
+
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
+}
+
+
+-----------------
+** functions4.fail **
+------------------
+int f1(int a, int b, char c, char d[]){ 
+
+  return (a + b + c + *d);
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+ // a = f1(a, *b, c, b);
+  a = f2(b, bb);  //Error assigning void pointer to a;
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+//return void; //these should give errors
+//return b;    //return type is not the same
+  return c;    //valid
+//  return a;    //valid
+}
+
+
+-----------------
+** functions5.fail **
+------------------
+int f1(int a, int b, char c, char d[]){ 
+
+  return (a + b + c + *d);
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+void main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+  a = a + f3(*b, c);
+
+
+
+  return c;    //valid
+
+}
+
+
+-----------------
+** functions6.fail **
+------------------
+int f1(int a, int b, char c, char d[]){ 
+
+  return (a + b + c + *d);
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+//  a = f2(b, bb);  //Error assigning void pointer to a;
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+
+return b;    //return type is not the same
+
+}
+
+
+-----------------
+** functions7.fail **
+------------------
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+
+
+  //error no return
+}
+
+
+-----------------
+** if1.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+    if ( b < c) { //error compare pointers
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+
+    return a;
+
+}
+
+
+-----------------
+** if2.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+    if ( bb ) {  //Error pointer
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+ 
+    return a;
+
+}
+
+
+-----------------
+** if3.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+    if ( c ) {  //Error pointer
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+
+}
+
+
+-----------------
+** if4.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+    if ( s ) { //Error struct
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+  
+    return a;
+
+}
+
+
+-----------------
+** intarr1.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  a = &c[3] - 2; //error assigning char ptr to int ptr
+
+
+	return b[3];
+}
+
+
+-----------------
+** intarr2.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  b = a; //error assigning pointer to array address
+
+	return b[3];
+}
+
+
+-----------------
+** intarr3.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  c[2] = b[c] - 2;  //error index from ptr
+	return b[3];
+}
+
+
+-----------------
+** intarr4.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  b[3] = c[a] + 2;  //error index from ptr
+
+//  c = c + b[2]; //error
+//  b = b[1] + c; //error
+//  c = c[1] + b; //error
+//  b = b + c[2]; //error
+
+	return b[3];
+}
+
+
+-----------------
+** intarr5.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+
+  c = c + b[2]; //error
+  b = b[1] + c; //error
+
+	return b[3];
+}
+
+
+-----------------
+** intarr6.fail **
+------------------
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  c = c[1] + 1; //error
+  b = b + c[2]; //error
+
+	return b[3];
+}
+
+
+-----------------
+** intptr1.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+  c = &b; //warning assign int ptr to char ptr
+
+  //a = &5; //error
+  //a = *9; //error
+
+ // b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptr2.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+  a = &5; //error
+  //a = *9; //error
+
+ // b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptr3.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+  a = *9; //error
+
+ // b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptr4.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+   b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptr5.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+  b = a == 53; //warning
+ // b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptr6.fail **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+
+  b = a == c; //warning
+
+
+	return b;
+}
+
+
+-----------------
+** intptrmod1.fail **
+------------------
+void fun(int **b) {   //Error args dont match
+	**b = 50;   
+}
+int main()
+{
+	int b;
+    int *a;
+	b = 20;
+    a = &b; 
+	fun(&b);
+	return b * *a;
+}
+
+
+-----------------
+** intptrmod2.fail **
+------------------
+void fun(char *b) { //error arg should be int and not char
+	*b = 50;
+}
+int main()
+{
+	int b;
+    int *a;
+	b = 20;
+    a = &b; 
+	fun(&b);
+	return b * *a;
+}
+
+
+-----------------
+** neg1.fail **
+------------------
+int main (){
+
+  int *a;
+  int *b;
+  char *c;
+  char *d;
+
+  a = -b + 1;
+
+}
+
+
+-----------------
+** neg2.fail **
+------------------
+int main (){
+
+  int *a;
+  int *b;
+  char *c;
+  char *d;
+
+  c = -d + 1;
+
+}
+
+
+-----------------
+** neg3.fail **
+------------------
+int main (){
+
+  int *a;
+  int *b;
+  char c;
+  char *d;
+
+  a = -(&c) - 1;
+
+}
+
+
+-----------------
+** struct1.fail **
+------------------
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+	struct a x;
+    struct b y;
+    
+    x = y;  //assign struct to another struct
+
+    return 0;
+}
+
+
+-----------------
+** struct2.fail **
+------------------
+struct a {
+	int c;
+	int arr[3];
+};
+
+
+int main()
+{
+    int i;
+  	struct a x;
+
+    i = 0;
+    x.arr = i; // Assign array member of struct as int
+
+    return 0;
+}
+
+
+-----------------
+** struct3.fail **
+------------------
+struct a {
+	int c;
+};
+
+struct b {
+	int d;
+};
+
+int main()
+{
+	struct a x;
+    struct b y;
+
+    x = y; // Should still fail!
+
+    return 0;
+}
+
+
+-----------------
+** struct4.fail **
+------------------
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+    struct a *x;
+    struct b *y;
+
+    x = y;
+	return 0;
+}
+
+
+-----------------
+** struct5.fail **
+------------------
+struct a {
+	int c;
+	int b;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+  struct a *x;
+  struct a y;
+  int i;
+  int *j;
+  int k;
+
+  y.c = 10;
+  y.b = -12;
+  x = &y;
+
+  y->c = i; //error
+
+
+//  j = x.c; //error
+//  j = x.b; //error
+
+  k = x->c;
+  k = x->b;
+
+	return y.c + y.b;
+}
+
+
+-----------------
+** struct6.fail **
+------------------
+struct a {
+	int c;
+	int b;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+  struct a *x;
+  struct a y;
+  int i;
+  int *j;
+  int k;
+
+  y.c = 10;
+  y.b = -12;
+  x = &y;
+
+  j = x.c; //error
+
+  return y.c + y.b;
+}
+
+
+-----------------
+** while1.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+
+  while ( b < c) { //error compare pointers
+	    a = a + 1;
+	} 
+
+
+    return a;
+
+}
+
+
+-----------------
+** while2.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+    while ( bb ) {  //Error pointer
+	    a = a + 1;
+	} 
+    
+ 
+
+    return a;
+
+}
+
+
+-----------------
+** while3.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+   
+    while ( c ) {  //Error pointer
+	    a = a + 1;
+	}
+   
+
+
+    return a;
+
+}
+
+
+-----------------
+** while4.fail **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+
+   
+    while ( s ) { //Error struct
+	    a = a + 1;
+	} 
+
+
+    return a;
+
+}
+
+
+-----------------
+** charptr.pass **
+------------------
+int main()
+{
+	char *a;
+	char b;
+	char **c;
+	b = 'a';
+	a = &b;
+	*a = 'b';
+
+  a = a - 4;
+  a = &b + 3;
+  c = &a - -2;
+  *a = *a + b - 'b';
+
+	return *a + b;
+}
+
+
+-----------------
+** functions.pass **
+------------------
+int f1(int a, int b, char c, char d[]){ 
+
+  return (a + b + c + *d);
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+
+  return a;    //valid
+}
+
+
+-----------------
+** if.pass **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+   if (*b  > *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+
+    if ( a == *b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+
+    
+    if ( bb[2] ) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( a - *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    
+    if ( s.a ) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+
+}
+
+
+-----------------
+** intarr.pass **
+------------------
+void fun(int *b) {
+	*b = 50;
+}
+
+char main()
+{
+	int *a;
+	int b[4];
+	char c[4];
+	b[0] = 32;
+	b[1] = 16;
+	b[2] = 8;
+	b[3] = 20;
+  c[0] = 2;
+  c[1] = 3;
+  c[2] = 4;
+
+  a = b + 2;
+  a = b - 1;
+  *a = b[3] - 1;
+  a = &b[3] - 2; 
+  *a = c[3] - 1; 
+//  a = &c[3] - 2; //error
+//  b = a; //error
+
+  c[1] = b[c[2]] - 2; 
+//  c[2] = b[c] - 2;  //error
+  b[2] = c[*a] + 2; 
+//  b[3] = c[a] + 2;  //error
+
+  *a = c[1] + b[2];
+//  c = c + b[2]; //error
+//  b = b[1] + c; //error
+//  c = c[1] + b; //error
+//  b = b + c[2]; //error
+
+  fun(&b[3]);
+	return b[3];
+}
+
+
+-----------------
+** intarrptr.pass **
+------------------
+void fun(int *b) {
+	*b = 50;
+}
+
+char main()
+{
+	int *a;
+  int* b[4];
+// int *(bb[4]); //b and bb are the same; an array of int ptrs
+//  int (*c)[4];  //c is a ptr to an array of ints
+
+  int cc[4];
+
+  int *p;
+  int num;
+
+  num = 7;
+  p = &num;
+/*
+	b[0] = p;
+	b[1] = p;
+	b[2] = &num;
+	b[3] = &num;
+	bb[0] = p;
+	bb[1] = p;
+	bb[2] = &num;
+	bb[3] = &num;
+  c = &cc;
+*/
+
+
+  fun(b[3]);
+	return *b[3];
+}
+
+
+-----------------
+** intptr.pass **
+------------------
+int main()
+{
+	int *a;
+	int b;
+  int *bb;
+	char *c;
+	char d;
+
+	a = &b;
+	bb = &b;
+	*a = 5;
+  //c = &b; //warning assign int ptr to char ptr
+
+  //a = &5; //error
+  //a = *9; //error
+
+ // b = a > 9; //warning
+ // b = a == 53; //warning
+ // b = a == c; //warning
+  b = a == bb; // ok
+
+
+	return b;
+}
+
+
+-----------------
+** intptrmod.pass **
+------------------
+void fun(int *b) {
+	*b = 45;
+}
+char main()
+{
+	int b;
+	b = 20;
+	fun(&b);
+	return b;
+}
+
+
+-----------------
+** struct.pass **
+------------------
+struct a {
+	int c;
+	int b;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+  struct a *x;
+  struct a y;
+  int i;
+  int *j;
+  int k;
+
+  y.c = 10;
+  y.b = -12;
+  x = &y;
+
+//  y->c = i; //error
+//  y->b = k; //error
+
+//  j = x.c; //error
+//  j = x.b; //error
+
+  k = x->c;
+  k = k + x->b;
+
+  return y.c + y.b + k ;
+}
+
+
+-----------------
+** struct5.pass **
+------------------
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+    struct a *x;
+    struct a *y;
+
+    x = y;
+	return 0;
+}
+
+
+-----------------
+** struct6.pass **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    return s.b + sptr->a + -(sptr->b);
+}
+
+
+-----------------
+** struct7.pass **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    sptr->b = 50;
+
+    return s.b;
+}
+
+
+-----------------
+** while.pass **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{
+  struct S s;
+	int a;
+	int *b;
+  char *c;
+  int bb[4];
+	a = 7;
+	b = &a;
+ *c = 15;
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  s.a = 2;
+  s.b = 3;
+
+   while (*b  > *c) {
+	    a = a + 1;
+   }
+
+
+
+
+    while ( a == *b) {
+	    a = a + 1;
+	} 
+
+
+    
+    while ( bb[2] ) {
+	    a = a + 1;
+	} 
+    
+    while ( a - *c) {
+	    a = a + 1;
+	} 
+   
+
+    while ( s.a ) {
+	    a = a + 1;
+	} 
+
+    return a;
+
+}
