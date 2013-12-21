@@ -1,0 +1,2449 @@
+
+
+-----------------
+** arrayasargument.cpi **
+------------------
+#include <stdio.h>
+
+void fun(int a[]) {
+    printf("%d \n",a[3]);
+
+}
+
+int main() {
+    int b[5];
+    b[3] = 5;
+    fun(b);
+
+    return b[3];
+}
+
+
+
+-----------------
+** arrayvarsize.cpi **
+------------------
+
+#include <stdio.h>
+
+int fun(int n) {
+  int c;
+  int a[n];
+  char b[n];
+  int sum;
+  c = 0;
+
+
+  while(c < n) {
+    a[c] = c;
+    b[c] = 'a' + c;
+    c = c+ 1;
+  }
+
+  c = 0;
+  sum =0;
+  while(c < n) {
+    printf("a[%d] = %d\t",c,a[c]);
+    printf("b[%d] = %c\n",c,b[c]);
+    sum = sum + a[c];
+    c = c+ 1;
+  }
+  return sum;
+}
+
+
+int main() {
+  return fun(10);
+}
+
+
+
+
+-----------------
+** arrfunc.cpi **
+------------------
+int sumArr(int array[], int len)
+{
+    int i;
+    int sum;
+    i = 0;
+    sum = 0;
+
+    while (i < len){
+        sum = sum + array[i];
+        i = i + 1;
+    }
+
+    return sum;
+}
+
+int main()
+{
+    int arr[2];
+
+    arr[0] = 4;
+    arr[1] = 5;
+
+    return sumArr(arr, 2);
+}
+
+
+-----------------
+** arrvarindex.cpi **
+------------------
+int main()
+{
+	int a;
+	int b[5];
+	a = 4;
+	b[4] = 5;
+	return b[4];
+}
+
+
+-----------------
+** arrvarindex1.cpi **
+------------------
+int main()
+{
+	int i;
+	int a[10];
+	int sum;
+
+	sum =0;
+	i =0;
+
+	while(i < 10) {
+		a[i] = i;
+		sum = sum + a[i];
+		i = i + 1;
+	}
+	return sum;
+}
+
+
+
+-----------------
+** arrvarindex2.cpi **
+------------------
+int main()
+{
+	int i;
+	char array[2];
+	char sum;
+
+	sum = 0;
+	i = 0;
+    
+    array[i] = 2 * 8;
+    i = 1;
+    array[i] = 20 - 4;
+    
+    sum = array[1] + array[0];
+
+	return sum;
+}
+
+
+
+-----------------
+** assign1.cpi **
+------------------
+int main()
+{
+    char a;
+    char *b;
+    
+    a = 1;
+    *b = -5;
+
+    return a + *b;
+}
+
+
+-----------------
+** assign2.cpi **
+------------------
+int main()
+{
+    char a;
+    a = 5 + 7;
+    return a;
+}
+
+
+-----------------
+** assign3.cpi **
+------------------
+int main()
+{
+    char a;
+    int b;
+    b = 5;
+    a = 6 + b;
+    return a;
+}
+
+
+-----------------
+** assign4.cpi **
+------------------
+int main()
+{
+    int c;
+    int *a;
+    int *d;
+
+    *d = 4;
+    *a = 5;
+    c = 10;
+
+    a = d;
+
+    return *a + c;
+}
+
+
+-----------------
+** assign5.cpi **
+------------------
+int main(){
+    int hello_int;
+
+    hello_int = -5;
+
+    return hello_int;
+}
+
+
+-----------------
+** binsearch.cpi **
+------------------
+int binary_search(int array[], int start, int end, int element) {
+    int mid;
+    int temp;
+    
+    if (start > end){
+        return -1;
+    } else {
+        mid = ((start + end)/2);
+        temp = array[mid];
+        if (temp == element) {
+            return mid;
+        } else if (temp > element) {
+            return binary_search(array, start, mid - 1, element);
+        } else {
+            return binary_search(array, mid + 1, end, element);
+        }
+    }
+}
+
+int bin_search(int array[], int size, int element) 
+{
+    return binary_search(array, 0, size - 1, element);
+}
+
+int main() 
+{
+  int arr[10];
+  int size;
+  int target;
+  int result;
+  
+  arr[0] = 1;
+  arr[1] = 2;
+  arr[2] = 4;
+  arr[3] = 8;
+  arr[4] = 16;
+  arr[5] = 32;
+  arr[6] = 64;
+  arr[7] = 128;
+  arr[8] = 256;
+  arr[9] = 512;
+  size = 10;
+  target = 32;
+
+  // target = scan();
+  // result = bin_search();
+  // print(“Binary search of “, target, “in arr returns”, bin_search(arr,size,target));
+  // return 0;
+
+  return bin_search(arr, size, target);
+}
+
+
+-----------------
+** char1.cpi **
+------------------
+char fun(char b) {
+	return b;
+}
+int main()
+{
+	char a;
+	a = 'b';
+	a = fun(a +1 );
+	return a;
+}
+
+
+-----------------
+** char2.cpi **
+------------------
+int main()
+{
+	char a;
+	a = 'b' + 8;
+	return a;
+}
+
+
+-----------------
+** char3.cpi **
+------------------
+int main()
+{
+	char a;
+	a = 'b' + 'e';
+	return a;
+}
+
+
+-----------------
+** charptr.cpi **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+	*a = 'c';
+	return b;
+}
+
+
+-----------------
+** charptr2.cpi **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+	return *a;
+}
+
+
+-----------------
+** charptr3.cpi **
+------------------
+char main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+
+    b = b + 12;
+
+	return *a;
+}
+
+
+-----------------
+** charptr4.cpi **
+------------------
+int main()
+{
+	char *a;
+	char b;
+	b = 'a';
+	a = &b;
+	*a = 'b';
+
+    *a = *a + b - 'b';
+
+	return *a + b;
+}
+
+
+-----------------
+** charptrmod.cpi **
+------------------
+int fun(char *b) {
+	*b = 'c';
+}
+char main()
+{
+	char b;
+	b = 'a';
+	fun(&b);
+	return b;
+}
+
+
+-----------------
+** charr.cpi **
+------------------
+char fun(char *b) {
+	*b = 'a';
+}
+char main()
+{
+	char b[4];
+	b[3] = 'b';
+	fun(&b[3]);
+	return b[3];
+}
+
+
+-----------------
+** charr2.cpi **
+------------------
+char fun(char *b) {
+	*b = 'a' + *b;
+}
+char main()
+{
+	char b[4];
+    b[0] = 'u';
+    b[1] = 34 - 78;
+	b[3] = 'b';
+	fun(&b[2]);
+	return b[3] + b[1] * (b[2] + b[0]);
+}
+
+
+-----------------
+** commentblock.cpi **
+------------------
+/* block comment 
+ *
+ * fun
+ * fun
+ * not fun :(
+*/
+
+char fun(char b) {
+/*  return b + 1; */
+	return b;
+}
+/* T.T */int main()
+{
+	char a; /* :0  */
+	a = 'b';
+ /* a = 'c'; */
+	a = fun(a +1 );
+/* commenting some code */
+	return a;
+}
+
+
+-----------------
+** commentnested.cpi **
+------------------
+/* block comment */
+
+/*
+//char fun(char b) {
+//    return b + 1; 
+//	return b;
+//}
+*/
+int main()
+{
+	char a;
+	a = 'b';
+ ///* a = 'c'; 
+ //	a = fun(a +1 );
+ //*/
+	return a;
+}
+
+
+-----------------
+** commentslash.cpi **
+------------------
+//this is a comment
+
+char fun(char b) {
+    //this is a comment in a function
+	return b;
+}
+int main()
+{
+	char a; //more comments!
+	a = 'b';
+	a = fun(a +1 );
+    //comments galore!
+	return a;
+}
+
+
+-----------------
+** ctest1.cpi **
+------------------
+int fun(int a , int b)
+{
+	return a + b;
+}
+
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 9;
+	a = b + a + 5;
+	b= fun(a , b);
+	b = fun( a+b, a-b);
+	return b;
+}
+
+
+-----------------
+** ctest2.cpi **
+------------------
+int fun(int a , int b)
+{
+    return a + b;
+}
+
+int main()
+{
+    int a;
+    int b;
+    int c;
+    a = 10;
+    b = 14;
+    a = fun(b, a * 5);
+    b = fun(a , b);
+    c = fun( a+b, a-b);
+    return c;
+}
+
+
+
+-----------------
+** ctest3.cpi **
+------------------
+int foo(char a, int b, int c, char d)
+{
+	return a + b + c +d;
+}
+
+int bar(int *c, char *d)
+{
+	return *c + *d;
+}
+
+int main()
+{
+	int a;
+	int *b;
+	int c[5];
+	char aa;
+	char *ab;
+	char ac[5];
+
+    aa = 5;
+    *ab = aa;
+    aa = 5 + 7;
+
+    a = 8 - 94;
+    *b = 50;
+    c[0] = *b - 25; 
+    ac[0] = 4;
+
+    return foo( aa, *b, c[0], ac[0]) + bar(&c[0], &ac[0]); 
+}
+
+
+-----------------
+** div1.cpi **
+------------------
+int main()
+{
+    int a;
+    int b;
+    a = 39/3;
+    b = (38 + 38)/ 2;
+    return a + b;
+}
+
+
+-----------------
+** div2.cpi **
+------------------
+int recDivide( int a, int b)
+{
+    int c;
+    c = a/b;
+    if (c > 8){
+        return recDivide(c, b);
+    }else{
+        return c;
+    }
+}
+
+
+int main()
+{
+    int a;
+    int b;
+    a = 200;
+    b = 4;
+    return recDivide(a, b);
+}
+
+
+-----------------
+** elseif.cpi **
+------------------
+// We don't support if statements without braces, so normal elseif statements
+// won't work at the moment
+
+
+int main(){
+    int x;
+
+    x = 10;
+
+    if (x == 5){
+        return 0;
+    } else {if (x == 8){
+        return 1;
+    } else {if (x == 10){
+        return 2;
+    } else{
+        return 3;
+    }
+    }}
+}
+
+
+-----------------
+** expr1.cpi **
+------------------
+char main()
+{
+    char a;
+    char b;
+    char c;
+    
+    a = 5;
+    b = 5 * 6;
+    c = 2;
+
+    a = ((a + b) - (c - c));
+    b = ((b * 9) + 9 * 6) - 2;
+
+    return a + b + c;
+}
+
+
+
+-----------------
+** expr2.cpi **
+------------------
+char main()
+{
+    int a;
+    int b;
+    int c;
+    
+    a = 14 - 19;
+    b = 0;
+    c = -9;
+
+    a = c + 10;
+    b = 49 * 6 - 24 + 39 *a;
+    c = -59 - -69;
+
+    return (a + b + b);
+}
+
+
+-----------------
+** expr3.cpi **
+------------------
+int main()
+{
+    int number;
+    int num2;
+    int num_3;
+
+    number = 6 - 9;
+    num2 = 7 - 9;
+    num_3 = number - num2;
+
+    return num_3 * num2;
+}
+
+
+-----------------
+** expr4.cpi **
+------------------
+
+int main()
+{
+    int *a;
+    int b;
+    int *c;
+    int d;
+    int result1;
+    int result2;
+
+    *a = 74;
+    b = 25 - 100;
+    *c = 50 / 3;
+    d = 48 * 2;
+
+    result1 = (*a + b) / (*c/3) + 39 * 38/2;
+    result2 = *a / *c / 2;
+
+    return result1 * result2;
+}
+
+
+-----------------
+** expr5.cpi **
+------------------
+int main()
+{
+    int *a;
+    int b;
+    int *c;
+    int d;
+    int result1;
+    int result2;
+
+    *a = 4 - 90;
+    b = 10 - 50;
+    c = &b;
+    d = 40;
+
+    
+    result1 = *c * *a / (2 + 8 - *a);
+    b = 3;
+    result2 = *a / *c + 32;  
+
+    return result1 - result2;
+}
+
+
+-----------------
+** for.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+	b = 0;
+    for (a = 0; a < 5; a = a + 1){
+		b = b + a;
+    }
+	return b;
+}
+
+
+
+-----------------
+** for2.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+	b = 0;
+    for (a = 0; a < 5; a = a + 1){
+		//b = b + a;
+    }
+	return b;
+}
+
+
+
+-----------------
+** functions.cpi **
+------------------
+int f1(int a, int b, char c, char d[]){ 
+
+  return (a + b + c + *d);
+}
+
+void f2(char *b, char bb[]){
+  b = &b[2];
+
+  return; 
+}
+
+char f3(int b, char c ){
+ return b+c;
+}
+/*
+int* f4(){
+
+}
+*/
+struct S {
+    int a;
+    int b;
+};
+
+int main(){
+  int a;
+  char *b;
+  char c;
+  char bb[4];
+  bb[0] = 0;
+  bb[1] = 1;
+  bb[2] = 2;
+  bb[3] = 3;
+  a = 8;
+  b = &c;
+  c = 19;
+  
+
+  a = f1(a, *b, c, b);
+  f2(b, bb);
+  a = a + f3(*b, c);
+
+
+
+  return a;    //valid
+}
+
+
+-----------------
+** gcd.cpi **
+------------------
+int gcd(int a, int b)
+{
+    while (a != b) {
+        if (a > b){
+          a = a - b;
+        }else{
+          b = b - a;
+        }
+    }
+    return a;
+}
+
+int main()
+{
+    int res1;
+    int res2;
+    int res3;
+    int res4;
+
+    res1 = gcd(4,5);
+    res2 = gcd(38,55482);
+    res3 = gcd(68,645284);
+    res4 = gcd(48, 8);
+
+    return res1 + res2 + res3 + res4;
+}
+
+
+-----------------
+** if.cpi **
+------------------
+int fun(int a , int b)
+{
+	return a + b;
+}
+
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 9;
+	if ( a + b > a - b) {
+	    return b;
+	} else {
+		return a;
+	}
+}
+
+
+-----------------
+** if2.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+    int *c;
+	a = 7;
+	b = 10;
+    *c = 15;
+
+    if (b  > *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( b < *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( *c == b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( *c <= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c >= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c <= b) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( b < *c) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( *c == (b+5)) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( (*c - 4) >  ( b+ 7 )) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+
+}
+
+
+-----------------
+** if3.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+    int *c;
+	a = 7;
+	b = 10;
+    *c = 15;
+
+    if (b + *c  >  b * *c -1 ) {
+	    return 0; 
+    } else {
+	    return 1;
+	}
+}
+
+
+
+-----------------
+** if4.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+    int *c;
+	a = 7;
+	b = 10;
+    *c = 15;
+
+    if (b + *c  >  b * *c -1 ) {
+	    a = a + 2; 
+    } else {
+	    a = a + 1;
+	}
+
+    return a;
+}
+
+
+
+-----------------
+** if5.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( 1 > 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 < 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 == 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 >= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 < 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 == 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 > 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+}
+
+
+-----------------
+** if6.cpi **
+------------------
+int second_if (){
+    int i;
+    int a;
+    int b;
+
+    i = 1;
+    a = 2234146;
+    b = 5678234;
+
+    if ( i < 1){
+        return a;
+    }else{
+        return b;
+    }
+}
+
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( 1 > 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 < 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 == 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 >= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 <= 1) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 < 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 == 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+    
+    if ( 1 > 2) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a + second_if();
+}
+
+
+-----------------
+** if_conditionals.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( a > 1 && a == 7 ) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( a < 0 ||  b < 10) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( a > 0 && (a + b) < 20 && (b - 1000) < 0) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+}
+
+
+-----------------
+** if_conditionals2.cpi **
+------------------
+int main()
+{
+	int a;
+	int b;
+	a = 7;
+	b = 10;
+
+    if ( (a < 1 && a == 7) || ((a + 10) > 5 ) ) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( a < 0 ||  b < 10) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    if ( a > 0 && (a + b) < 20 && (b - 1000) < 0) {
+	    a = a + 1;
+	} else {
+		a = a + 2;
+	}
+
+    return a;
+}
+
+
+-----------------
+** inner.cpi **
+------------------
+int main ( ){
+    int v1 [5];
+    int v2 [5];
+    int sum ;
+    int i ;
+ 
+    sum = 0 ;
+    i = 0;
+
+    v1[0] = 23;
+    v1[1] = 79;
+    v1[2] = 83;
+    v1[3] = 67;
+    v1[4] = 53;
+
+    v2[0] = 56;
+    v2[1] = 71;
+    v2[2] = 84;
+    v2[3] = 76;
+    v2[4] = 74;
+
+    while (i<5){
+        sum = sum + (v1 [ i ] * v2 [ i ]);
+        i= i + 1;
+    }
+
+    return  sum;
+}
+
+
+
+-----------------
+** inner2.cpi **
+------------------
+int main ( ){
+   int v1 [5];
+   int v2 [5];
+   int sum;
+   int n;
+   int *vector1;
+   int *vector2;
+ 
+   sum = 0;
+   n = 5;
+
+   v1[0] = 23;
+   v1[1] = 79;
+   v1[2] = 83;
+   v1[3] = 67;
+   v1[4] = 53;
+
+   v2[0] = 56;
+   v2[1] = 71;
+   v2[2] = 84;
+   v2[3] = 76;
+   v2[4] = 74;
+
+   vector1 = &v1[0];
+   vector2 = &v2[0];
+
+   while ( n > 0 ){
+        sum = sum + (*vector1 * *vector2);
+        vector1 = vector1 + 1;
+        vector2 = vector2 + 1;
+        n = n - 1;
+   }
+   return  sum;
+}
+
+
+
+-----------------
+** intarr.cpi **
+------------------
+void fun(int *b) {
+	*b = 50;
+}
+char main()
+{
+	int b[4];
+	b[3] = 30;
+	fun(&b[3]);
+	return b[3];
+}
+
+
+-----------------
+** intarr1.cpi **
+------------------
+int main()
+{
+
+    int b[5];
+    int i;
+    i = 0; 
+    b[i] = 0;
+    i = i + 1;
+    b[i] = i*3;
+    i = i + 1;
+    b[i] = i+2;
+    i = i + 1;
+    b[i] = i*i;
+    i = i + 1;
+    b[i] = 2 - 45;
+
+
+    b[0] = b[1] + b[2] + b[3] + b[4];
+
+    return b[0];
+}
+
+
+-----------------
+** intarr2.cpi **
+------------------
+char main()
+{
+
+    int hello[5];
+    hello[0] = 1 - 395;
+    hello[1] = 19 * 47;
+    hello[2] = 2 + 5;
+    hello[3] = hello[1] * hello[2];
+    hello[4] = hello[3] - hello[2];
+
+
+    hello[0] = hello[1] * (hello[3] -  hello[3]) + hello[4] + hello[2];
+
+    return hello[0] + hello[3];
+}
+
+
+-----------------
+** intarrptr.cpi **
+------------------
+void fun(int *b) {
+	*b = 50;
+}
+
+char main()
+{
+	int *a;
+  int* b[4];
+// int *(bb[4]); //b and bb are the same; an array of int ptrs
+//  int (*c)[4];  //c is a ptr to an array of ints
+
+  int cc[4];
+
+  int *p;
+  int num;
+
+  num = 7;
+  p = &num;
+/*
+	b[0] = p;
+	b[1] = p;
+	b[2] = &num;
+	b[3] = &num;
+	bb[0] = p;
+	bb[1] = p;
+	bb[2] = &num;
+	bb[3] = &num;
+  c = &cc;
+*/
+
+
+  fun(b[3]);
+	return *b[3];
+}
+
+
+-----------------
+** intptr.cpi **
+------------------
+int fun(int b) {
+	return b;
+}
+int main()
+{
+	int *a;
+	int b;
+	a = &b;
+	*a = 5;
+	return b;
+}
+
+
+-----------------
+** intptrmod.cpi **
+------------------
+void fun(int *b) {
+	*b = 45;
+}
+char main()
+{
+	int b;
+	b = 20;
+	fun(&b);
+	return b;
+}
+
+
+-----------------
+** intptrmod2.cpi **
+------------------
+void fun(int *b) {
+	*b = 50;
+}
+int main()
+{
+	int b;
+    int *a;
+	b = 20;
+    a = &b; 
+	fun(&b);
+	return b * *a;
+}
+
+
+-----------------
+** linearsearch_negative.cpi **
+------------------
+int main(){
+	int i;
+	int a[10];
+	int se;
+	i = 1;
+	se = 40; 
+	a[0] = 4;
+	while(i > 10) {
+		a[i] = i + a[i -1];
+	}
+	i =0;
+	while( i < 10 ) {
+		if ( se != a[i]) {
+			return i;
+		}
+		i = i+ 1;
+	}
+	return 100;/*
+	if(i < 9 ){
+		return 1;
+	} else {
+		if( i == 9) {
+			if( a[9] == se) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	}*/
+}
+
+	
+	
+
+
+-----------------
+** linearsearch_positive.cpi **
+------------------
+#include <stdio.h>
+
+int main(){
+	int i;
+	int a[10];
+	int se;
+	i = 1;
+	se = 10; 
+	a[0] = 4;
+	while(i < 10) {
+		a[i] = i + a[i -1];
+		i = i+1;
+        printf("i = %d, a[i]= %d\n", i, a[i]); 
+	}
+	i =0;
+	while( i < 10 ) {
+		if ( se == a[i]) {
+            printf("i = %d, a[i]= %d\n", i, a[i]); 
+			return i;
+		}
+		i = i+ 1;
+	}
+	return 100;}
+
+
+-----------------
+** logical_and.cpi **
+------------------
+#include <stdio.h>
+
+int main(){
+  int a;
+  int b;
+  a = 5;
+  b = 0;
+  if(a && b) {
+    printf("True");
+  }
+    else 
+    {
+      printf("False");
+    }
+    return (a && b);
+  }
+
+
+-----------------
+** logical_and2.cpi **
+------------------
+#include <stdio.h>
+
+int main(){
+    int a;
+    int b;
+    
+    a = 5;
+    b = 10;
+
+    if (a > 3 && b < 11 ){
+        printf("yes");
+    }
+    return 0;
+}
+
+
+-----------------
+** logical_or.cpi **
+------------------
+#include <stdio.h>
+
+int main(){
+  int a;
+  int b;
+  a = 5;
+  b = 0;
+  if(a || b) {
+    printf("True");
+  }
+    else 
+    {
+      printf("False");
+    }
+    return (a || b);
+  }
+
+
+-----------------
+** malloc.cpi **
+------------------
+ #include <stdlib.h>
+ #include <stdio.h>
+ 
+int main(){
+
+    int *a;
+    int b;
+
+    a = malloc(4);
+
+    *a = 5;
+
+    printf( "a = %d", *a);
+
+    free(a);
+
+    return 0;
+
+}
+
+
+
+-----------------
+** multirecursion.cpi **
+------------------
+int fib(int n) {
+	if(n == 0){
+		return 4;
+	}
+	if(n == 1){
+		return 8;
+	}
+	else {
+		return fib(n-1) + fib(n-2);
+	}
+}
+
+int main() {
+	int a;
+	a = fib(3);
+	a = a + a;
+	return a;
+}
+
+
+
+
+-----------------
+** neg.cpi **
+------------------
+int main ()
+{
+  int a;
+  int b;
+
+  a = 1;
+  b = -a;
+
+  return a + b;
+}
+
+
+-----------------
+** neg1.cpi **
+------------------
+int main ()
+{
+  int *a;
+  int b;
+  int c;
+  int d;
+
+  *a = 59;
+  b = -*a + 26;
+  c = -38;
+  d = -1;   
+
+  return (*a + b * c) * d;
+}
+
+
+-----------------
+** neg2.cpi **
+------------------
+#include <stdio.h>
+
+int main ()
+{
+    int a[2];
+    int b[3];
+    int *c;
+
+    a[1] = 8;
+    printf("a[1]= %d\n", a[1]); 
+    a[0] = -4;
+    printf("a[0]= %d\n", a[0]); 
+    b[0] = -a[1] + -2;
+    printf("b[0]= %d\n", b[0]); 
+    printf("a[1]= %d\n", a[1]); 
+    c = &a[0];
+
+    printf("a[1]=%d + b[0]=%d +", a[1], b[0]);
+    printf(" -*c=%d + -a[1]=%d\n", -*c , -a[1]);
+    printf("*c=%d\n", *c );
+   return a[1] + b[0] + -*c + -a[1];
+}
+
+
+-----------------
+** pointers1.cpi **
+------------------
+int main() 
+{
+	int *p;
+	int a [5];
+	int i;
+	i = 0;
+	p = &a[0];
+	a[0] = 4;
+	return *p;
+}
+
+
+-----------------
+** pointers2.cpi **
+------------------
+int main() 
+{
+	int *p;
+	int a [5];
+	int i;
+	i = 0;
+	p = &a[0];
+	while( i < 5) {
+		*(p + i) = i;
+		i = i + 1;
+	}
+	return a[0]+a[1]+a[2]+a[3]+a[4];
+}
+
+
+
+-----------------
+** pointers3.cpi **
+------------------
+int main() 
+{
+	int *p;
+	int a [5];
+	int i;
+	i = 0;
+	p = a;
+	while( i < 5) {
+		*(i + a) = i;
+		i = i + 1;
+	}
+	return a[0]+a[1]+a[2]+a[3]+a[4];
+}
+
+
+
+-----------------
+** print2.cpi **
+------------------
+#include <stdio.h>
+
+int main (){
+    printf("hello world %d, %c, %x\n", 77, 37, 15);
+    printf("yo ha\n");
+    printf("yo ha\n");
+
+    return 0;
+}
+
+
+-----------------
+** print3.cpi **
+------------------
+#include <stdio.h>
+
+int more_printing(){
+    printf("wowsa");
+    return 0;
+}
+
+int main (){
+    int ret;
+
+    printf("hello world %d, %c, %x", 77, 37, 15435);
+    printf("yo ha");
+    printf("yo ha");
+    ret = more_printing();
+
+    return ret;
+}
+
+
+-----------------
+** recursionAddition.cpi **
+------------------
+int fun(int a) {
+	if(a > 0){
+	return (a + fun( a -1));
+	}
+	else {
+	return 0;
+	}
+}
+int main() {
+	return fun(3);
+}
+
+
+-----------------
+** selectionsort.cpi **
+------------------
+void SelectionSort(int a[], int array_size)
+{
+     int i;
+     int j;
+     int min;
+     int temp;
+     for (i = 0; i < array_size - 1; i = i + 1)
+     {
+          min = i;
+          for (j = i+1; j < array_size; j = j + 1)
+          {
+               if (a[j] < a[min])
+                    min = j;
+          }
+
+          temp = a[i];
+          a[i] = a[min];
+          a[min] = temp;
+     }
+}
+
+int main(){
+    int arr[5];
+    arr[0] = 10;
+    arr[1] = 5;
+    arr[2] = 20;
+    arr[3] = 1;
+    arr[4] = 21;
+
+    SelectionSort(arr, 5);
+    return arr[0];
+}
+
+
+-----------------
+** struct1.cpi **
+------------------
+struct S {
+    int a;
+    int b;
+};
+
+int main()
+{
+    struct S s;
+    s.a = 10;
+    s.b = 2;
+    return s.a + s.b;
+}
+
+
+
+
+-----------------
+** struct2.cpi **
+------------------
+struct S {
+    int a;
+    int *b;
+};
+
+int main()
+{
+    struct S s;
+    int x;
+    x = 10;
+
+    s.b = &x;
+
+
+    return *(s.b);
+}
+
+
+
+
+-----------------
+** structarray.cpi **
+------------------
+#include <stdio.h>
+
+struct stack            /* Structure definition for stack */
+{
+	int top;
+	int stk[5];
+};
+
+
+
+int main ()
+{
+	int choice;
+	int option;
+  
+	struct stack s[2];
+    
+    s[0].top = 1;
+	printf(" s[0].top = %d", s[0].top);
+
+
+	s[1].top = 2;
+    printf(" s[1].top = %d", s[1].top); 
+/*  
+	s[0].top = -1;
+	s[0].stk[0]= 0;
+	s[0].stk[1]= 1;
+	s[0].stk[2]= 2;
+	
+  printf(" s[0].top = %d, s[0].stk[0]= %d, s[0].stk[1]= %d", 
+    s[0].top, s[0].stk[0], s[0].stk[1]);
+
+
+	s[1].top = -1;
+	s[1].stk[0]= 0;
+	s[1].stk[1]= 1;
+	s[1].stk[2]= 2;
+  printf(" s[1].top = %d, s[1].stk[0]= %d, s[1].stk[1]= %d", 
+    s[1].top, s[1].stk[0], s[1].stk[1]);
+*/
+    return 0;
+}
+
+
+-----------------
+** structbasic.cpi **
+------------------
+struct a {
+	int c;
+	int arr[3];
+	char carr[3];
+};
+
+
+int main() {
+	struct a b;
+    int arr[3];
+    b.c = 1;
+    b.arr[0] = 1;
+    b.arr[1] = 2;
+    b.arr[2] = 3;
+
+    return (b.arr[0] + b.arr[2] - b.c);
+}
+
+
+-----------------
+** structfunc.cpi **
+------------------
+#include <stdio.h>
+
+struct stack            /* Structure definition for stack */
+{
+	int stk[5];
+	int top;
+};
+
+
+void push1 (struct stack s[])
+{
+	int num;
+	if (s[0].top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		s[0].top = s[0].top + 1;
+		printf ("Increased stack now = %d\n", s[0].top);
+	}
+	return;
+}
+
+void push2 (struct stack s[])
+{
+	int num;
+	if (s[1].top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		s[1].top = s[1].top + 1;
+		printf ("Increased stack now = %d\n", s[1].top);
+	}
+	return;
+}
+
+/*Function to delete an element from the stack*/
+
+int main ()
+{
+	int choice;
+	int option;
+	struct stack s[2];
+  
+  s[0].top = 0;
+  s[1].top = 0;
+
+  printf(" s[0].top = %d", s[0].top);
+  printf(" s[1].top = %d", s[1].top);
+  
+  push1(s);	
+  push2(s);	
+	
+  printf(" s[0].top = %d", s[0].top);
+  printf(" s[1].top = %d", s[1].top);
+
+  return 0;
+}
+
+
+-----------------
+** structfunc2.cpi **
+------------------
+#include <stdio.h>
+#include <stdlib.h>
+
+struct stack            /* Structure definition for stack */
+{
+	int stk[5];
+	int top;
+};
+
+
+void push1 (struct stack *s)
+{
+	int num;
+	if (s->top == (5 - 1))
+	{
+		printf ("Stack is Full\n");
+		return;
+	}
+	else
+	{
+		printf ("Increasing Stack\n");
+		s->top = s->top + 1;
+	}
+	return;
+}
+
+
+/*Function to delete an element from the stack*/
+
+int main ()
+{
+	int choice;
+	int option;
+	struct stack *s1;
+ 
+    s1 = malloc(4);
+    s1->top = 0;
+
+    printf(" s1->top = %d, size = %d", s1->top, 4);
+  
+    push1(s1);	
+    push1(s1);	
+    push1(s1);	
+    push1(s1);	
+    push1(s1);	
+    push1(s1);	
+	
+    printf(" s1->top = %d", s1->top);
+    free(s1);
+    return 0;
+}
+
+
+-----------------
+** structptr.cpi **
+------------------
+struct S {
+    int *a;
+    int *b;
+};
+
+int main()
+{
+    struct S s;
+    int c;
+    int d;
+    s.a = &c;
+    s.b = &d;
+    c = 1;
+    d = 2;
+    return *(s.a) + *(s.b);
+}
+
+
+
+-----------------
+** structptr1.cpi **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    return s.a + sptr->b;
+}
+
+
+-----------------
+** structptr2.cpi **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    return s.a + (*sptr).b;
+}
+
+
+-----------------
+** structptr3.cpi **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    return s.a + sptr->b;
+}
+
+
+-----------------
+** structptr4.cpi **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+    sptr->b = 50;
+
+    return s.b;
+}
+
+
+-----------------
+** structptrarg1.cpi **
+------------------
+struct S {
+        int a;
+        int b;
+};
+
+void f(struct S *t)
+{
+        t->b=2;
+}
+
+int main()
+{
+        struct S *x;
+        f(x);
+        return x->b;
+}
+
+
+-----------------
+** structptrarg2.cpi **
+------------------
+struct S {
+        int a;
+        int b;
+};
+
+void f(struct S t)
+{
+        t.b=2;// valid but doesn't change anything
+}
+
+int main()
+{
+        struct S x;
+        x.b = 10;
+        f(x);
+
+        return x.b; // Should still be 10
+}
+
+
+-----------------
+** structtest1.cpi **
+------------------
+struct a {
+	int c;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+    struct a *x;
+    struct a *y;
+
+    x = y;
+	return 0;
+}
+
+
+-----------------
+** structtest2.cpi **
+------------------
+#include <stdio.h>
+
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+    int b;
+
+    s.a = 2;
+    printf("s.a= %d\n", s.a); 
+    s.b = 3;
+    printf("s.b= %d\n", s.b); 
+    sptr = &s;
+
+    b = s.b + sptr->a + -(sptr->b);
+    printf("s.b= %d\n", s.b); 
+    printf("sptr->a= %d\n", sptr->a); 
+    printf("sptr->b= %d\n", sptr->b); 
+    printf("s.b + sptr->a + -(sptr->b) = %d\n", b);
+    printf("s.b + sptr->a + -(sptr->b) = %d\n", s.b + sptr->a + -(sptr->b));
+    return s.b + sptr->a + -(sptr->b);
+}
+
+
+-----------------
+** structtest3.cpi **
+------------------
+struct S {
+      int a;
+      int b;
+};
+
+int main()
+{  
+    struct S s;
+    struct S *sptr;
+
+    s.a = 2;
+    s.b = 3;
+    sptr = &s;
+
+    sptr->b = 50;
+
+    return s.b;
+}
+
+
+-----------------
+** structtest4.cpi **
+------------------
+struct a {
+	int c;
+	int b;
+	int arr[3];
+};
+
+struct b {
+    int d;
+};
+
+int main()
+{
+  struct a *x;
+  struct a y;
+  int i;
+  int *j;
+  int k;
+
+  y.c = 10;
+  y.b = -12;
+  x = &y;
+
+//  y->c = i; //error
+//  y->b = k; //error
+
+//  j = x.c; //error
+//  j = x.b; //error
+
+  k = x->c;
+  k = k + x->b;
+
+  return y.c + y.b + k ;
+}
+
+
+-----------------
+** varname.cpi **
+------------------
+int main(){
+    int a1;
+    int b2_;
+    int _a;
+    
+    a1 = 1;
+    _a = 2;
+    b2_ = 45;
+
+    return a1 + _a + b2_;
+} 
+
+
+-----------------
+** while1.cpi **
+------------------
+int fun(int a ,int b)
+{
+	return a + b;
+}
+
+int main()
+{
+	int a;
+	int b;
+	a = 5;
+	b = 0;
+	while( a != 0) {
+		b = fun(a,b);
+		a = a - 1;
+	}
+	return b;
+}
+
+
+-----------------
+** while2.cpi **
+------------------
+int main()
+{
+	int i;
+	int sum;
+	sum =0;
+	i = 1;
+	while ( i > 5) {
+		i = i -1;
+		sum = sum + i;
+	}
+	return sum;
+}
+
+
+-----------------
+** while3.cpi **
+------------------
+int main()
+{
+	int i;
+    int k;
+	int sum;
+	sum = 0;
+	i = 1;
+    k = 1; 
+
+    
+	while ( i > 5) {
+		i = i -1;
+        while (k <= 7){
+            k = k +1;
+            sum = sum + i + k;
+        }
+	}
+	return sum;
+}
+
+
+-----------------
+** while4.cpi **
+------------------
+int main()
+{
+	int i;
+    int k;
+	int sum;
+	sum = 0;
+	i = 0;
+    k = 5; 
+    
+    
+	while ( i < 5) {
+        sum = sum + i;
+        i = i + 2;
+	}
+	
+    while ( k >= 0) {
+        sum = sum - i;
+        k = k - 1;
+	}
+
+	return sum * i - k;
+}
+
+
+-----------------
+** while5.cpi **
+------------------
+int second_while()
+{
+    int i;
+    int sum;
+
+    sum = 0;
+    i = 0;
+
+    while ( i < 0) {
+        sum = sum = i*4532;
+        i = i + 1;
+	}
+
+    return sum;
+}
+
+int main()
+{
+	int i;
+    int k;
+	int sum;
+	sum = 0;
+	i = 0;
+    k = 5; 
+    
+    
+	while ( i < 5) {
+        sum = sum + i;
+        i = i + 2;
+	}
+	
+    return sum + second_while();
+}
+
